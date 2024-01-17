@@ -6,7 +6,7 @@ interface Props {
 }
 export function Container({ className, children }: Props) {
   return (
-    <div className={`container mx-auto px-2 ${className}`}>{children}</div>
+    <div className={`container mx-auto px-3 ${className}`}>{children}</div>
   );
 }
 

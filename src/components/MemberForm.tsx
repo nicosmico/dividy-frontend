@@ -1,8 +1,8 @@
-import { useForm } from 'react-hook-form';
-import { RoundedButton } from './ui';
 import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Input } from './Input';
+import { useForm } from 'react-hook-form';
+import { Input } from 'src/components';
+import { RoundedButton } from 'src/components/ui';
 
 export function MemberForm() {
   const {
@@ -79,7 +79,10 @@ export function MemberForm() {
         )}
       </div>
 
-      <RoundedButton type='submit' className='h-min bg-gray-800 text-white'>
+      <RoundedButton
+        type='submit'
+        className='mt-1 h-min bg-gray-900 text-white'
+      >
         <IconPlus />
       </RoundedButton>
     </form>

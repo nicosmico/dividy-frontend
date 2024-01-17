@@ -29,12 +29,12 @@ export function Input({
         placeholder={props.placeholder ?? ''}
         {...props}
         {...register}
-        className={`peer block w-full rounded-xl border-gray-200 p-4 text-sm outline-gray-800 placeholder:text-transparent autofill:pb-2 autofill:pt-6 focus:border-gray-800 focus:pb-2 focus:pt-6 focus:ring-gray-800 focus:placeholder:text-gray-400 disabled:pointer-events-none disabled:opacity-50 [&:not(:placeholder-shown)]:pb-2 [&:not(:placeholder-shown)]:pt-6 ${props.className}`}
+        className={`text-md peer block w-full rounded-xl border-gray-200 p-4 outline-gray-800 placeholder:text-transparent autofill:pb-2 autofill:pt-6 focus:border-gray-800 focus:pb-2 focus:pt-6 focus:ring-gray-800 focus:placeholder:text-gray-400 disabled:pointer-events-none disabled:opacity-50 [&:not(:placeholder-shown)]:pb-2 [&:not(:placeholder-shown)]:pt-6 ${props.className}`}
       />
 
       <label
         htmlFor={register?.name ?? props.id}
-        className='pointer-events-none absolute start-0 top-0 h-full truncate border border-transparent p-4 text-sm transition duration-100 ease-in-out peer-focus:-translate-y-2.5 peer-focus:text-xs peer-focus:text-gray-700
+        className='text-md pointer-events-none absolute start-0 top-0 h-full truncate border border-transparent p-4 transition duration-100 ease-in-out peer-focus:-translate-y-2.5 peer-focus:text-xs peer-focus:text-gray-700
           peer-disabled:pointer-events-none
           peer-disabled:opacity-50
           peer-[:not(:placeholder-shown)]:-translate-y-2.5
@@ -47,7 +47,7 @@ export function Input({
       {icon && (
         <button
           type='button'
-          className='absolute inset-y-0 end-0 flex max-h-[52px] items-center pr-4'
+          className='absolute inset-y-0 end-0 flex max-h-[56px] items-center pr-4'
           onClick={onIconClick}
         >
           {icon}
