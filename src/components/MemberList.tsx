@@ -1,6 +1,6 @@
 import { IconPencil, IconX } from '@tabler/icons-react';
 import { Member } from '../models/Member';
-import { RoundedButton } from './ui';
+import { IconButton } from './ui';
 
 interface Props {
   members: Member[];
@@ -22,12 +22,12 @@ export function MemberList({ members }: Props) {
             <span>{member.name}</span>
           </div>
           <div className='flex items-center gap-1'>
-            <RoundedButton className='bg-gray-900 py-1 text-white'>
+            <IconButton className='bg-gray-900 py-1 text-white'>
               <IconPencil></IconPencil>
-            </RoundedButton>
-            <RoundedButton className='bg-red-400 py-1 text-white'>
+            </IconButton>
+            <IconButton className='bg-red-400 py-1 text-white'>
               <IconX></IconX>
-            </RoundedButton>
+            </IconButton>
           </div>
         </li>
       ))}

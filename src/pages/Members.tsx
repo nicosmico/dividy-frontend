@@ -34,7 +34,7 @@ export function Members() {
       </div>
 
       <div className='flex w-full justify-center md:justify-end'>
-        <RoundedButton className='flex w-full justify-center gap-2 bg-amber-200 px-8 md:w-min'>
+        <RoundedButton className='w-full  bg-amber-200 px-8 md:w-min'>
           Deudas
           <IconArrowNarrowRight></IconArrowNarrowRight>
         </RoundedButton>

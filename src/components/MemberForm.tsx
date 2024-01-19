@@ -2,7 +2,7 @@ import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from 'src/components';
-import { RoundedButton } from 'src/components/ui';
+import { IconButton } from 'src/components/ui';
 
 export function MemberForm() {
   const {
@@ -47,12 +47,9 @@ export function MemberForm() {
           }
           onIconClick={() => setShowDetail(!showDetail)}
         />
-        <RoundedButton
-          type='submit'
-          className='mt-1 h-min bg-gray-900 text-white'
-        >
+        <IconButton type='submit' className='mt-1 h-min bg-gray-900 text-white'>
           <IconPlus />
-        </RoundedButton>
+        </IconButton>
       </div>
 
       {showDetail && (
