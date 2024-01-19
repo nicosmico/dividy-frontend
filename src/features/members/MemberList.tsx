@@ -1,6 +1,6 @@
 import { IconPencil, IconX } from '@tabler/icons-react';
-import { Member } from '../models/Member';
-import { IconButton } from './ui';
+import { IconButton } from '../../components/ui';
+import { Member } from '../../models/Member';
 
 interface Props {
   members: Member[];
@@ -34,5 +34,3 @@ export function MemberList({ members }: Props) {
     </ul>
   );
 }
-
-export default MemberList;

@@ -1,7 +1,7 @@
 import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Input } from 'src/components';
+import { Input } from 'src/components/form';
 import { IconButton } from 'src/components/ui';
 
 export function MemberForm() {
@@ -84,5 +84,3 @@ export function MemberForm() {
     </form>
   );
 }
-
-export default MemberForm;

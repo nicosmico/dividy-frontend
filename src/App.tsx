@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RootLayout } from './layouts/RootLayout';
-import { Bills } from './pages/Bills';
-import { Members } from './pages/Members';
-import { Totals } from './pages/Totals';
+import { Bills } from './pages/split/Bills';
+import { Members } from './pages/split/Members';
+import { Totals } from './pages/split/Totals';
 
 function App() {
   return (

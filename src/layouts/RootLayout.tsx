@@ -1,6 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
-import DividyIcon from 'src/components/DividyIcon';
-import { Container } from 'src/components/ui';
+import { Container, DividyIcon } from 'src/components/ui';
 import { useBreakpoint } from 'src/hooks/useBreakpoint';
 import Navbar from './components/Navbar';
 

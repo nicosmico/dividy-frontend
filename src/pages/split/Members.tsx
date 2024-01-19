@@ -1,6 +1,6 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { MemberForm, MemberList } from 'src/components';
 import { Container, RoundedButton } from 'src/components/ui';
+import { MemberForm, MemberList } from 'src/features/members';
 import { Member } from 'src/models/Member';
 
 export function Members() {
