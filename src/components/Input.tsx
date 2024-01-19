@@ -23,7 +23,7 @@ export function Input({
   const error = register && errors ? errors[register.name] : undefined;
 
   return (
-    <div className='relative'>
+    <div className='relative w-full'>
       <input
         id={register?.name ?? props.id}
         placeholder={props.placeholder ?? ''}

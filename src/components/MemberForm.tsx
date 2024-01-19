@@ -22,8 +22,8 @@ export function MemberForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} className='flex gap-2'>
-      <div className='flex-grow space-y-2'>
+    <form onSubmit={onSubmit} className='space-y-2'>
+      <div className='flex gap-2'>
         <Input
           type='text'
           label='Nombre'
@@ -47,44 +47,43 @@ export function MemberForm() {
           }
           onIconClick={() => setShowDetail(!showDetail)}
         />
-
-        {showDetail && (
-          <>
-            <Input
-              label='Email'
-              type='email'
-              placeholder='Ej: nicolas@gmail.com'
-              register={register('email', {
-                pattern: {
-                  value: /^\S+@\S+\.\S+$/,
-                  message: 'Email inválido',
-                },
-              })}
-              errors={errors}
-            />
-
-            <Input
-              label='Teléfono'
-              type='phone'
-              placeholder='Ej: 989799157'
-              register={register('phone', {
-                minLength: {
-                  value: 9,
-                  message: 'Debe tener al menos 9 caracteres',
-                },
-              })}
-              errors={errors}
-            />
-          </>
-        )}
+        <RoundedButton
+          type='submit'
+          className='mt-1 h-min bg-gray-900 text-white'
+        >
+          <IconPlus />
+        </RoundedButton>
       </div>
 
-      <RoundedButton
-        type='submit'
-        className='mt-1 h-min bg-gray-900 text-white'
-      >
-        <IconPlus />
-      </RoundedButton>
+      {showDetail && (
+        <>
+          <Input
+            label='Email'
+            type='email'
+            placeholder='Ej: nicolas@gmail.com'
+            register={register('email', {
+              pattern: {
+                value: /^\S+@\S+\.\S+$/,
+                message: 'Email inválido',
+              },
+            })}
+            errors={errors}
+          />
+
+          <Input
+            label='Teléfono'
+            type='phone'
+            placeholder='Ej: 989799157'
+            register={register('phone', {
+              minLength: {
+                value: 9,
+                message: 'Debe tener al menos 9 caracteres',
+              },
+            })}
+            errors={errors}
+          />
+        </>
+      )}
     </form>
   );
 }

@@ -26,7 +26,7 @@ export function Members() {
           </p>
         </div>
 
-        <div className='w-full space-y-4'>
+        <div className='w-full space-y-8'>
           <MemberForm />
 
           <MemberList members={members} />
