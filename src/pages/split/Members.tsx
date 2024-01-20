@@ -1,6 +1,6 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { PageContainer, RoundedButton } from 'src/components/ui';
-import { MemberForm, MemberList } from 'src/features/members';
+import { MemberForm, MemberList } from 'src/features/split';
 import useBreakpoint from 'src/hooks/useBreakpoint';
 import { Member } from 'src/models/Member';
 

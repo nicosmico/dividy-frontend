@@ -1,6 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
-import { NavigationLink } from '../types/navigation';
+
+export interface NavigationLink {
+  text: string;
+  href: string;
+  icon?: JSX.Element;
+}
 
 const navLinks: NavigationLink[] = [
   { text: 'Dividir gastos', href: '/split' },

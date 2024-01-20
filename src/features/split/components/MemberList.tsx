@@ -1,6 +1,6 @@
 import { IconPencil, IconX } from '@tabler/icons-react';
-import { IconButton } from '../../components/ui';
-import { Member } from '../../models/Member';
+import { IconButton } from '../../../components/ui';
+import { Member } from '../../../models/Member';
 
 interface Props {
   members: Member[];

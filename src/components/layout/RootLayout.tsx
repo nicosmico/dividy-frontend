@@ -1,7 +1,7 @@
 import { Link, Outlet } from 'react-router-dom';
 import { Container, DividyIcon } from 'src/components/ui';
 import { useBreakpoint } from 'src/hooks/useBreakpoint';
-import Navbar from './components/Navbar';
+import { Navbar } from './Navbar';
 
 export function RootLayout() {
   const { md } = useBreakpoint();
