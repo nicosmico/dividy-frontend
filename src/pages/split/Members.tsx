@@ -1,45 +1,58 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { Container, RoundedButton } from 'src/components/ui';
+import { PageContainer, RoundedButton } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/members';
+import useBreakpoint from 'src/hooks/useBreakpoint';
 import { Member } from 'src/models/Member';
 
-export function Members() {
-  const members: Member[] = [
-    {
-      id: crypto.randomUUID(),
-      name: 'Nico',
-      email: 'nico@gmail.com',
-      phone: '931220127',
-    },
-    { id: crypto.randomUUID(), name: 'Tamara' },
-    { id: crypto.randomUUID(), name: 'Manuel' },
-  ];
+const members: Member[] = [
+  {
+    id: crypto.randomUUID(),
+    name: 'Nico',
+    email: 'nico@gmail.com',
+    phone: '931220127',
+  },
+  { id: crypto.randomUUID(), name: 'Tamara' },
+  { id: crypto.randomUUID(), name: 'Manuel' },
+  { id: crypto.randomUUID(), name: 'Marcelo' },
+  { id: crypto.randomUUID(), name: 'Jorge' },
+  { id: crypto.randomUUID(), name: 'Jorge' },
+  { id: crypto.randomUUID(), name: 'Jorge' },
+  { id: crypto.randomUUID(), name: 'Jorge' },
+  { id: crypto.randomUUID(), name: 'Jorge' },
+];
 
+export function Members() {
+  const { md } = useBreakpoint();
   return (
-    <Container className='space-y-4 pt-8'>
-      <div className='space-y-4 lg:flex lg:gap-4'>
-        <div className='grid w-full place-content-center text-center'>
+    <PageContainer className='space-y-4'>
+      <div className='space-y-4 md:flex md:gap-4'>
+        <div className='w-full text-center md:text-left'>
           <h1 className='text-xl font-bold'>Miembros</h1>
-          <p className='lg:text-balance'>
+          <p>
             Agrega a los miembros del grupo con quienes dividirás los gastos. En
             el siguiente paso podrás agregar las deudas.
           </p>
+          {md && (
+            <RoundedButton className='mt-4 w-full min-w-full bg-amber-200 px-8 md:w-min'>
+              Deudas
+              <IconArrowNarrowRight></IconArrowNarrowRight>
+            </RoundedButton>
+          )}
         </div>
 
         <div className='w-full space-y-8'>
           <MemberForm />
-
           <MemberList members={members} />
         </div>
       </div>
 
-      <div className='flex w-full justify-center md:justify-end'>
-        <RoundedButton className='w-full  bg-amber-200 px-8 md:w-min'>
+      {!md && (
+        <RoundedButton className='mt-4 w-full min-w-full bg-amber-200 px-8 md:w-min'>
           Deudas
           <IconArrowNarrowRight></IconArrowNarrowRight>
         </RoundedButton>
-      </div>
-    </Container>
+      )}
+    </PageContainer>
   );
 }
 
