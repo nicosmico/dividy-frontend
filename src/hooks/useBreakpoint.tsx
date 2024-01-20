@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { debounce } from 'src/utils/debounce';
 
 interface Breakpoints {
   sm: boolean;
@@ -9,32 +8,55 @@ interface Breakpoints {
   xxl: boolean;
 }
 
-function getInitialBreakpoints(): Breakpoints {
+interface BreakpointsMediaQueries {
+  sm: MediaQueryList;
+  md: MediaQueryList;
+  lg: MediaQueryList;
+  xl: MediaQueryList;
+  xxl: MediaQueryList;
+}
+
+function evaluateQuery(mediaQueries: BreakpointsMediaQueries): Breakpoints {
   return {
-    sm: window.innerWidth >= 640,
-    md: window.innerWidth >= 768,
-    lg: window.innerWidth >= 1024,
-    xl: window.innerWidth >= 1280,
-    xxl: window.innerWidth >= 1536,
+    sm: mediaQueries.sm.matches,
+    md: mediaQueries.md.matches,
+    lg: mediaQueries.lg.matches,
+    xl: mediaQueries.xl.matches,
+    xxl: mediaQueries.xxl.matches,
   };
 }
 
+// Media queries to listen
+const mediaQueries: BreakpointsMediaQueries = {
+  sm: window.matchMedia('(min-width: 640px)'),
+  md: window.matchMedia('(min-width: 768px)'),
+  lg: window.matchMedia('(min-width: 1024px)'),
+  xl: window.matchMedia('(min-width: 1280px)'),
+  xxl: window.matchMedia('(min-width: 1536px)'),
+};
+
 export function useBreakpoint(): Breakpoints {
-  const [currentBreakpoints, setCurrentBreakpoints] = useState<Breakpoints>(
-    getInitialBreakpoints()
+  const [breakpoints, setBreakpoints] = useState<Breakpoints>(
+    evaluateQuery(mediaQueries)
   );
 
   useEffect(() => {
-    const handleResize = () => setCurrentBreakpoints(getInitialBreakpoints());
-    const debouncedHandleResize = debounce(handleResize, 100);
-    window.addEventListener('resize', debouncedHandleResize);
+    const handleResize = () => setBreakpoints(evaluateQuery(mediaQueries));
+
+    // Update breakpoints when any of them matches
+    Object.values(mediaQueries).forEach((query: MediaQueryList) => {
+      query.addEventListener('change', handleResize);
+    });
 
     return () => {
-      window.removeEventListener('resize', debouncedHandleResize);
+      // Remove enventListener
+      Object.values(mediaQueries).forEach((query: MediaQueryList) => {
+        query.removeEventListener('change', handleResize);
+      });
     };
   }, []);
 
-  return currentBreakpoints;
+  return breakpoints;
 }
 
 export default useBreakpoint;
