@@ -4,7 +4,7 @@ import NavigationStep from '../../features/split/components/NavigationStep';
 
 export function SplitLayout() {
   return (
-    <Container className='flex flex-col gap-4 pb-4 pt-2 md:flex-row'>
+    <Container className='flex flex-col gap-4 pb-4 pt-2 md:flex-row md:pt-4'>
       <NavigationStep />
       <Outlet />
     </Container>

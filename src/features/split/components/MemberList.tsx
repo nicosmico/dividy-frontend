@@ -1,5 +1,5 @@
-import { IconPencil, IconX } from '@tabler/icons-react';
-import { IconButton } from '../../../components/ui';
+import { IconPencil, IconUsersGroup, IconX } from '@tabler/icons-react';
+import { IconButton, Status } from '../../../components/ui';
 import { Member } from '../../../models/Member';
 
 interface Props {
@@ -7,7 +7,13 @@ interface Props {
 }
 export function MemberList({ members }: Props) {
   if (!members.length) {
-    return;
+    return (
+      <Status
+        title='Agrega los miembros'
+        description='Debes agregar al menos 2 miembros'
+        icon={<IconUsersGroup size={48}></IconUsersGroup>}
+      />
+    );
   }
 
   return (
