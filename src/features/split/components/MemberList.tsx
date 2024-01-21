@@ -6,6 +6,10 @@ interface Props {
   members: Member[];
 }
 export function MemberList({ members }: Props) {
+  if (!members.length) {
+    return;
+  }
+
   return (
     <ul className='space-y-2'>
       {members.map((member) => (

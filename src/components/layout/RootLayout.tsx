@@ -1,7 +1,7 @@
-import { Link, Outlet } from 'react-router-dom';
-import { Container, DividyIcon } from 'src/components/ui';
+import { Outlet } from 'react-router-dom';
+import { Container } from 'src/components/ui';
 import { useBreakpoint } from 'src/hooks/useBreakpoint';
-import { Navbar } from './Navbar';
+import { Header } from '.';
 
 export function RootLayout() {
   const { md } = useBreakpoint();
@@ -10,19 +10,8 @@ export function RootLayout() {
     <>
       {/* Header */}
       {md && (
-        <Container>
-          <header className='flex items-center justify-center py-2 md:justify-between md:py-4'>
-            <Link to='/' className='flex items-center gap-2'>
-              <DividyIcon size={md ? 24 : 18} className='rounded-lg p-1' />
-              <p className='font-semibold md:text-lg'>Dividy</p>
-            </Link>
-
-            <Navbar />
-            {/* <BorderButton className='font-bold'>
-            Compartir
-            <IconShare></IconShare>
-          </BorderButton> */}
-          </header>
+        <Container className='sticky top-4 z-10 mt-4 flex justify-center'>
+          <Header />
         </Container>
       )}
 

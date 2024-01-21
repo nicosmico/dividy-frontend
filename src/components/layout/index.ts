@@ -1,4 +1,4 @@
-import { Navbar } from './Navbar';
+import { Header } from './Header';
 import { RootLayout } from './RootLayout';
 
-export { Navbar, RootLayout };
+export { Header, RootLayout };

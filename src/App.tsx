@@ -1,18 +1,18 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RootLayout } from './components/layout';
 import { Bills, Members, Totals } from './pages';
+import SplitLayout from './pages/split/SplitLayout';
 
 function App() {
   return (
     <>
       <Routes>
-        <Route
-          path='/'
-          element={<Navigate to='/split' replace={true} />}
-        ></Route>
-
         <Route element={<RootLayout />}>
-          <Route path='split'>
+          <Route
+            path='/'
+            element={<Navigate to='/split' replace={true} />}
+          ></Route>
+          <Route path='split' element={<SplitLayout />}>
             <Route
               path=''
               element={<Navigate to='members' replace={true} />}

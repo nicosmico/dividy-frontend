@@ -35,6 +35,7 @@ const mediaQueries: BreakpointsMediaQueries = {
   xxl: window.matchMedia('(min-width: 1536px)'),
 };
 
+// TODO: Pass breakpoints to listen
 export function useBreakpoint(): Breakpoints {
   const [breakpoints, setBreakpoints] = useState<Breakpoints>(
     evaluateQuery(mediaQueries)
