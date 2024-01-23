@@ -43,7 +43,7 @@ export function Stepper({
               className={twMerge(
                 'text-gray-400',
                 step.completed && 'text-gray-500',
-                index === currentStep && 'text-black'
+                index === currentStep && 'text-zinc-800'
               )}
               onClick={() => {
                 onStepClick && onStepClick(step.name);

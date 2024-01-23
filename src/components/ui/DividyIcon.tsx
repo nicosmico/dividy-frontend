@@ -9,7 +9,7 @@ export function DividyIcon({ className, size = 24 }: Props) {
   return (
     <div
       className={twMerge(
-        'w-min rounded-xl bg-gray-900 p-2 text-white',
+        'w-min rounded-xl bg-zinc-800 p-2 text-white',
         className
       )}
     >

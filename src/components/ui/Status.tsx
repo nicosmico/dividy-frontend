@@ -16,7 +16,7 @@ export function Status({
   return (
     <div
       className={twMerge(
-        'grid place-content-center gap-2 text-center text-zinc-900',
+        'grid place-content-center gap-2 text-center text-zinc-800',
         className
       )}
       {...props}

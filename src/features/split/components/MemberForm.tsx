@@ -40,14 +40,14 @@ export function MemberForm() {
           errors={errors}
           icon={
             showDetail ? (
-              <IconAtOff className='text-gray-800'></IconAtOff>
+              <IconAtOff className='text-zinc-800'></IconAtOff>
             ) : (
-              <IconAt className='text-gray-800'></IconAt>
+              <IconAt className='text-zinc-800'></IconAt>
             )
           }
           onIconClick={() => setShowDetail(!showDetail)}
         />
-        <IconButton type='submit' className='mt-1 h-min bg-gray-900 text-white'>
+        <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
           <IconPlus />
         </IconButton>
       </div>

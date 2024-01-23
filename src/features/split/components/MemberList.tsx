@@ -25,14 +25,14 @@ export function MemberList({ members }: Props) {
         >
           <div className='flex items-center gap-4'>
             <img
-              className='max-w-[50px] rounded-full border-2 border-gray-800 p-0.5'
+              className='max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
               src={`https://doodleipsum.com/100x100/avatar-5?n=${member.id}`}
               alt={member.name}
             />
             <span>{member.name}</span>
           </div>
           <div className='flex items-center gap-1'>
-            <IconButton className='bg-gray-900 py-1 text-white'>
+            <IconButton className='bg-zinc-800 py-1 text-white'>
               <IconPencil></IconPencil>
             </IconButton>
             <IconButton className='bg-red-400 py-1 text-white'>
