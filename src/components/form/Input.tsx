@@ -7,7 +7,7 @@ import {
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  icon?: JSX.Element;
+  icon?: React.ReactNode;
   onIconClick?: MouseEventHandler<HTMLButtonElement>;
   register?: UseFormRegisterReturn<string>; // For react-hook-form
   errors?: FieldErrors<FieldValues>; // For react-hook-form

@@ -4,7 +4,7 @@ import { IconButton } from '.';
 interface Step {
   name: string;
   completed: boolean;
-  icon?: JSX.Element;
+  icon?: React.ReactNode;
 }
 
 interface Props {

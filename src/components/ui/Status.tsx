@@ -1,7 +1,7 @@
 import { twMerge } from 'tailwind-merge';
 
 interface Props {
-  icon: JSX.Element;
+  icon: React.ReactNode;
   title: string;
   description?: string;
   className?: string;

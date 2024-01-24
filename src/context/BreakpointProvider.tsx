@@ -20,7 +20,7 @@ const evaluateQuery = (mediaQueries: BreakpointsMediaQueries): Breakpoints => ({
 export const BreakpointContext = createContext(evaluateQuery(mediaQueries));
 
 interface Props {
-  children: JSX.Element;
+  children: React.ReactNode;
 }
 function BreakpointProvider({ children }: Props) {
   const [breakpoints, setBreakpoints] = useState(evaluateQuery(mediaQueries));

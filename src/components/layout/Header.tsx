@@ -5,7 +5,7 @@ import { DividyIcon } from '../ui';
 export interface NavigationLink {
   text: string;
   href: string;
-  icon?: JSX.Element;
+  icon?: React.ReactNode;
 }
 
 const navLinks: NavigationLink[] = [
