@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { RootLayout } from './components/layout';
 import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
 import { Bills, Members, Totals } from './pages';
-import SplitLayout from './pages/split/SplitLayout';
+import SplitLayout from './pages/split-bills/SplitBillsLayout';
 
 function App() {
   useUpdateBreakpoints();
@@ -13,9 +13,9 @@ function App() {
         <Route element={<RootLayout />}>
           <Route
             path='/'
-            element={<Navigate to='/split' replace={true} />}
+            element={<Navigate to='/split-bills' replace={true} />}
           ></Route>
-          <Route path='split' element={<SplitLayout />}>
+          <Route path='split-bills' element={<SplitLayout />}>
             <Route
               path=''
               element={<Navigate to='members' replace={true} />}

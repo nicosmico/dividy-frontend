@@ -1,5 +1,5 @@
-import { Bills } from './split/Bills';
-import { Members } from './split/Members';
-import { Totals } from './split/Totals';
+import { Bills } from './split-bills/Bills';
+import { Members } from './split-bills/Members';
+import { Totals } from './split-bills/Totals';
 
 export { Bills, Members, Totals };

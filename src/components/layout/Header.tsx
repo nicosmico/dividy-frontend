@@ -9,7 +9,7 @@ export interface NavigationLink {
 }
 
 const navLinks: NavigationLink[] = [
-  { text: 'Dividir gastos', href: '/split' },
+  { text: 'Dividir gastos', href: '/split-bills' },
   { text: '¿Cómo funciona?', href: '/how-it-works' },
 ];
 export function Header() {
