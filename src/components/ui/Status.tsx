@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
-interface Props {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   icon: React.ReactNode;
   title: string;
   description?: string;

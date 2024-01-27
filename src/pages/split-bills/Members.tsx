@@ -2,27 +2,17 @@ import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { RoundedButton } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import useBreakpoint from 'src/hooks/useBreakpoint';
+import useMembers from 'src/hooks/useMembers';
 import { Member } from 'src/models/Member';
-
-const members: Member[] = [
-  {
-    id: crypto.randomUUID(),
-    name: 'Nico',
-    email: 'nico@gmail.com',
-    phone: '931220127',
-  },
-  { id: crypto.randomUUID(), name: 'Tamara' },
-  { id: crypto.randomUUID(), name: 'Manuel' },
-  { id: crypto.randomUUID(), name: 'Marcelo' },
-  { id: crypto.randomUUID(), name: 'Jorge' },
-  { id: crypto.randomUUID(), name: 'Jorge' },
-  { id: crypto.randomUUID(), name: 'Jorge' },
-  { id: crypto.randomUUID(), name: 'Jorge' },
-  { id: crypto.randomUUID(), name: 'Jorge' },
-];
 
 export function Members() {
   const { md } = useBreakpoint();
+  const { members, addMember, deleteMember } = useMembers();
+
+  const onEdit = (member: Member) => {
+    console.log(member);
+  };
+
   return (
     <div className='space-y-4'>
       <div className='space-y-4 md:flex md:gap-4'>
@@ -33,7 +23,7 @@ export function Members() {
             el siguiente paso podrás agregar las deudas.
           </p>
           {md && (
-            <RoundedButton className='mt-4 w-full min-w-full bg-amber-200 px-8 md:w-min'>
+            <RoundedButton className='mt-4 w-full min-w-full bg-amber-200 px-8 shadow-sm md:w-min'>
               Deudas
               <IconArrowNarrowRight></IconArrowNarrowRight>
             </RoundedButton>
@@ -41,13 +31,17 @@ export function Members() {
         </div>
 
         <div className='w-full space-y-8'>
-          <MemberForm />
-          <MemberList members={members} />
+          <MemberForm onSubmit={addMember} />
+          <MemberList
+            members={members}
+            onEdit={onEdit}
+            onDelete={deleteMember}
+          />
         </div>
       </div>
 
       {!md && (
-        <RoundedButton className='mt-4 w-full min-w-full bg-amber-200 px-8 md:w-min'>
+        <RoundedButton className='sticky bottom-2 w-full min-w-full bg-amber-200 px-8 shadow-sm md:w-min'>
           Deudas
           <IconArrowNarrowRight></IconArrowNarrowRight>
         </RoundedButton>

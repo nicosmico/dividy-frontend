@@ -1,4 +1,4 @@
-import { BorderButton } from './BorderButton';
+import { Card } from './Card';
 import { Container } from './Container';
 import { DividyIcon } from './DividyIcon';
 import { IconButton } from './IconButton';
@@ -7,7 +7,7 @@ import { Status } from './Status';
 import { Stepper } from './Stepper';
 
 export {
-  BorderButton,
+  Card,
   Container,
   DividyIcon,
   IconButton,

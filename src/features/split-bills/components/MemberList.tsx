@@ -1,17 +1,20 @@
-import { IconPencil, IconUsersGroup, IconX } from '@tabler/icons-react';
-import { IconButton, Status } from '../../../components/ui';
+import { IconUsersGroup, IconX } from '@tabler/icons-react';
+import { Card, IconButton, Status } from '../../../components/ui';
 import { Member } from '../../../models/Member';
 
 interface Props {
   members: Member[];
+  onEdit: (member: Member) => void;
+  onDelete: (member: Member) => void;
 }
-export function MemberList({ members }: Props) {
+export function MemberList({ members, onEdit, onDelete }: Props) {
   if (!members.length) {
     return (
       <Status
         title='Agrega los miembros'
         description='Debes agregar al menos 2 miembros'
         icon={<IconUsersGroup size={48}></IconUsersGroup>}
+        className='py-8'
       />
     );
   }
@@ -19,26 +22,30 @@ export function MemberList({ members }: Props) {
   return (
     <ul className='space-y-2'>
       {members.map((member) => (
-        <li
-          key={member.id}
-          className='flex items-center justify-between gap-4 rounded-xl bg-white px-4 py-2'
-        >
-          <div className='flex items-center gap-4'>
-            <img
-              className='max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
-              src={`https://doodleipsum.com/100x100/avatar-5?n=${member.id}`}
-              alt={member.name}
-            />
-            <span>{member.name}</span>
-          </div>
-          <div className='flex items-center gap-1'>
-            <IconButton className='bg-zinc-800 py-1 text-white'>
-              <IconPencil></IconPencil>
-            </IconButton>
-            <IconButton className='bg-red-400 py-1 text-white'>
+        <li key={member.id}>
+          <Card
+            className='flex items-center justify-between'
+            onClick={() => onEdit(member)}
+          >
+            <div className='flex min-w-0 items-center gap-4'>
+              <img
+                className='max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
+                src={`https://doodleipsum.com/100x100/avatar-4?n=${member.id}`}
+                alt={member.name}
+              />
+              <span className='truncate'>{member.name}</span>
+            </div>
+
+            <IconButton
+              className='px-1 py-1 text-red-400 hover:bg-red-400 hover:text-white'
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(member);
+              }}
+            >
               <IconX></IconX>
             </IconButton>
-          </div>
+          </Card>
         </li>
       ))}
     </ul>

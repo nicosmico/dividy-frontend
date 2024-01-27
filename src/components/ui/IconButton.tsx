@@ -1,10 +1,10 @@
 import { twMerge } from 'tailwind-merge';
 
-interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
-  className?: string;
-}
-export function IconButton({ children, className, ...props }: Props) {
+export function IconButton({
+  children,
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type='button'

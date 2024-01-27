@@ -3,26 +3,33 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from 'src/components/form';
 import { IconButton } from 'src/components/ui';
+import { Member } from 'src/models/Member';
 
-export function MemberForm() {
+interface Props {
+  onSubmit: (member: Member) => void;
+}
+export function MemberForm({ onSubmit }: Props) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+    reset,
+  } = useForm<Member>();
   const [showDetail, setShowDetail] = useState(false);
 
-  const onSubmit: () => void = handleSubmit(({ name, email, phone }) => {
-    const member = {
+  const _onSubmit: () => void = handleSubmit(({ name, email, phone }) => {
+    const member: Member = {
+      id: crypto.randomUUID(),
       name,
       email: showDetail ? email : undefined,
       phone: showDetail ? phone : undefined,
     };
-    console.log(member);
+    onSubmit(member);
+    reset();
   });
 
   return (
-    <form onSubmit={onSubmit} className='space-y-2'>
+    <form onSubmit={_onSubmit} className='space-y-2'>
       <div className='flex gap-2'>
         <Input
           type='text'
