@@ -37,7 +37,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
             </div>
 
             <IconButton
-              className='px-1 py-1 text-red-400 hover:bg-red-400 hover:text-white'
+              className='px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete(member);

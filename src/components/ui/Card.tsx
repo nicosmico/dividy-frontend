@@ -10,7 +10,7 @@ export function Card({
       className={twMerge(
         'rounded-xl bg-white px-4 py-2',
         props.onClick &&
-          'transition hover:scale-[1.015] hover:cursor-pointer active:scale-100',
+          'transition hover:cursor-pointer active:scale-100 md:hover:scale-[1.015]',
         className
       )}
       {...props}
