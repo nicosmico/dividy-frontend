@@ -1,28 +1,15 @@
 import { MouseEventHandler } from 'react';
-import {
-  FieldErrors,
-  FieldValues,
-  UseFormRegisterReturn,
-} from 'react-hook-form';
+import { UseFormRegisterReturn } from 'react-hook-form';
 import { twMerge } from 'tailwind-merge';
+import { IconButton } from '../ui';
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   icon?: React.ReactNode;
   onIconClick?: MouseEventHandler<HTMLButtonElement>;
   register?: UseFormRegisterReturn<string>; // For react-hook-form
-  errors?: FieldErrors<FieldValues>; // For react-hook-form
 }
-export function Input({
-  label,
-  icon,
-  onIconClick,
-  register,
-  errors,
-  ...props
-}: Props) {
-  const error = register && errors ? errors[register.name] : undefined;
-
+export function Input({ label, icon, onIconClick, register, ...props }: Props) {
   return (
     <div className='relative w-full'>
       <input
@@ -51,19 +38,13 @@ export function Input({
       </label>
 
       {icon && (
-        <button
+        <IconButton
           type='button'
-          className='absolute inset-y-0 end-0 flex max-h-[56px] items-center pr-4'
+          className='absolute inset-y-0 end-0 flex items-center'
           onClick={onIconClick}
         >
           {icon}
-        </button>
-      )}
-
-      {error && (
-        <p className='ml-1 mt-1 block text-xs text-red-500'>
-          {error.message as String}
-        </p>
+        </IconButton>
       )}
     </div>
   );

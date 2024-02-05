@@ -1,2 +1,3 @@
 import { Input } from './Input';
-export { Input };
+import { InputError } from './InputError';
+export { Input, InputError };
