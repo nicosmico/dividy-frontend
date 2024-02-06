@@ -5,7 +5,7 @@ import { MemberForm } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 import { Member } from 'src/models/Member';
 
-export function EditMember() {
+export function EditMemberPage() {
   const { memberId } = useParams();
   const { getMember, updateMember } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
@@ -69,4 +69,4 @@ export function EditMember() {
   );
 }
 
-export default EditMember;
+export default EditMemberPage;

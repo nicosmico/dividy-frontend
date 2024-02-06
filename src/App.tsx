@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RootLayout } from './components/layout';
 import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
-import { Bills, Members, Totals } from './pages';
-import { SplitBillsLayout } from './pages/split-bills/SplitBillsLayout';
-import { EditMember } from './pages/split-bills/members/EditMember';
+import { BillsPage, MembersPage, TotalsPage } from './pages';
+import { SplitBillsPage } from './pages/split-bills/SplitBillsPage';
+import { EditMemberPage } from './pages/split-bills/members/EditMemberPage';
 
 function App() {
   useUpdateBreakpoints();
@@ -16,16 +16,16 @@ function App() {
             path='/'
             element={<Navigate to='/split-bills' replace={true} />}
           ></Route>
-          <Route path='split-bills' element={<SplitBillsLayout />}>
+          <Route path='split-bills' element={<SplitBillsPage />}>
             <Route
               path=''
               element={<Navigate to='members' replace={true} />}
             ></Route>
-            <Route path='members' element={<Members />}>
-              <Route path=':memberId/edit' element={<EditMember />}></Route>
+            <Route path='members' element={<MembersPage />}>
+              <Route path=':memberId/edit' element={<EditMemberPage />}></Route>
             </Route>
-            <Route path='bills' element={<Bills />}></Route>
-            <Route path='totals' element={<Totals />}></Route>
+            <Route path='bills' element={<BillsPage />}></Route>
+            <Route path='totals' element={<TotalsPage />}></Route>
           </Route>
         </Route>
       </Routes>

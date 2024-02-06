@@ -4,7 +4,7 @@ import { IconButton, RoundedButton } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 
-export function Members() {
+export function MembersPage() {
   const { members, addMember, deleteMember } = useMembers();
   const navigate = useNavigate();
 
@@ -55,4 +55,4 @@ export function Members() {
   );
 }
 
-export default Members;
+export default MembersPage;
