@@ -30,7 +30,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
             <div className='flex min-w-0 items-center gap-4'>
               <img
                 className='max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
-                src={`https://doodleipsum.com/100x100/avatar-4?n=${member.id}`}
+                src={member.picture}
                 alt={member.name}
               />
               <span className='truncate'>{member.name}</span>

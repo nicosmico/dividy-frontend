@@ -6,6 +6,7 @@ interface MemberStore {
   members: Member[];
   addMember: (member: Member) => void;
   deleteMember: (member: Member) => void;
+  updateMember: (id: string, member: Member) => void;
 }
 export const useMembersStore = create<MemberStore>()(
   persist(
@@ -17,6 +18,11 @@ export const useMembersStore = create<MemberStore>()(
       deleteMember: (member) => {
         set((state) => ({
           members: state.members.filter((m) => m.id !== member.id),
+        }));
+      },
+      updateMember: (id, member) => {
+        set((state) => ({
+          members: state.members.map((m) => (m.id === id ? member : m)),
         }));
       },
     }),

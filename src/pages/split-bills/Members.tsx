@@ -1,6 +1,6 @@
-import { IconArrowNarrowRight } from '@tabler/icons-react';
+import { IconArrowNarrowRight, IconPlus } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { RoundedButton } from 'src/components/ui';
+import { IconButton, RoundedButton } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 
@@ -28,7 +28,19 @@ export function Members() {
           </div>
 
           <div className='w-full space-y-8'>
-            <MemberForm onSubmit={addMember} />
+            <MemberForm
+              onSubmitForm={addMember}
+              className='flex gap-2'
+              resetOnSubmit
+            >
+              <IconButton
+                type='submit'
+                className='mt-1 h-min bg-zinc-800 text-white'
+              >
+                <IconPlus />
+              </IconButton>
+            </MemberForm>
+
             <MemberList
               members={members}
               onDelete={deleteMember}
