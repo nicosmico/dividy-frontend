@@ -13,6 +13,7 @@ export const useMembersStore = create<MemberStore>()(
     (set) => ({
       members: [],
       addMember: (member) => {
+        member.picture = `https://doodleipsum.com/100x100/avatar-4?n=${member.id}`;
         set((state) => ({ members: [member, ...state.members] }));
       },
       deleteMember: (member) => {
