@@ -57,7 +57,7 @@ export function Dialog({ open, onClose, className, children }: Props) {
       <dialog
         ref={dialogRef}
         className={twMerge(
-          'inset-auto bottom-0 m-0 max-h-[90%] w-full max-w-full rounded-t-xl bg-white backdrop:bg-black/25',
+          'inset-auto bottom-0 left-0 right-0 m-0 max-h-[90%] w-full max-w-full rounded-t-xl bg-white backdrop:bg-black/25 md:top-0 md:m-auto md:max-w-2xl md:rounded-xl',
           'open:backdrop:animate-fade-in open:animate-fade-in-slide-up',
           closing && 'open:animate-fade-out-slide-down pointer-events-none'
         )}
