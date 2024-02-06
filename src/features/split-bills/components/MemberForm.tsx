@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
 import { IconButton } from 'src/components/ui';
@@ -38,12 +38,21 @@ export function MemberForm({ onSubmit }: Props) {
   });
   const [showDetail, setShowDetail] = useState(false);
 
+  useEffect(() => {
+    if (!showDetail) {
+      reset({
+        email: '',
+        phone: '',
+      });
+    }
+  }, [showDetail]);
+
   const _onSubmit: () => void = handleSubmit(({ name, email, phone }) => {
     const member: Member = {
       id: crypto.randomUUID(),
       name,
-      email: showDetail ? email : undefined,
-      phone: showDetail ? phone : undefined,
+      email,
+      phone,
     };
     onSubmit(member);
     reset();
