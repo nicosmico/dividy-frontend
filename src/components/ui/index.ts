@@ -1,4 +1,3 @@
-import { BottomSheet } from './BottomSheet';
 import { Card } from './Card';
 import { Container } from './Container';
 import { Dialog } from './Dialog';
@@ -9,7 +8,6 @@ import { Status } from './Status';
 import { Stepper } from './Stepper';
 
 export {
-  BottomSheet,
   Card,
   Container,
   Dialog,

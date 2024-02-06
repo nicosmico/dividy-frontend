@@ -5,7 +5,7 @@ interface Props extends React.HTMLAttributes<HTMLDialogElement> {
   open?: boolean; // Notify when open/close the dialog
   onClose?: () => void;
 }
-export function Dialog({ open, onClose, children }: Props) {
+export function Dialog({ open, onClose, className, children }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [_open, _setOpen] = useState(false); // To save dialog state
@@ -13,12 +13,14 @@ export function Dialog({ open, onClose, children }: Props) {
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      e.target === dialogRef.current && onClose?.();
+      e.target === dialogRef.current && startCloseDialog();
     };
     dialogRef.current?.addEventListener('click', handleOutsideClick);
+
     return () => {
       dialogRef.current?.removeEventListener('click', handleOutsideClick);
       dialogRef.current?.close();
+      document.body.style.overflow = '';
     };
   }, []);
 
@@ -32,16 +34,22 @@ export function Dialog({ open, onClose, children }: Props) {
 
     // Close dialog if it's alerady opened
     if (!open && _open) {
-      setClosing(true);
-      _setOpen(false);
+      startCloseDialog();
     }
 
+    // Block document scroll when open dialog
     document.body.style.overflow = open ? 'hidden' : '';
   }, [open]);
 
   const handleCloseAnimation = () => {
     setClosing(false);
     dialogRef.current?.close();
+    onClose?.();
+  };
+
+  const startCloseDialog = () => {
+    setClosing(true);
+    _setOpen(false);
   };
 
   return (
@@ -55,7 +63,7 @@ export function Dialog({ open, onClose, children }: Props) {
         )}
         onAnimationEnd={() => closing && handleCloseAnimation()}
       >
-        <div className='px-4 py-10'>{children}</div>
+        <div className={twMerge('px-4 py-10', className)}>{children}</div>
       </dialog>
     </>
   );

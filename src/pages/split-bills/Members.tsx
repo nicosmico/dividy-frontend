@@ -1,14 +1,12 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { BottomSheet, RoundedButton } from 'src/components/ui';
+import { RoundedButton } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 
 export function Members() {
   const { members, addMember, deleteMember } = useMembers();
   const navigate = useNavigate();
-  const [open, setopen] = useState(false);
 
   return (
     <>
@@ -38,23 +36,9 @@ export function Members() {
             />
           </div>
         </div>
-
-        <button onClick={() => setopen(true)}>open</button>
       </div>
 
       <Outlet />
-      <BottomSheet
-        className='space-y-8'
-        isOpen={open}
-        onClose={() => setopen(false)}
-      >
-        <h1>content here!</h1>
-        <p>
-          Al cerrar haciendo click afuera hace la animacion, pero usando el
-          boton no :(
-        </p>
-        <button onClick={() => setopen(false)}>close</button>
-      </BottomSheet>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BottomSheet, RoundedButton } from 'src/components/ui';
+import { Dialog, RoundedButton } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 import { Member } from 'src/models/Member';
@@ -9,6 +9,7 @@ export function EditMembers() {
   const { memberId } = useParams();
   const { getMemberByID } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
+  const [open, setOpen] = useState(true);
 
   const navigate = useNavigate();
 
@@ -22,7 +23,7 @@ export function EditMembers() {
   };
 
   return (
-    <BottomSheet isOpen onClose={handleClose} className='space-y-8'>
+    <Dialog open={open} onClose={handleClose} className='space-y-8'>
       <div>
         {member && (
           <img
@@ -39,7 +40,7 @@ export function EditMembers() {
       <div className='flex justify-end gap-2'>
         <RoundedButton
           className='w-full bg-red-400 text-white md:w-fit'
-          onClick={handleClose}
+          onClick={() => setOpen(false)}
         >
           Cancelar
         </RoundedButton>
@@ -47,7 +48,7 @@ export function EditMembers() {
           Guardar
         </RoundedButton>
       </div>
-    </BottomSheet>
+    </Dialog>
   );
 }
 
