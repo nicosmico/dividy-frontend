@@ -1,7 +1,7 @@
-import { FieldError } from 'react-hook-form';
+import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
 
 interface Props extends React.HTMLAttributes<HTMLSpanElement> {
-  errors?: FieldError;
+  errors?: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
 }
 export function InputError({ errors, ...props }: Props) {
   if (!errors) return;

@@ -6,7 +6,7 @@ import { Input, InputError } from 'src/components/form';
 import { Member } from 'src/models/Member';
 import { z } from 'zod';
 
-const memberSchema = z.object({
+const formSchema = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
   email: z
     .string()
@@ -21,7 +21,7 @@ const memberSchema = z.object({
     .or(z.literal(''))
     .transform((value) => (!value ? undefined : value)),
 });
-type MemberForm = z.infer<typeof memberSchema>;
+type MemberForm = z.infer<typeof formSchema>;
 
 interface Props extends React.HTMLAttributes<HTMLFormElement> {
   onSubmitForm: (member: Member) => void;
@@ -41,11 +41,15 @@ export function MemberForm({
 }: Props) {
   const [showDetail, setShowDetail] = useState(defaultShowDetail);
 
-  const { register, handleSubmit, formState, reset } = useForm<MemberForm>({
-    resolver: zodResolver(memberSchema),
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<MemberForm>({
+    resolver: zodResolver(formSchema),
     defaultValues,
   });
-  const errors = formState.errors;
 
   const onValid = ({ name, email, phone }: MemberForm) => {
     const id = crypto.randomUUID();
