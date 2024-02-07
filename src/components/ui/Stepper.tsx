@@ -1,16 +1,17 @@
 import { twMerge } from 'tailwind-merge';
 import { IconButton } from '.';
 
-interface Step {
+export interface Step {
   name: string;
   completed: boolean;
+  enabled: boolean;
   icon?: React.ReactNode;
 }
 
 interface Props {
   steps: Step[];
   vertical?: boolean;
-  onStepClick?: (name: string) => unknown;
+  onStepClick?: (index: number) => unknown;
   currentStep?: number;
 }
 export function Stepper({
@@ -32,21 +33,33 @@ export function Stepper({
           <div
             className={twMerge(
               'h-2 w-full rounded-full bg-gray-300 shadow-sm',
-              vertical && 'h-28 w-3',
-              step.completed && 'bg-amber-200'
+              vertical && 'h-28 w-3'
             )}
-          ></div>
+          >
+            <div
+              className={twMerge(
+                'h-0 w-0 rounded-full transition-all',
+                twMerge(
+                  vertical ? 'w-full' : 'h-full',
+                  step.completed && 'h-full w-full bg-amber-200',
+                  index === currentStep &&
+                    !step.completed &&
+                    (vertical ? 'h-1/6 bg-amber-200' : 'w-1/6 bg-amber-200')
+                )
+              )}
+            ></div>
+          </div>
 
           {step.icon && (
             <IconButton
-              disabled={!step.completed}
+              disabled={!step.enabled}
               className={twMerge(
-                'text-gray-400',
-                step.completed && 'text-gray-500',
-                index === currentStep && 'text-zinc-800'
+                'text-zinc-400',
+                step.enabled && 'text-zinc-500',
+                index === currentStep && 'text-zinc-900'
               )}
               onClick={() => {
-                onStepClick && onStepClick(step.name);
+                onStepClick && onStepClick(index);
               }}
             >
               {step.icon}

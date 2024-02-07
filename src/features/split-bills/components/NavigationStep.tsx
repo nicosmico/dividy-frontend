@@ -1,27 +1,48 @@
 import { IconReceipt, IconReceipt2, IconUsers } from '@tabler/icons-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Stepper } from 'src/components/ui';
+import { Step } from 'src/components/ui/Stepper';
 import { useBreakpoint } from 'src/hooks/useBreakpoint';
 
+const steps: Step[] = [
+  {
+    name: 'members',
+    completed: true,
+    enabled: true,
+    icon: <IconUsers />,
+  },
+  {
+    name: 'bills',
+    completed: false,
+    enabled: true,
+    icon: <IconReceipt />,
+  },
+  {
+    name: 'totals',
+    completed: false,
+    enabled: true,
+    icon: <IconReceipt2 />,
+  },
+];
+
 export function NavigationStep() {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const { md } = useBreakpoint();
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const handleRedirect = (relativePath: string) => {
-    const basePath = pathname.split('/').slice(0, -1).join('/');
-    navigate(`${basePath}/${relativePath}`);
+  const handleRedirect = (index: number) => {
+    setCurrentStep(index);
+    const path = steps[index]?.name;
+    navigate(path);
   };
 
   return (
     <Stepper
-      steps={[
-        { name: 'members', completed: true, icon: <IconUsers /> },
-        { name: 'bills', completed: false, icon: <IconReceipt /> },
-        { name: 'totals', completed: false, icon: <IconReceipt2 /> },
-      ]}
+      steps={steps}
       onStepClick={handleRedirect}
       vertical={md}
+      currentStep={currentStep}
     />
   );
 }

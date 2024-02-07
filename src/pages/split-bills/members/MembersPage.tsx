@@ -1,6 +1,6 @@
 import { IconArrowNarrowRight, IconPlus } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { IconButton, RoundedButton } from 'src/components/ui';
+import { IconButton, RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import useMembers from 'src/hooks/useMembers';
 
@@ -18,13 +18,14 @@ export function MembersPage() {
               Agrega a los miembros del grupo con quienes dividirás los gastos.
               En el siguiente paso podrás agregar las deudas.
             </p>
-            <RoundedButton
+            <RoundedLink
+              to='../bills'
               disabled={members.length < 2}
               className='mt-4 w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
             >
               Deudas
               <IconArrowNarrowRight></IconArrowNarrowRight>
-            </RoundedButton>
+            </RoundedLink>
           </div>
 
           <div className='w-full space-y-8'>
