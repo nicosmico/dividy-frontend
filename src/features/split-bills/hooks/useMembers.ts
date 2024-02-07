@@ -1,4 +1,4 @@
-import { useMembersStore } from 'src/store/useMembersStore';
+import { useMembersStore } from 'src/features/split-bills/store/useMembersStore';
 
 export function useMembers() {
   const members = useMembersStore((state) => state.members);

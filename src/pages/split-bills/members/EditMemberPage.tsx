@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog, RoundedButton } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
-import useMembers from 'src/hooks/useMembers';
+import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Member } from 'src/models/Member';
 
 export function EditMemberPage() {

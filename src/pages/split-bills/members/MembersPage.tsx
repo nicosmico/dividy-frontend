@@ -2,7 +2,7 @@ import { IconArrowNarrowRight, IconPlus } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { IconButton, RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
-import useMembers from 'src/hooks/useMembers';
+import useMembers from 'src/features/split-bills/hooks/useMembers';
 
 export function MembersPage() {
   const { members, addMember, deleteMember } = useMembers();
