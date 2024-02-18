@@ -1,4 +1,4 @@
-import { Member } from 'src/models/Member';
+import { Member } from 'src/features/split-bills/types/member';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 

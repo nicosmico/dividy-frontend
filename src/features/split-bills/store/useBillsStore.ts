@@ -1,24 +1,31 @@
-import { Bill } from 'src/models/Bill';
+import { Bill } from 'src/features/split-bills/types/bill';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface BillsStore {
   bills: Bill[];
-  addBill: (bill: Bill) => void;
-  deleteBill: (bill: Bill) => void;
-  updateBill: (id: string, bill: Bill) => void;
+  setBills: (bills: Bill[]) => void;
+  deleteBill: (id: string) => void;
 }
 
-export const useBillsStore = create<BillsStore>((set) => ({
-  bills: [],
-  addBill: (bill) =>
-    set((state) => {
-      bill.id = crypto.randomUUID(); // Create ID
-      return { bills: [bill, ...state.bills] };
+export const useBillsStore = create<BillsStore>()(
+  persist(
+    (set) => ({
+      bills: [],
+      setBills: (bills) => {
+        set(() => {
+          return { bills };
+        });
+      },
+      deleteBill: (id) => {
+        set((state) => ({
+          bills: state.bills.filter((b) => b.id !== id),
+        }));
+      },
     }),
-  deleteBill: (bill) =>
-    set((state) => ({ bills: state.bills.filter((b) => b.id !== bill.id) })),
-  updateBill: (id, bill) =>
-    set((state) => ({
-      bills: state.bills.map((b) => (b.id === id ? bill : b)),
-    })),
-}));
+    {
+      name: 'bills-store',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);

@@ -1,15 +1,15 @@
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from '@tabler/icons-react';
 import { RoundedLink } from 'src/components/ui';
-import { BillsList } from 'src/features/split-bills';
+import { BillsFormList } from 'src/features/split-bills';
 
 export function BillsPage() {
   return (
     <div className='space-y-4 md:flex md:gap-4'>
       <div className='w-full text-center md:pt-20 md:text-left'>
-        <h1 className='text-xl font-bold'>Deudas</h1>
+        <h1 className='text-xl font-bold'>Boletas</h1>
         <p>
-          Agrega boletas e items. También, quien hizo cada compra y entre
-          quienes se debe dividir cada item.
+          Debes seleccionar quién pagó cada boleta, los items y quienes serán
+          considerados para pagar cada item.
         </p>
         <div className='flex gap-2'>
           <RoundedLink
@@ -30,7 +30,7 @@ export function BillsPage() {
       </div>
 
       <div className='w-full space-y-8'>
-        <BillsList />
+        <BillsFormList />
       </div>
     </div>
   );

@@ -1,42 +1,31 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  IconBottle,
-  IconChevronDown,
-  IconPlus,
-  IconX,
-} from '@tabler/icons-react';
-import { useForm } from 'react-hook-form';
-import { Input, InputError } from 'src/components/form';
-import { Card, Divider, IconButton, RoundedButton } from 'src/components/ui';
-import { z } from 'zod';
-import ItemForm from './ItemForm';
+import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
+import { UseFormRegisterReturn } from 'react-hook-form';
+import { Input, Select } from 'src/components/form';
+import { Divider, IconButton, RoundedButton } from 'src/components/ui';
+import { formatToCurrency } from 'src/utils/format-to';
+import { BillForm } from '../schemas/bills';
 import ItemsList from './ItemsList';
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Debes ingresar un nombre'),
-  paidBy: z.string().min(1, 'Debes ingresar un nombre'),
-});
-
-export function BillCard() {
-  const {
-    register,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(formSchema),
-  });
-
+interface Props {
+  register: (name: keyof BillForm) => UseFormRegisterReturn<string>;
+  value: BillForm;
+  onDelete: () => void;
+}
+export function BillFormItem({ register, value, onDelete }: Props) {
   return (
-    <Card className='space-y-4'>
+    <>
       <div className='flex items-center justify-between gap-2'>
         <div className='aspect-square rounded-full bg-red-400 p-3 text-white'>
           <IconBottle />
         </div>
         <div className='w-full'>
-          <h2 className='text-lg font-medium'>$32.594</h2>
-          <h1 className='text-sm font-medium'>Boleta 1</h1>
+          <h2 className='text-lg font-medium'>
+            {formatToCurrency(value.total)}
+          </h2>
+          <h1 className='text-sm font-medium'>{value.name}</h1>
         </div>
-        <IconButton className='bg-zinc-900 px-2 py-0 text-white'>
-          <IconChevronDown></IconChevronDown>
+        <IconButton className='p-0'>
+          <IconChevronDown size={28}></IconChevronDown>
         </IconButton>
       </div>
 
@@ -49,16 +38,17 @@ export function BillCard() {
             register={register('name')}
             className='bg-neutral-100'
           />
-          <InputError errors={errors.name}></InputError>
         </div>
         <div>
-          <Input
-            type='text'
+          <Select
             label='Pagado por'
             register={register('paidBy')}
             className='bg-neutral-100'
-          />
-          <InputError errors={errors.paidBy}></InputError>
+          >
+            <option value='1'>Nico</option>
+            <option value='2'>Manuel</option>
+            <option value='3'>Alejandra</option>
+          </Select>
         </div>
       </div>
       <Divider />
@@ -71,7 +61,7 @@ export function BillCard() {
       <Divider />
 
       {/* Item form */}
-      <div className='space-y-2'>
+      {/* <div className='space-y-2'>
         <h3 className='font-medium'>Agregar item</h3>
         <ItemForm className='flex gap-2'>
           <IconButton
@@ -82,14 +72,17 @@ export function BillCard() {
           </IconButton>
         </ItemForm>
       </div>
-      <Divider />
+      <Divider /> */}
 
-      <RoundedButton className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'>
+      <RoundedButton
+        className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
+        onClick={() => onDelete()}
+      >
         <IconX size={16}></IconX>
         Eliminar boleta
       </RoundedButton>
-    </Card>
+    </>
   );
 }
 
-export default BillCard;
+export default BillFormItem;

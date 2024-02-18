@@ -3,7 +3,7 @@ import { IconAt, IconAtOff } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
-import { Member } from 'src/models/Member';
+import { Member } from 'src/features/split-bills/types/member';
 import { z } from 'zod';
 
 const formSchema = z.object({

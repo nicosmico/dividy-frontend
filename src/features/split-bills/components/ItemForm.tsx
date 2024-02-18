@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
-import { BillItem } from 'src/models/Bill';
+import { BillItem } from 'src/features/split-bills/types/bill';
 import { z } from 'zod';
 
 const formSchema = z.object({

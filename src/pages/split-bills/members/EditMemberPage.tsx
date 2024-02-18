@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog, RoundedButton } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { Member } from 'src/models/Member';
+import { Member } from 'src/features/split-bills/types/member';
 
 export function EditMemberPage() {
   const { memberId } = useParams();

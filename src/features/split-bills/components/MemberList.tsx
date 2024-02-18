@@ -1,6 +1,6 @@
 import { IconUsersGroup, IconX } from '@tabler/icons-react';
 import { Card, IconButton, Status } from '../../../components/ui';
-import { Member } from '../../../models/Member';
+import { Member } from '../types/member';
 
 interface Props {
   members: Member[];
