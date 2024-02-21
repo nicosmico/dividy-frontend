@@ -24,15 +24,12 @@ export function BillsFormList() {
 
   const handleAdd = () => {
     append({
-      id: crypto.randomUUID(),
+      uuid: crypto.randomUUID(),
       name: `Nueva boleta ${fields.length + 1}`,
       paidBy: '1', // TODO: Add ID of the first memeber
       total: 0,
     });
   };
-
-  const getRegisterByIndex = (index: number) => (name: keyof BillForm) =>
-    register(`bills.${index}.${name}`);
 
   const onValid = ({ bills }: BillForms) => {
     saveBills(bills);
@@ -41,7 +38,6 @@ export function BillsFormList() {
   const saveBills = useMemo(
     () =>
       debounce((bills: BillForm[]) => {
-        console.log(bills);
         setBills(bills);
       }, 300),
     [setBills]
@@ -60,9 +56,11 @@ export function BillsFormList() {
             <li key={field.id}>
               <Card className='space-y-4'>
                 <BillFormItem
-                  register={getRegisterByIndex(index)}
+                  register={(name: keyof BillForm) =>
+                    register(`bills.${index}.${name}`)
+                  }
                   value={watchItems[index]}
-                  onDelete={() => onDelete(field.id, index)}
+                  onDelete={() => onDelete(field.uuid, index)}
                 />
               </Card>
             </li>

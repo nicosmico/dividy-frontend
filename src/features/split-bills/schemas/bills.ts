@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const BILL_FORM_SCHEMA = z.object({
-  id: z.string().min(1),
+  uuid: z.string().min(1),
   name: z.string().min(1, 'Debes ingresar un nombre'),
   paidBy: z.string().min(1, 'Ingresa quién hizo esta compra'),
   total: z.number().min(0),

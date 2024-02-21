@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface BillsStore {
   bills: Bill[];
   setBills: (bills: Bill[]) => void;
-  deleteBill: (id: string) => void;
+  deleteBill: (uuid: string) => void;
 }
 
 export const useBillsStore = create<BillsStore>()(
@@ -17,9 +17,9 @@ export const useBillsStore = create<BillsStore>()(
           return { bills };
         });
       },
-      deleteBill: (id) => {
+      deleteBill: (uuid) => {
         set((state) => ({
-          bills: state.bills.filter((b) => b.id !== id),
+          bills: state.bills.filter((b) => b.uuid !== uuid),
         }));
       },
     }),

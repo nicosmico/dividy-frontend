@@ -1,5 +1,5 @@
 export interface Bill {
-  id: string;
+  uuid: string;
   name: string;
   paidBy: string; // Member ID
   total: number;
