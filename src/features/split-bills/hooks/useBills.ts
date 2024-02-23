@@ -6,9 +6,8 @@ export function useBills() {
   const addBill = useBillsStore((state) => state.addBill);
   const deleteBill = useBillsStore((state) => state.deleteBill);
   const updateBill = useBillsStore((state) => state.updateBill);
-  const getBillByUUID = (uuid: string) => bills[uuid];
 
-  return { bills, billsOrder, addBill, deleteBill, updateBill, getBillByUUID };
+  return { bills, billsOrder, addBill, deleteBill, updateBill };
 }
 
 export default useBills;

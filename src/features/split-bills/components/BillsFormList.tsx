@@ -59,6 +59,7 @@ export function BillsFormList() {
             <li key={uuid}>
               <BillCard
                 uuid={uuid}
+                bill={bills[uuid]}
                 onRemoveBill={handleRemoveBill}
                 onBillChange={handleBillChange}
                 onInvalidBill={handleInvalidBill}

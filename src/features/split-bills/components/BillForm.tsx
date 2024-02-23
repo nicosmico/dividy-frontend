@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FieldErrors, useForm } from 'react-hook-form';
+import { DefaultValues, FieldErrors, useForm } from 'react-hook-form';
 import { Input, Select } from 'src/components/form';
 import { z } from 'zod';
 
@@ -10,7 +10,7 @@ const BILL_FORM_SCHEMA = z.object({
 export type TBillForm = z.infer<typeof BILL_FORM_SCHEMA>;
 
 interface Props {
-  defaultValues?: TBillForm;
+  defaultValues?: DefaultValues<TBillForm>;
   onValid: (values: TBillForm) => void;
   onInvalid: (values: FieldErrors<TBillForm>) => void;
 }

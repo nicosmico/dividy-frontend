@@ -59,6 +59,10 @@ export function BillCard({
 
       {/* Bill form */}
       <BillForm
+        defaultValues={{
+          name: bill?.name,
+          paidBy: bill?.paidBy,
+        }}
         onValid={handleValidBill}
         onInvalid={() => onInvalidBill(uuid)}
       ></BillForm>
