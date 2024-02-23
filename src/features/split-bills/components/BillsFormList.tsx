@@ -16,7 +16,7 @@ export function BillsFormList() {
     shouldFocusError: false,
     defaultValues: { bills },
   });
-  const { fields, append, remove } = useFieldArray<BillForms>({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: 'bills',
   });
@@ -28,6 +28,7 @@ export function BillsFormList() {
       name: `Nueva boleta ${fields.length + 1}`,
       paidBy: '1', // TODO: Add ID of the first memeber
       total: 0,
+      items: [],
     });
   };
 
@@ -56,9 +57,8 @@ export function BillsFormList() {
             <li key={field.id}>
               <Card className='space-y-4'>
                 <BillFormItem
-                  register={(name: keyof BillForm) =>
-                    register(`bills.${index}.${name}`)
-                  }
+                  index={index}
+                  register={register}
                   value={watchItems[index]}
                   onDelete={() => onDelete(field.uuid, index)}
                 />

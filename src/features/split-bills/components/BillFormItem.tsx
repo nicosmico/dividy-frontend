@@ -1,17 +1,23 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
-import { UseFormRegisterReturn } from 'react-hook-form';
+import { UseFormRegister } from 'react-hook-form';
 import { Input, Select } from 'src/components/form';
 import { Divider, IconButton, RoundedButton } from 'src/components/ui';
 import { formatToCurrency } from 'src/utils/format-to';
-import { BillForm } from '../schemas/bills';
+import { BillForm, BillForms } from '../schemas/bills';
+import { BillItemForm, ItemForm } from './BillItemForm';
 import ItemsList from './ItemsList';
 
 interface Props {
-  register: (name: keyof BillForm) => UseFormRegisterReturn<string>;
+  index: number;
+  register: UseFormRegister<BillForms>;
   value: BillForm;
   onDelete: () => void;
 }
-export function BillFormItem({ register, value, onDelete }: Props) {
+export function BillFormItem({ index, register, value, onDelete }: Props) {
+  const onAddItem = (item: ItemForm) => {
+    console.log(item);
+  };
+
   return (
     <>
       <div className='flex items-center justify-between gap-2'>
@@ -35,14 +41,14 @@ export function BillFormItem({ register, value, onDelete }: Props) {
           <Input
             type='text'
             label='Nombre compra'
-            register={register('name')}
+            register={register(`bills.${index}.name`)}
             className='bg-neutral-100'
           />
         </div>
         <div>
           <Select
             label='Pagado por'
-            register={register('paidBy')}
+            register={register(`bills.${index}.paidBy`)}
             className='bg-neutral-100'
           >
             <option value='1'>Nico</option>
@@ -61,18 +67,11 @@ export function BillFormItem({ register, value, onDelete }: Props) {
       <Divider />
 
       {/* Item form */}
-      {/* <div className='space-y-2'>
+      <div className='space-y-2'>
         <h3 className='font-medium'>Agregar item</h3>
-        <ItemForm className='flex gap-2'>
-          <IconButton
-            type='submit'
-            className='mt-1 h-min bg-zinc-800 text-white'
-          >
-            <IconPlus />
-          </IconButton>
-        </ItemForm>
+        <BillItemForm onSubmit={onAddItem}></BillItemForm>
       </div>
-      <Divider /> */}
+      <Divider />
 
       <RoundedButton
         className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
