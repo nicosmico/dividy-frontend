@@ -10,8 +10,9 @@ interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   register?: UseFormRegisterReturn<string>; // For react-hook-form
 }
 export function Input({ label, icon, onIconClick, register, ...props }: Props) {
-  const randomNumber = Math.random().toString().replace('.', '').slice(1, 5);
-  const id = register?.name ? register.name + randomNumber : props.id;
+  const id = register?.name
+    ? `${register.name}-${crypto.randomUUID()}`
+    : props.id;
   return (
     <div className='relative w-full'>
       <input

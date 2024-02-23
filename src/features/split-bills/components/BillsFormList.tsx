@@ -1,75 +1,55 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { IconPlus } from '@tabler/icons-react';
-import { useMemo } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { Card, RoundedButton } from 'src/components/ui';
-import { debounce } from 'src/utils/debounce';
-import { BillFormItem } from '..';
-import useBills from '../hooks/useBills';
-import { BILL_FORMS_SCHEMA, BillForm, BillForms } from '../schemas/bills';
+import { useState } from 'react';
+import { RoundedButton } from 'src/components/ui';
+import { BillCard } from './BillCard';
+import { TBillForm } from './BillForm';
 
 export function BillsFormList() {
-  const { bills, setBills, deleteBill } = useBills();
+  // const { bills, setBills, deleteBill } = useBills();
+  const [billsList, setBillsList] = useState<string[]>([crypto.randomUUID()]);
+  const [invalidForms, setInvalidForms] = useState<string[]>([]);
 
-  const { control, register, watch, handleSubmit } = useForm<BillForms>({
-    resolver: zodResolver(BILL_FORMS_SCHEMA),
-    shouldFocusError: false,
-    defaultValues: { bills },
-  });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'bills',
-  });
-  const watchItems = watch('bills');
-
-  const handleAdd = () => {
-    append({
-      uuid: crypto.randomUUID(),
-      name: `Nueva boleta ${fields.length + 1}`,
-      paidBy: '1', // TODO: Add ID of the first memeber
-      total: 0,
-      items: [],
-    });
+  const handleAddBill = () => {
+    setBillsList([...billsList, crypto.randomUUID()]);
   };
 
-  const onValid = ({ bills }: BillForms) => {
-    saveBills(bills);
+  const handleRemoveBill = (uuid: string) => {
+    setBillsList([...billsList].filter((id) => id !== uuid));
+    removeFromInvalidForms(uuid);
   };
 
-  const saveBills = useMemo(
-    () =>
-      debounce((bills: BillForm[]) => {
-        setBills(bills);
-      }, 300),
-    [setBills]
-  );
+  const handleBillChange = (uuid: string, values: TBillForm) => {
+    console.log(uuid, values);
+    removeFromInvalidForms(uuid);
+  };
 
-  const onDelete = (id: string, index: number) => {
-    remove(index);
-    deleteBill(id);
+  const handleInvalidBill = (uuid: string) => {
+    setInvalidForms([...invalidForms, uuid]);
+  };
+
+  const removeFromInvalidForms = (uuid: string) => {
+    setInvalidForms([...invalidForms].filter((id) => id !== uuid));
   };
 
   return (
     <>
-      <form onChange={handleSubmit(onValid)} onSubmit={handleSubmit(onValid)}>
+      <div>
         <ul className='space-y-2'>
-          {fields.map((field, index) => (
-            <li key={field.id}>
-              <Card className='space-y-4'>
-                <BillFormItem
-                  index={index}
-                  register={register}
-                  value={watchItems[index]}
-                  onDelete={() => onDelete(field.uuid, index)}
-                />
-              </Card>
+          {billsList.map((uuid) => (
+            <li key={uuid}>
+              <BillCard
+                uuid={uuid}
+                onRemoveBill={handleRemoveBill}
+                onBillChange={handleBillChange}
+                onInvalidBill={handleInvalidBill}
+              ></BillCard>
             </li>
           ))}
         </ul>
-      </form>
+      </div>
       <RoundedButton
         className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
-        onClick={handleAdd}
+        onClick={handleAddBill}
       >
         <IconPlus size={16} />
         Agregar boleta
@@ -77,5 +57,3 @@ export function BillsFormList() {
     </>
   );
 }
-
-export default BillsFormList;

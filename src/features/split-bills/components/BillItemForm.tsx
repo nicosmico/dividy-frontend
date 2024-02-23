@@ -9,19 +9,18 @@ const ITEM_FORM_SCHEMA = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
   price: z.coerce.number().min(1, 'Debe ser mayor que 0'),
 });
-export type ItemForm = z.infer<typeof ITEM_FORM_SCHEMA>;
+export type TBillItemForm = z.infer<typeof ITEM_FORM_SCHEMA>;
 
 interface Props {
-  onSubmit: (item: ItemForm) => void;
+  defaultValues?: TBillItemForm;
 }
-export function BillItemForm({ onSubmit }: Props) {
+export function BillItemForm({ defaultValues }: Props) {
   const {
     register,
-    handleSubmit,
     formState: { errors },
-    reset,
-  } = useForm<ItemForm>({
+  } = useForm<TBillItemForm>({
     resolver: zodResolver(ITEM_FORM_SCHEMA),
+    defaultValues,
   });
 
   return (
@@ -46,18 +45,9 @@ export function BillItemForm({ onSubmit }: Props) {
           <InputError errors={errors.price}></InputError>
         </div>
       </div>
-      <IconButton
-        type='button'
-        className='mt-1 h-min bg-zinc-800 text-white'
-        onClick={handleSubmit((data) => {
-          onSubmit(data);
-          reset();
-        })}
-      >
+      <IconButton type='button' className='mt-1 h-min bg-zinc-800 text-white'>
         <IconPlus />
       </IconButton>
     </div>
   );
 }
-
-export default BillItemForm;
