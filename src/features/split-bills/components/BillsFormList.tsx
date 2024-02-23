@@ -1,13 +1,22 @@
 import { IconPlus } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RoundedButton } from 'src/components/ui';
+import useBills from '../hooks/useBills';
 import { BillCard } from './BillCard';
 import { TBillForm } from './BillForm';
 
 export function BillsFormList() {
-  // const { bills, setBills, deleteBill } = useBills();
-  const [billsList, setBillsList] = useState<string[]>([crypto.randomUUID()]);
+  const { bills, billsOrder, addBill, updateBill, deleteBill } = useBills();
+
+  const [billsList, setBillsList] = useState<string[]>(() => {
+    return billsOrder.length ? billsOrder : [crypto.randomUUID()];
+  });
   const [invalidForms, setInvalidForms] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log(bills);
+    console.log(billsOrder);
+  }, [bills, billsOrder]);
 
   const handleAddBill = () => {
     setBillsList([...billsList, crypto.randomUUID()]);
@@ -16,11 +25,22 @@ export function BillsFormList() {
   const handleRemoveBill = (uuid: string) => {
     setBillsList([...billsList].filter((id) => id !== uuid));
     removeFromInvalidForms(uuid);
+    deleteBill(uuid);
   };
 
   const handleBillChange = (uuid: string, values: TBillForm) => {
     console.log(uuid, values);
     removeFromInvalidForms(uuid);
+    if (bills[uuid]) {
+      updateBill(uuid, values);
+    } else {
+      addBill({
+        uuid,
+        name: values.name,
+        paidBy: values.paidBy,
+        total: 0,
+      });
+    }
   };
 
   const handleInvalidBill = (uuid: string) => {
