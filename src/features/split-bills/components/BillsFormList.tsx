@@ -4,9 +4,11 @@ import { RoundedButton } from 'src/components/ui';
 import useBills from '../hooks/useBills';
 import { BillCard } from './BillCard';
 import { TBillForm } from './BillForm';
+import { TBillItemForm } from './BillItemForm';
 
 export function BillsFormList() {
-  const { bills, billsOrder, addBill, updateBill, deleteBill } = useBills();
+  const { bills, billsOrder, addBill, updateBill, deleteBill, addItemToBill } =
+    useBills();
 
   const [billsList, setBillsList] = useState<string[]>(() => {
     return billsOrder.length ? billsOrder : [crypto.randomUUID()];
@@ -39,12 +41,21 @@ export function BillsFormList() {
         name: values.name,
         paidBy: values.paidBy,
         total: 0,
+        items: [],
       });
     }
   };
 
   const handleInvalidBill = (uuid: string) => {
     setInvalidForms([...invalidForms, uuid]);
+  };
+
+  const handleAddItem = (uuid: string, item: TBillItemForm) => {
+    console.log('handleAddBill');
+    addItemToBill(uuid, {
+      uuid: crypto.randomUUID(),
+      ...item,
+    });
   };
 
   const removeFromInvalidForms = (uuid: string) => {
@@ -63,6 +74,7 @@ export function BillsFormList() {
                 onRemoveBill={handleRemoveBill}
                 onBillChange={handleBillChange}
                 onInvalidBill={handleInvalidBill}
+                onAddItem={handleAddItem}
               ></BillCard>
             </li>
           ))}

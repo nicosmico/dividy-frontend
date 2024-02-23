@@ -6,6 +6,7 @@ import { formatToCurrency } from 'src/utils/format-to';
 import { BillForm } from '..';
 import { Bill } from '../types/bill';
 import { TBillForm } from './BillForm';
+import { BillItemForm, TBillItemForm } from './BillItemForm';
 import { ItemsList } from './ItemsList';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
   onRemoveBill: (uuid: string) => void;
   onBillChange: (uuid: string, bill: TBillForm) => void;
   onInvalidBill: (uuid: string) => void;
+  onAddItem: (uuid: string, item: TBillItemForm) => void;
 }
 export function BillCard({
   uuid,
@@ -21,6 +23,7 @@ export function BillCard({
   onRemoveBill,
   onBillChange,
   onInvalidBill,
+  onAddItem,
 }: Props) {
   const [name, setName] = useState<string>(bill?.name ?? 'Boleta 1');
   const [total] = useState<number>(0);
@@ -69,16 +72,23 @@ export function BillCard({
       <Divider />
 
       {/* Detail */}
-      <div className='space-y-2'>
-        <h3 className='font-medium'>Detalle</h3>
-        <ItemsList />
-      </div>
-      <Divider />
+      {bill?.items && (
+        <>
+          <div className='space-y-2'>
+            <h3 className='font-medium'>Detalle</h3>
+            <ItemsList items={bill.items}></ItemsList>
+          </div>
+          <Divider />
+        </>
+      )}
 
       {/* Item form */}
       <div className='space-y-2'>
         <h3 className='font-medium'>Agregar item</h3>
-        {/* <BillItemForm onSubmit={console.log}></BillItemForm> */}
+        <BillItemForm
+          onValid={(item) => onAddItem(uuid, item)}
+          onInvalid={() => onInvalidBill(uuid)}
+        ></BillItemForm>
       </div>
       <Divider />
 

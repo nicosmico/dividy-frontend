@@ -1,4 +1,4 @@
-import { Bill } from 'src/features/split-bills/types/bill';
+import { Bill, BillItem } from 'src/features/split-bills/types/bill';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -8,6 +8,7 @@ interface BillsStore {
   addBill: (bill: Bill) => void;
   deleteBill: (uuid: string) => void;
   updateBill: (uuid: string, billValues: Partial<Bill>) => void;
+  addItemToBill: (uuid: string, item: BillItem) => void;
 }
 
 export const useBillsStore = create<BillsStore>()(
@@ -28,7 +29,7 @@ export const useBillsStore = create<BillsStore>()(
 
           return {
             bills: remainingBills,
-            billsOrder: [...state.billsOrder].filter((b) => b !== uuid),
+            billsOrder: state.billsOrder.filter((b) => b !== uuid),
           };
         });
       },
@@ -42,6 +43,15 @@ export const useBillsStore = create<BillsStore>()(
             },
           },
         }));
+      },
+      addItemToBill: (uuid, item) => {
+        set((state) => {
+          const bill = state.bills[uuid];
+          bill.items.push(item);
+          return {
+            bills: { ...state.bills, [uuid]: bill },
+          };
+        });
       },
     }),
     {

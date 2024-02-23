@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconPlus } from '@tabler/icons-react';
-import { useForm } from 'react-hook-form';
+import { FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
 import { IconButton } from 'src/components/ui';
 import { z } from 'zod';
@@ -12,19 +12,29 @@ const ITEM_FORM_SCHEMA = z.object({
 export type TBillItemForm = z.infer<typeof ITEM_FORM_SCHEMA>;
 
 interface Props {
-  defaultValues?: TBillItemForm;
+  onValid: (values: TBillItemForm) => void;
+  onInvalid: (values: FieldErrors<TBillItemForm>) => void;
 }
-export function BillItemForm({ defaultValues }: Props) {
+export function BillItemForm({ onValid, onInvalid }: Props) {
   const {
     register,
     formState: { errors },
+    handleSubmit,
+    reset,
   } = useForm<TBillItemForm>({
     resolver: zodResolver(ITEM_FORM_SCHEMA),
-    defaultValues,
   });
 
+  const handleValid = (values: TBillItemForm) => {
+    onValid(values);
+    reset();
+  };
+
   return (
-    <div className='flex gap-2'>
+    <form
+      className='flex gap-2'
+      onSubmit={handleSubmit(handleValid, onInvalid)}
+    >
       <div className='w-full space-y-2'>
         <div>
           <Input
@@ -45,9 +55,9 @@ export function BillItemForm({ defaultValues }: Props) {
           <InputError errors={errors.price}></InputError>
         </div>
       </div>
-      <IconButton type='button' className='mt-1 h-min bg-zinc-800 text-white'>
+      <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
         <IconPlus />
       </IconButton>
-    </div>
+    </form>
   );
 }

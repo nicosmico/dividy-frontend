@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DefaultValues, FieldErrors, useForm } from 'react-hook-form';
-import { Input, Select } from 'src/components/form';
+import { Input, InputError, Select } from 'src/components/form';
 import { z } from 'zod';
 
 const BILL_FORM_SCHEMA = z.object({
@@ -15,7 +15,11 @@ interface Props {
   onInvalid: (values: FieldErrors<TBillForm>) => void;
 }
 export function BillForm({ defaultValues, onValid, onInvalid }: Props) {
-  const { register, handleSubmit } = useForm<TBillForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TBillForm>({
     resolver: zodResolver(BILL_FORM_SCHEMA),
     defaultValues,
   });
@@ -33,6 +37,7 @@ export function BillForm({ defaultValues, onValid, onInvalid }: Props) {
           register={register('name')}
           className='bg-neutral-100'
         />
+        <InputError errors={errors.name}></InputError>
       </div>
       <div>
         <Select
@@ -44,6 +49,7 @@ export function BillForm({ defaultValues, onValid, onInvalid }: Props) {
           <option value='2'>Manuel</option>
           <option value='3'>Alejandra</option>
         </Select>
+        <InputError errors={errors.paidBy}></InputError>
       </div>
     </form>
   );
