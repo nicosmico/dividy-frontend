@@ -16,6 +16,7 @@ interface Props {
   onBillChange: (uuid: string, bill: TBillForm) => void;
   onInvalidBill: (uuid: string) => void;
   onAddItem: (uuid: string, item: TBillItemForm) => void;
+  onRemoveItem: (uuid: string, itemUuid: string) => void;
 }
 export function BillCard({
   uuid,
@@ -24,6 +25,7 @@ export function BillCard({
   onBillChange,
   onInvalidBill,
   onAddItem,
+  onRemoveItem,
 }: Props) {
   const [name, setName] = useState<string>(bill?.name ?? 'Boleta 1');
   const [total] = useState<number>(0);
@@ -76,7 +78,10 @@ export function BillCard({
         <>
           <div className='space-y-2'>
             <h3 className='font-medium'>Detalle</h3>
-            <ItemsList items={bill.items}></ItemsList>
+            <ItemsList
+              items={bill.items}
+              onRemoveItem={(itemUuid) => onRemoveItem(uuid, itemUuid)}
+            ></ItemsList>
           </div>
           <Divider />
         </>

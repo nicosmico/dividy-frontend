@@ -9,6 +9,7 @@ interface BillsStore {
   deleteBill: (uuid: string) => void;
   updateBill: (uuid: string, billValues: Partial<Bill>) => void;
   addItemToBill: (uuid: string, item: BillItem) => void;
+  removeItemFromBill: (uuid: string, itemUuid: string) => void;
 }
 
 export const useBillsStore = create<BillsStore>()(
@@ -48,6 +49,15 @@ export const useBillsStore = create<BillsStore>()(
         set((state) => {
           const bill = state.bills[uuid];
           bill.items.push(item);
+          return {
+            bills: { ...state.bills, [uuid]: bill },
+          };
+        });
+      },
+      removeItemFromBill: (uuid, itemUuid) => {
+        set((state) => {
+          const bill = state.bills[uuid];
+          bill.items = bill.items.filter((i) => i.uuid !== itemUuid);
           return {
             bills: { ...state.bills, [uuid]: bill },
           };

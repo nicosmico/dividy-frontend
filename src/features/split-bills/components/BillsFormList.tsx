@@ -7,8 +7,15 @@ import { TBillForm } from './BillForm';
 import { TBillItemForm } from './BillItemForm';
 
 export function BillsFormList() {
-  const { bills, billsOrder, addBill, updateBill, deleteBill, addItemToBill } =
-    useBills();
+  const {
+    bills,
+    billsOrder,
+    addBill,
+    updateBill,
+    deleteBill,
+    addItemToBill,
+    removeItemFromBill,
+  } = useBills();
 
   const [billsList, setBillsList] = useState<string[]>(() => {
     return billsOrder.length ? billsOrder : [crypto.randomUUID()];
@@ -17,7 +24,6 @@ export function BillsFormList() {
 
   useEffect(() => {
     console.log(bills);
-    console.log(billsOrder);
   }, [bills, billsOrder]);
 
   const handleAddBill = () => {
@@ -51,11 +57,14 @@ export function BillsFormList() {
   };
 
   const handleAddItem = (uuid: string, item: TBillItemForm) => {
-    console.log('handleAddBill');
     addItemToBill(uuid, {
       uuid: crypto.randomUUID(),
       ...item,
     });
+  };
+
+  const handleRemoveItem = (uuid: string, itemUuid: string) => {
+    removeItemFromBill(uuid, itemUuid);
   };
 
   const removeFromInvalidForms = (uuid: string) => {
@@ -75,6 +84,7 @@ export function BillsFormList() {
                 onBillChange={handleBillChange}
                 onInvalidBill={handleInvalidBill}
                 onAddItem={handleAddItem}
+                onRemoveItem={handleRemoveItem}
               ></BillCard>
             </li>
           ))}

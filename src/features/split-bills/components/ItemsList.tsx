@@ -5,8 +5,9 @@ import { BillItem } from '../types/bill';
 
 interface Props {
   items: BillItem[];
+  onRemoveItem: (uuid: string) => void;
 }
-export function ItemsList({ items }: Props) {
+export function ItemsList({ items, onRemoveItem }: Props) {
   return (
     <ul>
       {items.map((item) => (
@@ -25,6 +26,7 @@ export function ItemsList({ items }: Props) {
           <IconButton
             className='h-fit px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
             type='submit'
+            onClick={() => onRemoveItem(item.uuid)}
           >
             <IconX></IconX>
           </IconButton>

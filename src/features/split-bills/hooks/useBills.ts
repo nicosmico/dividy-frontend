@@ -7,8 +7,17 @@ export function useBills() {
   const deleteBill = useBillsStore((state) => state.deleteBill);
   const updateBill = useBillsStore((state) => state.updateBill);
   const addItemToBill = useBillsStore((state) => state.addItemToBill);
+  const removeItemFromBill = useBillsStore((state) => state.removeItemFromBill);
 
-  return { bills, billsOrder, addBill, deleteBill, updateBill, addItemToBill };
+  return {
+    bills,
+    billsOrder,
+    addBill,
+    deleteBill,
+    updateBill,
+    addItemToBill,
+    removeItemFromBill,
+  };
 }
 
 export default useBills;
