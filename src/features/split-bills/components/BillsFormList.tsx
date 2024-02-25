@@ -59,9 +59,13 @@ export function BillsFormList() {
   };
 
   const handleAddItem = (uuid: string, item: TBillItemForm) => {
+    const members = Object.entries(item.members)
+      .filter(([, checked]) => checked)
+      .map(([uuid]) => uuid);
     addItemToBill(uuid, {
       uuid: crypto.randomUUID(),
       ...item,
+      members,
     });
   };
 

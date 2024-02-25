@@ -95,6 +95,7 @@ export function BillCard({
       <div className='space-y-2'>
         <h3 className='font-medium'>Agregar item</h3>
         <BillItemForm
+          members={members}
           onValid={(item) => onAddItem(uuid, item)}
           onInvalid={() => onInvalidBill(uuid)}
         ></BillItemForm>

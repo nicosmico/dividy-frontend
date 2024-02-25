@@ -10,5 +10,5 @@ export interface BillItem {
   uuid: string;
   name: string;
   price: number;
-  // members: string[]; // Member IDs
+  members: string[]; // Member IDs
 }
