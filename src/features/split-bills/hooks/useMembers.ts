@@ -5,8 +5,8 @@ export function useMembers() {
   const addMember = useMembersStore((state) => state.addMember);
   const deleteMember = useMembersStore((state) => state.deleteMember);
   const updateMember = useMembersStore((state) => state.updateMember);
-  const getMember = (id: string) => {
-    return members.find((member) => member.id === id);
+  const getMember = (uuid: string) => {
+    return members.find((member) => member.uuid === uuid);
   };
 
   return { members, addMember, deleteMember, updateMember, getMember };

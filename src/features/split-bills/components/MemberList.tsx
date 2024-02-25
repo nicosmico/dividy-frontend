@@ -5,7 +5,7 @@ import { Member } from '../types/member';
 interface Props {
   members: Member[];
   onEdit: (member: Member) => void;
-  onDelete: (id: string) => void;
+  onDelete: (uuid: string) => void;
 }
 export function MemberList({ members, onEdit, onDelete }: Props) {
   if (!members.length) {
@@ -22,7 +22,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
   return (
     <ul className='space-y-2'>
       {members.map((member) => (
-        <li key={member.id}>
+        <li key={member.uuid}>
           <Card
             className='flex items-center justify-between'
             onClick={() => onEdit(member)}
@@ -40,7 +40,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
               className='px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
               onClick={(event) => {
                 event.stopPropagation();
-                onDelete(member.id);
+                onDelete(member.uuid);
               }}
             >
               <IconX></IconX>

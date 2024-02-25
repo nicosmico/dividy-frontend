@@ -11,7 +11,7 @@ export function MembersPage() {
 
   const handleAddMember = (values: TMemberForm) => {
     addMember({
-      id: crypto.randomUUID(),
+      uuid: crypto.randomUUID(),
       ...values,
     });
   };
@@ -53,7 +53,7 @@ export function MembersPage() {
             <MemberList
               members={members}
               onDelete={deleteMember}
-              onEdit={(member) => navigate(`${member.id}/edit`)}
+              onEdit={(member) => navigate(`${member.uuid}/edit`)}
             />
           </div>
         </div>

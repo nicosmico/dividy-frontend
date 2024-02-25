@@ -5,26 +5,26 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface MemberStore {
   members: Member[];
   addMember: (member: Member) => void;
-  deleteMember: (id: string) => void;
-  updateMember: (id: string, memberData: Partial<Member>) => void;
+  deleteMember: (uuid: string) => void;
+  updateMember: (uuid: string, memberData: Partial<Member>) => void;
 }
 export const useMembersStore = create<MemberStore>()(
   persist(
     (set) => ({
       members: [],
       addMember: (member) => {
-        member.picture = `https://doodleipsum.com/100x100/avatar-4?n=${member.id}`;
+        member.picture = `https://doodleipsum.com/100x100/avatar-4?n=${member.uuid}`;
         set((state) => ({ members: [member, ...state.members] }));
       },
-      deleteMember: (id) => {
+      deleteMember: (uuid) => {
         set((state) => ({
-          members: state.members.filter((m) => m.id !== id),
+          members: state.members.filter((m) => m.uuid !== uuid),
         }));
       },
-      updateMember: (id, memberData) => {
+      updateMember: (uuid, memberData) => {
         set((state) => ({
           members: state.members.map((m) =>
-            m.id === id
+            m.uuid === uuid
               ? {
                   ...m,
                   ...memberData,
