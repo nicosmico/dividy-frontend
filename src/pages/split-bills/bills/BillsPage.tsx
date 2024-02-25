@@ -8,8 +8,8 @@ export function BillsPage() {
       <div className='w-full text-center md:pt-20 md:text-left'>
         <h1 className='text-xl font-bold'>Boletas</h1>
         <p>
-          Debes seleccionar quién pagó cada boleta, los items y quienes serán
-          considerados para pagar cada item.
+          Cada boleta que agregues contiene los items que fueron comprados por
+          uno de los miembros y entre quienes se dividirá cada item.
         </p>
         <div className='flex gap-2'>
           <RoundedLink

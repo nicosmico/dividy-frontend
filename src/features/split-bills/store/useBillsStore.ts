@@ -46,6 +46,7 @@ export const useBillsStore = create<BillsStore>()(
         set((state) => {
           const bill = state.bills[uuid];
           bill.items.push(item);
+          bill.total += item.price;
           return {
             bills: { ...state.bills, [uuid]: bill },
           };
@@ -55,6 +56,8 @@ export const useBillsStore = create<BillsStore>()(
         set((state) => {
           const bill = state.bills[uuid];
           bill.items = bill.items.filter((i) => i.uuid !== itemUuid);
+          const item = bill.items.find((i) => i.uuid === itemUuid);
+          bill.total -= item?.price ?? 0;
           return {
             bills: { ...state.bills, [uuid]: bill },
           };

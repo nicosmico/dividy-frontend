@@ -1,11 +1,13 @@
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconReceipt } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { RoundedButton } from 'src/components/ui';
+import { RoundedButton, Status } from 'src/components/ui';
 import useBills from '../hooks/useBills';
 import useMembers from '../hooks/useMembers';
 import { BillCard } from './BillCard';
 import { TBillForm } from './BillForm';
 import { TBillItemForm } from './BillItemForm';
+
+let billsAdded = 1;
 
 export function BillsFormList() {
   const {
@@ -19,27 +21,29 @@ export function BillsFormList() {
   } = useBills();
   const { members, membersOrder } = useMembers();
 
-  const [billsList, setBillsList] = useState<string[]>(() => {
-    return billsOrder.length ? billsOrder : [crypto.randomUUID()];
-  });
   const [invalidForms, setInvalidForms] = useState<string[]>([]);
 
   useEffect(() => {
-    console.log(bills);
+    console.log(billsOrder.length);
   }, [bills, billsOrder]);
 
   const handleAddBill = () => {
-    setBillsList([...billsList, crypto.randomUUID()]);
+    addBill({
+      uuid: crypto.randomUUID(),
+      name: `Boleta ${billsAdded}`,
+      paidBy: membersOrder[0],
+      total: 0,
+      items: [],
+    });
+    billsAdded++;
   };
 
   const handleRemoveBill = (uuid: string) => {
-    setBillsList([...billsList].filter((b) => b !== uuid));
     removeFromInvalidForms(uuid);
     deleteBill(uuid);
   };
 
   const handleBillChange = (uuid: string, values: TBillForm) => {
-    console.log(uuid, values);
     removeFromInvalidForms(uuid);
     if (bills[uuid]) {
       updateBill(uuid, values);
@@ -79,24 +83,33 @@ export function BillsFormList() {
 
   return (
     <>
-      <div>
-        <ul className='space-y-2'>
-          {billsList.map((uuid) => (
-            <li key={uuid}>
-              <BillCard
-                uuid={uuid}
-                bill={bills[uuid]}
-                members={membersOrder.map((uuid) => members[uuid])}
-                onRemoveBill={handleRemoveBill}
-                onBillChange={handleBillChange}
-                onInvalidBill={handleInvalidBill}
-                onAddItem={handleAddItem}
-                onRemoveItem={handleRemoveItem}
-              ></BillCard>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {billsOrder.length ? (
+        <div>
+          <ul className='space-y-2'>
+            {billsOrder.map((uuid) => (
+              <li key={uuid}>
+                <BillCard
+                  uuid={uuid}
+                  bill={bills[uuid]}
+                  members={membersOrder.map((uuid) => members[uuid])}
+                  onRemoveBill={handleRemoveBill}
+                  onBillChange={handleBillChange}
+                  onInvalidBill={handleInvalidBill}
+                  onAddItem={handleAddItem}
+                  onRemoveItem={handleRemoveItem}
+                ></BillCard>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <Status
+          title='Agrega una boleta'
+          description='Debes agregar al menos una boleta'
+          icon={<IconReceipt size={48}></IconReceipt>}
+          className='pt-8'
+        />
+      )}
       <RoundedButton
         className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
         onClick={handleAddBill}

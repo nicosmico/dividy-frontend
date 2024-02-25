@@ -1,5 +1,5 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, IconButton, RoundedButton } from 'src/components/ui';
 import { debounce } from 'src/utils/debounce';
 import { formatToCurrency } from 'src/utils/format-to';
@@ -30,12 +30,7 @@ export function BillCard({
   onAddItem,
   onRemoveItem,
 }: Props) {
-  const [name, setName] = useState<string>(bill?.name ?? 'Boleta 1');
-  const [total] = useState<number>(0);
-
-  useEffect(() => {
-    console.log(bill);
-  }, [bill]);
+  const [name, setName] = useState<string>(bill?.name ?? 'Boleta');
 
   const handleValidBill = (values: TBillForm) => {
     setName(values.name);
@@ -57,7 +52,11 @@ export function BillCard({
           <IconBottle />
         </div>
         <div className='w-full'>
-          <h2 className='text-lg font-medium'>{formatToCurrency(total)}</h2>
+          {bill?.total !== undefined && (
+            <h2 className='text-lg font-medium'>
+              {formatToCurrency(bill.total)}
+            </h2>
+          )}
           <h1 className='text-sm font-medium'>{name}</h1>
         </div>
         <IconButton className='p-0'>
