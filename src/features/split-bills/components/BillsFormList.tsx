@@ -2,6 +2,7 @@ import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { RoundedButton } from 'src/components/ui';
 import useBills from '../hooks/useBills';
+import useMembers from '../hooks/useMembers';
 import { BillCard } from './BillCard';
 import { TBillForm } from './BillForm';
 import { TBillItemForm } from './BillItemForm';
@@ -16,6 +17,7 @@ export function BillsFormList() {
     addItemToBill,
     removeItemFromBill,
   } = useBills();
+  const { members, membersOrder } = useMembers();
 
   const [billsList, setBillsList] = useState<string[]>(() => {
     return billsOrder.length ? billsOrder : [crypto.randomUUID()];
@@ -80,6 +82,7 @@ export function BillsFormList() {
               <BillCard
                 uuid={uuid}
                 bill={bills[uuid]}
+                members={membersOrder.map((uuid) => members[uuid])}
                 onRemoveBill={handleRemoveBill}
                 onBillChange={handleBillChange}
                 onInvalidBill={handleInvalidBill}

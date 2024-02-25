@@ -5,6 +5,7 @@ import { debounce } from 'src/utils/debounce';
 import { formatToCurrency } from 'src/utils/format-to';
 import { BillForm } from '..';
 import { Bill } from '../types/bill';
+import { Member } from '../types/member';
 import { TBillForm } from './BillForm';
 import { BillItemForm, TBillItemForm } from './BillItemForm';
 import { ItemsList } from './ItemsList';
@@ -12,6 +13,7 @@ import { ItemsList } from './ItemsList';
 interface Props {
   uuid: string;
   bill?: Bill;
+  members: Member[];
   onRemoveBill: (uuid: string) => void;
   onBillChange: (uuid: string, bill: TBillForm) => void;
   onInvalidBill: (uuid: string) => void;
@@ -21,6 +23,7 @@ interface Props {
 export function BillCard({
   uuid,
   bill,
+  members,
   onRemoveBill,
   onBillChange,
   onInvalidBill,
@@ -68,6 +71,7 @@ export function BillCard({
           name: bill?.name,
           paidBy: bill?.paidBy,
         }}
+        members={members}
         onValid={handleValidBill}
         onInvalid={() => onInvalidBill(uuid)}
       ></BillForm>

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DefaultValues, FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError, Select } from 'src/components/form';
 import { z } from 'zod';
+import { Member } from '../types/member';
 
 const BILL_FORM_SCHEMA = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
@@ -11,10 +12,16 @@ export type TBillForm = z.infer<typeof BILL_FORM_SCHEMA>;
 
 interface Props {
   defaultValues?: DefaultValues<TBillForm>;
+  members: Member[];
   onValid: (values: TBillForm) => void;
   onInvalid: (values: FieldErrors<TBillForm>) => void;
 }
-export function BillForm({ defaultValues, onValid, onInvalid }: Props) {
+export function BillForm({
+  defaultValues,
+  members,
+  onValid,
+  onInvalid,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -45,9 +52,11 @@ export function BillForm({ defaultValues, onValid, onInvalid }: Props) {
           register={register('paidBy')}
           className='bg-neutral-100'
         >
-          <option value='1'>Nico</option>
-          <option value='2'>Manuel</option>
-          <option value='3'>Alejandra</option>
+          {members.map((member) => (
+            <option key={member.uuid} value={member.uuid}>
+              {member.name}
+            </option>
+          ))}
         </Select>
         <InputError errors={errors.paidBy}></InputError>
       </div>
