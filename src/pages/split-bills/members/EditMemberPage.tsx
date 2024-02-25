@@ -7,8 +7,8 @@ import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Member } from 'src/features/split-bills/types/member';
 
 export function EditMemberPage() {
-  const { memberId } = useParams();
-  const { getMember, updateMember } = useMembers();
+  const { memberId } = useParams(); // TODO: Rename memberId to uuid?
+  const { members, updateMember } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
   const [open, setOpen] = useState(true);
 
@@ -16,8 +16,8 @@ export function EditMemberPage() {
 
   useEffect(() => {
     if (!memberId) return;
-    setMember(getMember(memberId));
-  }, [setMember, getMember, memberId]);
+    setMember(members[memberId]);
+  }, [setMember, members, memberId]);
 
   const handleClose = () => {
     navigate('..');

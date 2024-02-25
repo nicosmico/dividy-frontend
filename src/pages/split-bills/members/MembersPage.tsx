@@ -6,13 +6,15 @@ import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 
 export function MembersPage() {
-  const { members, addMember, deleteMember } = useMembers();
+  const { members, membersOrder, addMember, deleteMember } = useMembers();
   const navigate = useNavigate();
 
   const handleAddMember = (values: TMemberForm) => {
+    const uuid = crypto.randomUUID();
     addMember({
-      uuid: crypto.randomUUID(),
+      uuid,
       ...values,
+      picture: `https://doodleipsum.com/100x100/avatar-4?n=${uuid}`,
     });
   };
 
@@ -28,7 +30,7 @@ export function MembersPage() {
             </p>
             <RoundedLink
               to='../bills'
-              disabled={members.length < 2}
+              disabled={membersOrder.length < 2}
               className='mt-4 w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
             >
               Deudas
@@ -51,7 +53,7 @@ export function MembersPage() {
             </MemberForm>
 
             <MemberList
-              members={members}
+              members={membersOrder.map((uuid) => members[uuid])}
               onDelete={deleteMember}
               onEdit={(member) => navigate(`${member.uuid}/edit`)}
             />
