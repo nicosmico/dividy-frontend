@@ -2,11 +2,19 @@ import { IconArrowNarrowRight, IconPlus } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { IconButton, RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
+import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 
 export function MembersPage() {
   const { members, addMember, deleteMember } = useMembers();
   const navigate = useNavigate();
+
+  const handleAddMember = (values: TMemberForm) => {
+    addMember({
+      id: crypto.randomUUID(),
+      ...values,
+    });
+  };
 
   return (
     <>
@@ -30,7 +38,7 @@ export function MembersPage() {
 
           <div className='w-full space-y-8'>
             <MemberForm
-              onSubmitForm={addMember}
+              onValid={handleAddMember}
               className='flex gap-2'
               resetOnSubmit
             >

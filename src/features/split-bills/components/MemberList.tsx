@@ -5,7 +5,7 @@ import { Member } from '../types/member';
 interface Props {
   members: Member[];
   onEdit: (member: Member) => void;
-  onDelete: (member: Member) => void;
+  onDelete: (id: string) => void;
 }
 export function MemberList({ members, onEdit, onDelete }: Props) {
   if (!members.length) {
@@ -40,7 +40,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
               className='px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
               onClick={(event) => {
                 event.stopPropagation();
-                onDelete(member);
+                onDelete(member.id);
               }}
             >
               <IconX></IconX>

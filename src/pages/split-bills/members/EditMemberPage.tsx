@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog, RoundedButton } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
+import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Member } from 'src/features/split-bills/types/member';
 
@@ -16,15 +17,14 @@ export function EditMemberPage() {
   useEffect(() => {
     if (!memberId) return;
     setMember(getMember(memberId));
-  }, []);
+  }, [setMember, getMember, memberId]);
 
   const handleClose = () => {
     navigate('..');
   };
 
-  const onSubmit = (memberData: Member) => {
-    console.log(member);
-    updateMember(member!.id, memberData);
+  const handleEditMember = (values: TMemberForm) => {
+    updateMember(memberId!, values);
     setOpen(false);
   };
 
@@ -43,7 +43,7 @@ export function EditMemberPage() {
 
       {member && (
         <MemberForm
-          onSubmitForm={onSubmit}
+          onValid={handleEditMember}
           defaultValues={member}
           className='space-y-4'
           inputsClassName='bg-neutral-100'

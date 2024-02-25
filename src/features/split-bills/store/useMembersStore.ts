@@ -5,8 +5,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface MemberStore {
   members: Member[];
   addMember: (member: Member) => void;
-  deleteMember: (member: Member) => void;
-  updateMember: (id: string, member: Member) => void;
+  deleteMember: (id: string) => void;
+  updateMember: (id: string, memberData: Partial<Member>) => void;
 }
 export const useMembersStore = create<MemberStore>()(
   persist(
@@ -16,14 +16,21 @@ export const useMembersStore = create<MemberStore>()(
         member.picture = `https://doodleipsum.com/100x100/avatar-4?n=${member.id}`;
         set((state) => ({ members: [member, ...state.members] }));
       },
-      deleteMember: (member) => {
+      deleteMember: (id) => {
         set((state) => ({
-          members: state.members.filter((m) => m.id !== member.id),
+          members: state.members.filter((m) => m.id !== id),
         }));
       },
-      updateMember: (id, member) => {
+      updateMember: (id, memberData) => {
         set((state) => ({
-          members: state.members.map((m) => (m.id === id ? member : m)),
+          members: state.members.map((m) =>
+            m.id === id
+              ? {
+                  ...m,
+                  ...memberData,
+                }
+              : m
+          ),
         }));
       },
     }),

@@ -1,9 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconAt, IconAtOff } from '@tabler/icons-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
-import { Member } from 'src/features/split-bills/types/member';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -21,18 +20,18 @@ const formSchema = z.object({
     .or(z.literal(''))
     .transform((value) => (!value ? undefined : value)),
 });
-type MemberForm = z.infer<typeof formSchema>;
+export type TMemberForm = z.infer<typeof formSchema>;
 
 interface Props extends React.HTMLAttributes<HTMLFormElement> {
-  onSubmitForm: (member: Member) => void;
+  onValid: (member: TMemberForm) => void;
   resetOnSubmit?: boolean;
   inputsClassName?: string;
   showDetail?: boolean;
-  defaultValues?: MemberForm;
+  defaultValues?: TMemberForm;
 }
 export function MemberForm({
   children, // To pass button with submit type
-  onSubmitForm,
+  onValid,
   resetOnSubmit,
   inputsClassName,
   showDetail: defaultShowDetail = false,
@@ -46,24 +45,17 @@ export function MemberForm({
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<MemberForm>({
+  } = useForm<TMemberForm>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
 
-  const onValid = ({ name, email, phone }: MemberForm) => {
-    const id = crypto.randomUUID();
-    const member: Member = {
-      id,
-      name,
-      email,
-      phone,
-    };
-    onSubmitForm(member);
+  const handleValid = (memberValues: TMemberForm) => {
+    onValid(memberValues);
     resetOnSubmit && reset();
   };
 
-  const onInvalid = ({ email, phone }: FieldErrors<MemberForm>) => {
+  const handleInvalid = ({ email, phone }: FieldErrors<TMemberForm>) => {
     if (email || phone) {
       setShowDetail(true);
     }
@@ -72,7 +64,7 @@ export function MemberForm({
   const DetailIcon = showDetail ? IconAtOff : IconAt;
 
   return (
-    <form onSubmit={handleSubmit(onValid, onInvalid)} {...props}>
+    <form onSubmit={handleSubmit(handleValid, handleInvalid)} {...props}>
       <div className='w-full space-y-2'>
         <div>
           <Input
