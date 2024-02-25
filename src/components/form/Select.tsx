@@ -15,8 +15,9 @@ export function Select({
   className,
   ...props
 }: Props) {
-  const randomNumber = Math.random().toString().replace('.', '').slice(1, 5);
-  const id = register?.name ? register.name + randomNumber : props.id;
+  const id = register?.name
+    ? `${register.name}-${crypto.randomUUID()}`
+    : props.id;
 
   return (
     <div className='relative w-full'>
