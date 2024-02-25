@@ -75,7 +75,7 @@ export function MemberForm({
             onIconClick={() => setShowDetail(!showDetail)}
             className={inputsClassName}
           />
-          <InputError errors={errors.name}></InputError>
+          <InputError error={errors.name}></InputError>
         </div>
         {showDetail && (
           <>
@@ -87,7 +87,7 @@ export function MemberForm({
                 register={register('email')}
                 className={inputsClassName}
               />
-              <InputError errors={errors.email}></InputError>
+              <InputError error={errors.email}></InputError>
             </div>
 
             <div>
@@ -98,7 +98,7 @@ export function MemberForm({
                 register={register('phone')}
                 className={inputsClassName}
               />
-              <InputError errors={errors.phone}></InputError>
+              <InputError error={errors.phone}></InputError>
             </div>
           </>
         )}

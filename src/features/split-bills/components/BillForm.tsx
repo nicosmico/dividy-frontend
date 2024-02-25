@@ -44,7 +44,7 @@ export function BillForm({
           register={register('name')}
           className='bg-neutral-100'
         />
-        <InputError errors={errors.name}></InputError>
+        <InputError error={errors.name}></InputError>
       </div>
       <div>
         <Select
@@ -58,7 +58,7 @@ export function BillForm({
             </option>
           ))}
         </Select>
-        <InputError errors={errors.paidBy}></InputError>
+        <InputError error={errors.paidBy}></InputError>
       </div>
     </form>
   );

@@ -68,7 +68,7 @@ export function BillItemForm({ members, onValid, onInvalid }: Props) {
               register={register('name')}
               className='bg-neutral-100'
             />
-            <InputError errors={errors.name}></InputError>
+            <InputError error={errors.name}></InputError>
           </div>
           <div>
             <Input
@@ -77,7 +77,7 @@ export function BillItemForm({ members, onValid, onInvalid }: Props) {
               register={register('price')}
               className='bg-neutral-100'
             />
-            <InputError errors={errors.price}></InputError>
+            <InputError error={errors.price}></InputError>
           </div>
         </div>
         <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
@@ -105,7 +105,7 @@ export function BillItemForm({ members, onValid, onInvalid }: Props) {
             </label>
           ))}
         </div>
-        {!selectedMembers && <InputError errors={errors.members}></InputError>}
+        {!selectedMembers && <InputError error={errors.members}></InputError>}
       </fieldset>
 
       <div className='flex justify-between text-xs font-medium'>
