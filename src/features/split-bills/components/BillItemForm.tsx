@@ -85,7 +85,6 @@ export function BillItemForm({ members, onValid, onInvalid }: Props) {
         </IconButton>
       </form>
 
-      {/* TODO: Move this to a component */}
       <fieldset>
         <legend className='mb-2 text-center text-sm'>
           Selecciona quienes deben dividirse este item:
