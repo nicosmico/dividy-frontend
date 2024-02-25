@@ -31,7 +31,7 @@ export function BillsFormList() {
   };
 
   const handleRemoveBill = (uuid: string) => {
-    setBillsList([...billsList].filter((id) => id !== uuid));
+    setBillsList([...billsList].filter((b) => b !== uuid));
     removeFromInvalidForms(uuid);
     deleteBill(uuid);
   };
@@ -68,7 +68,7 @@ export function BillsFormList() {
   };
 
   const removeFromInvalidForms = (uuid: string) => {
-    setInvalidForms([...invalidForms].filter((id) => id !== uuid));
+    setInvalidForms([...invalidForms].filter((b) => b !== uuid));
   };
 
   return (
