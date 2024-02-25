@@ -1,6 +1,6 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Card, Divider, IconButton, RoundedButton } from 'src/components/ui';
+import { Card, IconButton, RoundedButton } from 'src/components/ui';
 import { debounce } from 'src/utils/debounce';
 import { formatToCurrency } from 'src/utils/format-to';
 import { BillForm } from '..';
@@ -51,7 +51,7 @@ export function BillCard({
   );
 
   return (
-    <Card className='space-y-4'>
+    <Card className='space-y-4 divide-y *:pt-4'>
       <div className='flex items-center justify-between gap-2'>
         <div className='aspect-square rounded-full bg-red-400 p-3 text-white'>
           <IconBottle />
@@ -75,10 +75,9 @@ export function BillCard({
         onValid={handleValidBill}
         onInvalid={() => onInvalidBill(uuid)}
       ></BillForm>
-      <Divider />
 
       {/* Detail */}
-      {bill?.items && (
+      {!!bill?.items.length && (
         <>
           <div className='space-y-2'>
             <h3 className='font-medium'>Detalle</h3>
@@ -87,7 +86,6 @@ export function BillCard({
               onRemoveItem={(itemUuid) => onRemoveItem(uuid, itemUuid)}
             ></ItemsList>
           </div>
-          <Divider />
         </>
       )}
 
@@ -100,15 +98,16 @@ export function BillCard({
           onInvalid={() => onInvalidBill(uuid)}
         ></BillItemForm>
       </div>
-      <Divider />
 
-      <RoundedButton
-        className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
-        onClick={() => onRemoveBill(uuid)}
-      >
-        <IconX size={16}></IconX>
-        Eliminar boleta
-      </RoundedButton>
+      <div>
+        <RoundedButton
+          className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
+          onClick={() => onRemoveBill(uuid)}
+        >
+          <IconX size={16}></IconX>
+          Eliminar boleta
+        </RoundedButton>
+      </div>
     </Card>
   );
 }

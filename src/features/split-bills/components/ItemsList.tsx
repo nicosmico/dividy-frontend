@@ -1,4 +1,4 @@
-import { IconUser, IconX } from '@tabler/icons-react';
+import { IconPencil, IconUser, IconX } from '@tabler/icons-react';
 import { IconButton } from 'src/components/ui';
 import { formatToCurrency } from 'src/utils/format-to';
 import { BillItem } from '../types/bill';
@@ -9,27 +9,38 @@ interface Props {
 }
 export function ItemsList({ items, onRemoveItem }: Props) {
   return (
-    <ul>
+    <ul className='ml-2 space-y-2 divide-y divide-dotted'>
       {items.map((item) => (
         <li key={item.uuid} className='flex justify-between gap-4'>
           <div>
             <span>{item.name}</span>
-            <div className='flex gap-1 text-sm font-medium'>
+            <div className='flex gap-1 text-xs font-medium'>
               <div className='flex items-center'>
-                3 <IconUser size={16} stroke={3} />
+                <IconUser size={12} stroke={3} /> {item.members.length}
               </div>
               <span>-</span>
-              <span>{formatToCurrency(item.price)}</span>
+              <span>
+                {formatToCurrency(item.price / item.members.length)} c/u
+              </span>
             </div>
           </div>
 
-          <IconButton
-            className='h-fit px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
-            type='submit'
-            onClick={() => onRemoveItem(item.uuid)}
-          >
-            <IconX></IconX>
-          </IconButton>
+          <div className='flex items-center gap-1'>
+            <span className='text-sm'>{formatToCurrency(item.price)}</span>
+            <IconButton
+              className='h-fit px-1 py-1 text-zinc-900 md:hover:bg-zinc-900 md:hover:text-white'
+              type='button'
+            >
+              <IconPencil></IconPencil>
+            </IconButton>
+            <IconButton
+              className='h-fit px-1 py-1 text-red-400 md:hover:bg-red-400 md:hover:text-white'
+              type='button'
+              onClick={() => onRemoveItem(item.uuid)}
+            >
+              <IconX></IconX>
+            </IconButton>
+          </div>
         </li>
       ))}
     </ul>
