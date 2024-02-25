@@ -7,7 +7,7 @@ interface BillsStore {
   billsOrder: string[];
   addBill: (bill: Bill) => void;
   deleteBill: (uuid: string) => void;
-  updateBill: (uuid: string, billValues: Partial<Bill>) => void;
+  updateBill: (uuid: string, billData: Partial<Bill>) => void;
   addItemToBill: (uuid: string, item: BillItem) => void;
   removeItemFromBill: (uuid: string, itemUuid: string) => void;
 }
@@ -34,16 +34,13 @@ export const useBillsStore = create<BillsStore>()(
           };
         });
       },
-      updateBill: (uuid, billValues) => {
-        set((state) => ({
-          bills: {
-            ...state.bills,
-            [uuid]: {
-              ...state.bills[uuid],
-              ...billValues,
-            },
-          },
-        }));
+      updateBill: (uuid, billData) => {
+        set((state) => {
+          const updatedBill = { ...state.bills[uuid], ...billData };
+          return {
+            bills: { ...state.bills, [uuid]: updatedBill },
+          };
+        });
       },
       addItemToBill: (uuid, item) => {
         set((state) => {
