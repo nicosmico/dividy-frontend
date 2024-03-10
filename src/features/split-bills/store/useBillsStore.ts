@@ -10,13 +10,18 @@ interface BillsStore {
   updateBill: (uuid: string, billData: Partial<Bill>) => void;
   addItemToBill: (uuid: string, item: BillItem) => void;
   removeItemFromBill: (uuid: string, itemUuid: string) => void;
+  updateItemInBill: (
+    uuid: string,
+    itemUuid: string,
+    itemData: Partial<BillItem>
+  ) => void;
 }
 
 export const useBillsStore = create<BillsStore>()(
   persist(
     (set) => ({
       bills: {},
-      billsOrder: [],
+      billsOrder: [] as string[],
       addBill: (bill) => {
         set((state) => ({
           bills: { ...state.bills, [bill.uuid]: bill },
@@ -58,6 +63,21 @@ export const useBillsStore = create<BillsStore>()(
           bill.items = bill.items.filter((i) => i.uuid !== itemUuid);
           const item = bill.items.find((i) => i.uuid === itemUuid);
           bill.total -= item?.price ?? 0;
+          return {
+            bills: { ...state.bills, [uuid]: bill },
+          };
+        });
+      },
+      updateItemInBill: (uuid, itemUuid, itemData) => {
+        set((state) => {
+          const bill = state.bills[uuid];
+          let item = bill.items.find((i) => i.uuid === itemUuid);
+          if (!item) return state;
+
+          item = { ...item, ...itemData };
+          if (!item) return state;
+
+          bill.items = bill.items.map((i) => (i.uuid === itemUuid ? item! : i));
           return {
             bills: { ...state.bills, [uuid]: bill },
           };

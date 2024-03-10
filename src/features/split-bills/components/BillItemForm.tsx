@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconPlus } from '@tabler/icons-react';
-import { FieldErrors, useForm } from 'react-hook-form';
+import { DefaultValues, FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
 import { IconButton } from 'src/components/ui';
 import { formatToCurrency } from 'src/utils/format-to';
@@ -20,11 +20,17 @@ const ITEM_FORM_SCHEMA = z.object({
 export type TBillItemForm = z.infer<typeof ITEM_FORM_SCHEMA>;
 
 interface Props {
+  defaultValues?: DefaultValues<TBillItemForm>;
   members: Member[];
   onValid: (values: TBillItemForm) => void;
   onInvalid: (values: FieldErrors<TBillItemForm>) => void;
 }
-export function BillItemForm({ members, onValid, onInvalid }: Props) {
+export function BillItemForm({
+  defaultValues,
+  members,
+  onValid,
+  onInvalid,
+}: Props) {
   const {
     register,
     formState: { errors },
@@ -34,9 +40,12 @@ export function BillItemForm({ members, onValid, onInvalid }: Props) {
   } = useForm<TBillItemForm>({
     resolver: zodResolver(ITEM_FORM_SCHEMA),
     defaultValues: {
+      ...defaultValues,
       members: members.reduce(
-        // TODO: Modify this when use form to edit
-        (acc, member) => ({ ...acc, [member.uuid]: false }),
+        (acc, member) => ({
+          ...acc,
+          [member.uuid]: defaultValues?.members?.[member.uuid] ?? false,
+        }),
         {} as Record<string, boolean>
       ),
     },

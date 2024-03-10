@@ -6,8 +6,9 @@ import { BillItem } from '../types/bill';
 interface Props {
   items: BillItem[];
   onRemoveItem: (uuid: string) => void;
+  onEditItem: (uuid: string) => void;
 }
-export function ItemsList({ items, onRemoveItem }: Props) {
+export function ItemsList({ items, onRemoveItem, onEditItem }: Props) {
   return (
     <ul className='ml-2 space-y-2 divide-y divide-dotted'>
       {items.map((item) => (
@@ -30,6 +31,7 @@ export function ItemsList({ items, onRemoveItem }: Props) {
             <IconButton
               className='h-fit px-1 py-1 text-zinc-900 md:hover:bg-zinc-900 md:hover:text-white'
               type='button'
+              onClick={() => onEditItem(item.uuid)}
             >
               <IconPencil></IconPencil>
             </IconButton>

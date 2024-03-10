@@ -18,7 +18,8 @@ interface Props {
   onBillChange: (uuid: string, bill: TBillForm) => void;
   onInvalidBill: (uuid: string) => void;
   onAddItem: (uuid: string, item: TBillItemForm) => void;
-  onRemoveItem: (uuid: string, itemUuid: string) => void;
+  onRemoveItem: (uuid: string, itemUUID: string) => void;
+  onEditItem: (uuid: string, itemUUID: string) => void;
 }
 export function BillCard({
   uuid,
@@ -29,6 +30,7 @@ export function BillCard({
   onInvalidBill,
   onAddItem,
   onRemoveItem,
+  onEditItem,
 }: Props) {
   const [name, setName] = useState<string>(bill?.name ?? 'Boleta');
 
@@ -82,7 +84,8 @@ export function BillCard({
             <h3 className='font-medium'>Detalle</h3>
             <ItemsList
               items={bill.items}
-              onRemoveItem={(itemUuid) => onRemoveItem(uuid, itemUuid)}
+              onRemoveItem={(itemUUID) => onRemoveItem(uuid, itemUUID)}
+              onEditItem={(itemUUID) => onEditItem(uuid, itemUUID)}
             ></ItemsList>
           </div>
         </>

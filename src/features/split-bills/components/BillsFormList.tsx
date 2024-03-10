@@ -1,5 +1,6 @@
 import { IconPlus, IconReceipt } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RoundedButton, Status } from 'src/components/ui';
 import useBills from '../hooks/useBills';
 import useMembers from '../hooks/useMembers';
@@ -20,6 +21,7 @@ export function BillsFormList() {
     removeItemFromBill,
   } = useBills();
   const { members, membersOrder } = useMembers();
+  const navigate = useNavigate();
 
   const [invalidForms, setInvalidForms] = useState<string[]>([]);
 
@@ -97,6 +99,9 @@ export function BillsFormList() {
                   onInvalidBill={handleInvalidBill}
                   onAddItem={handleAddItem}
                   onRemoveItem={handleRemoveItem}
+                  onEditItem={(billUUID, itemUUID) =>
+                    navigate(`${billUUID}/item/${itemUUID}/edit`)
+                  }
                 ></BillCard>
               </li>
             ))}
