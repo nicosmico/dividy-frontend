@@ -2,9 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { IconPlus } from '@tabler/icons-react';
 import { DefaultValues, FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
-import { IconButton } from 'src/components/ui';
+import { IconButton, RoundedButton } from 'src/components/ui';
 import { formatToCurrency } from 'src/utils/format-to';
 import { z } from 'zod';
+import { SubmitButton } from '../types/forms';
 import { Member } from '../types/member';
 
 const ITEM_FORM_SCHEMA = z.object({
@@ -23,13 +24,17 @@ interface Props {
   defaultValues?: DefaultValues<TBillItemForm>;
   members: Member[];
   onValid: (values: TBillItemForm) => void;
-  onInvalid: (values: FieldErrors<TBillItemForm>) => void;
+  onInvalid?: (values: FieldErrors<TBillItemForm>) => void;
+  submitButton?: SubmitButton;
+  onCancel?: () => void;
 }
 export function BillItemForm({
   defaultValues,
   members,
   onValid,
   onInvalid,
+  submitButton = SubmitButton.ASIDE_ROUNDED,
+  onCancel,
 }: Props) {
   const {
     register,
@@ -64,11 +69,8 @@ export function BillItemForm({
   const totalByMember = selectedMembers ? watchPrice / selectedMembers : 0;
 
   return (
-    <div className='space-y-4'>
-      <form
-        className='flex gap-2'
-        onSubmit={handleSubmit(handleValid, onInvalid)}
-      >
+    <form className='space-y-4' onSubmit={handleSubmit(handleValid, onInvalid)}>
+      <div className='flex gap-2'>
         <div className='w-full space-y-2'>
           <div>
             <Input
@@ -89,10 +91,15 @@ export function BillItemForm({
             <InputError error={errors.price}></InputError>
           </div>
         </div>
-        <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
-          <IconPlus />
-        </IconButton>
-      </form>
+        {submitButton === SubmitButton.ASIDE_ROUNDED && (
+          <IconButton
+            type='submit'
+            className='mt-1 h-min bg-zinc-800 text-white'
+          >
+            <IconPlus />
+          </IconButton>
+        )}
+      </div>
 
       <fieldset>
         <legend className='mb-2 text-center text-sm'>
@@ -120,6 +127,23 @@ export function BillItemForm({
         <div>Dividido entre: {selectedMembers}</div>
         <div>Total a pagar C/U: {formatToCurrency(totalByMember)}</div>
       </div>
-    </div>
+
+      {submitButton === SubmitButton.BOTTOM_SAVE_CANCEL && (
+        <div className='mt-4 flex justify-end gap-2'>
+          <RoundedButton
+            className='w-full bg-red-400 text-white md:w-fit'
+            onClick={onCancel}
+          >
+            Cancelar
+          </RoundedButton>
+          <RoundedButton
+            type='submit'
+            className='w-full bg-zinc-900 text-white md:w-fit'
+          >
+            Guardar
+          </RoundedButton>
+        </div>
+      )}
+    </form>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from 'src/features/split-bills/components/BillItemForm';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
+import { SubmitButton } from 'src/features/split-bills/types/forms';
 
 export function EditBillItemPage() {
   const { billUUID, itemUUID } = useParams();
@@ -75,7 +76,8 @@ export function EditBillItemPage() {
           defaultValues={item}
           members={membersOrder.map((uuid) => members[uuid])}
           onValid={handleEditMember}
-          onInvalid={(data) => console.log(data)} // TODO
+          submitButton={SubmitButton.BOTTOM_SAVE_CANCEL}
+          onCancel={() => setOpen(false)}
         ></BillItemForm>
       )}
     </Dialog>
