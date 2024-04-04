@@ -1,6 +1,6 @@
-import { IconArrowNarrowRight, IconPlus } from '@tabler/icons-react';
+import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { IconButton, RoundedLink } from 'src/components/ui';
+import { RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
@@ -39,18 +39,7 @@ export function MembersPage() {
           </div>
 
           <div className='w-full space-y-8'>
-            <MemberForm
-              onValid={handleAddMember}
-              className='flex gap-2'
-              resetOnSubmit
-            >
-              <IconButton
-                type='submit'
-                className='mt-1 h-min bg-zinc-800 text-white'
-              >
-                <IconPlus />
-              </IconButton>
-            </MemberForm>
+            <MemberForm onValid={handleAddMember} resetOnSubmit></MemberForm>
 
             <MemberList
               members={membersOrder.map((uuid) => members[uuid])}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Dialog, RoundedButton } from 'src/components/ui';
+import { Dialog } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
+import { SubmitButton } from 'src/features/split-bills/types/forms';
 import { Member } from 'src/features/split-bills/types/member';
 
 export function EditMemberPage() {
@@ -45,25 +46,11 @@ export function EditMemberPage() {
         <MemberForm
           onValid={handleEditMember}
           defaultValues={member}
-          className='space-y-4'
           inputsClassName='bg-neutral-100'
           showDetail
-        >
-          <div className='flex justify-end gap-2'>
-            <RoundedButton
-              className='w-full bg-red-400 text-white md:w-fit'
-              onClick={() => setOpen(false)}
-            >
-              Cancelar
-            </RoundedButton>
-            <RoundedButton
-              type='submit'
-              className='w-full bg-zinc-900 text-white md:w-fit'
-            >
-              Guardar
-            </RoundedButton>
-          </div>
-        </MemberForm>
+          submitButton={SubmitButton.BOTTOM_SAVE_CANCEL}
+          onCancel={() => setOpen(false)}
+        ></MemberForm>
       )}
     </Dialog>
   );

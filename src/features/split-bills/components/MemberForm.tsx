@@ -1,9 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { IconAt, IconAtOff } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
+import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 import { Input, InputError } from 'src/components/form';
+import { IconButton, RoundedButton } from 'src/components/ui';
+import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
+import { SubmitButton } from '../types/forms';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
@@ -22,21 +25,23 @@ const formSchema = z.object({
 });
 export type TMemberForm = z.infer<typeof formSchema>;
 
-interface Props extends React.HTMLAttributes<HTMLFormElement> {
+interface Props {
   onValid: (member: TMemberForm) => void;
   resetOnSubmit?: boolean;
   inputsClassName?: string;
   showDetail?: boolean;
   defaultValues?: TMemberForm;
+  submitButton?: SubmitButton;
+  onCancel?: () => void;
 }
 export function MemberForm({
-  children, // To pass button with submit type
+  defaultValues,
   onValid,
   resetOnSubmit,
-  inputsClassName,
   showDetail: defaultShowDetail = false,
-  defaultValues,
-  ...props
+  inputsClassName,
+  submitButton = SubmitButton.ASIDE_ROUNDED,
+  onCancel,
 }: Props) {
   const [showDetail, setShowDetail] = useState(defaultShowDetail);
 
@@ -62,9 +67,16 @@ export function MemberForm({
   };
 
   const DetailIcon = showDetail ? IconAtOff : IconAt;
+  const formClassNames = {
+    [SubmitButton.ASIDE_ROUNDED]: 'flex gap-2',
+    [SubmitButton.BOTTOM_SAVE_CANCEL]: 'space-y-4',
+  };
 
   return (
-    <form onSubmit={handleSubmit(handleValid, handleInvalid)} {...props}>
+    <form
+      onSubmit={handleSubmit(handleValid, handleInvalid)}
+      className={twMerge(formClassNames[submitButton])}
+    >
       <div className='w-full space-y-2'>
         <div>
           <Input
@@ -103,7 +115,29 @@ export function MemberForm({
           </>
         )}
       </div>
-      {children}
+
+      {submitButton === SubmitButton.ASIDE_ROUNDED && (
+        <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
+          <IconPlus />
+        </IconButton>
+      )}
+
+      {submitButton === SubmitButton.BOTTOM_SAVE_CANCEL && (
+        <div className='flex justify-end gap-2'>
+          <RoundedButton
+            className='w-full bg-red-400 text-white md:w-fit'
+            onClick={onCancel}
+          >
+            Cancelar
+          </RoundedButton>
+          <RoundedButton
+            type='submit'
+            className='w-full bg-zinc-900 text-white md:w-fit'
+          >
+            Guardar
+          </RoundedButton>
+        </div>
+      )}
     </form>
   );
 }
