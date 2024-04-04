@@ -105,10 +105,10 @@ export function BillItemForm({
         <legend className='mb-2 text-center text-sm'>
           Selecciona quienes deben dividirse este item:
         </legend>
-        <div className='flex flex-wrap justify-center gap-2'>
+        <div className='flex flex-wrap justify-center gap-1'>
           {members.map((member) => (
             <label
-              className='relative select-none items-center rounded-full border-2 border-zinc-900 px-2 py-1 has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200'
+              className='relative select-none items-center rounded-full border-2 border-neutral-200 px-2 py-1 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200'
               key={member.uuid}
             >
               <input
@@ -131,7 +131,7 @@ export function BillItemForm({
       {submitButton === SubmitButton.BOTTOM_SAVE_CANCEL && (
         <div className='mt-4 flex justify-end gap-2'>
           <RoundedButton
-            className='w-full bg-red-400 text-white md:w-fit'
+            className='w-full bg-neutral-100 hover:bg-red-400 hover:text-white md:w-fit'
             onClick={onCancel}
           >
             Cancelar
