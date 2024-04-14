@@ -1,43 +1,20 @@
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { RoundedLink } from 'src/components/ui';
-import { TotalSummary } from 'src/features/split-bills/components/TotalSummary';
+import { MemberDebtsCard } from 'src/features/split-bills/components/MemberDebtsCard';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { Bill } from 'src/features/split-bills/types/bill';
-import { Summary } from 'src/features/split-bills/types/totals';
+import { MemberDebts, Summary } from 'src/features/split-bills/types/totals';
 
 export function TotalsPage() {
-  const { membersOrder, members } = useMembers();
-  const { billsOrder, bills } = useBills();
-  const [totalsSummary, setTotalsSummary] = useState<Summary[]>([]);
+  const { members } = useMembers();
+  const { bills } = useBills();
+  const [membersDebts, setMembersDebts] = useState<MemberDebts[]>([]);
 
   useEffect(() => {
-    // Group bills with items to pay by every member
-    const billsToPayByMember: {
-      [memberUuid: string]: { [billUuid: string]: Bill };
-    } = {};
-    billsOrder.forEach((billUuid) => {
-      const bill = bills[billUuid];
-      bill.items.forEach((item) => {
-        item.members.forEach((memberUuid) => {
-          billsToPayByMember[memberUuid] ??= {};
-          billsToPayByMember[memberUuid][billUuid] ??= { ...bill, items: [] };
-          billsToPayByMember[memberUuid][billUuid].items.push(item);
-        });
-      });
-    });
-
-    // Format as Summary object
-    const summary = Object.entries(billsToPayByMember).map(
-      ([memberUuid, billsToPay]) => ({
-        uuid: crypto.randomUUID(),
-        member: memberUuid,
-        bills: Object.values(billsToPay),
-      })
-    );
-    setTotalsSummary(summary);
-  }, [billsOrder, bills, members]);
+    const summary = new Summary(Object.values(bills));
+    setMembersDebts(Object.values(summary.getMembersDebts()));
+  }, [bills]);
 
   return (
     <>
@@ -59,12 +36,12 @@ export function TotalsPage() {
           </div>
 
           <ul className='w-full space-y-4'>
-            {totalsSummary.map((summary) => (
-              <li key={summary.uuid}>
-                <TotalSummary
-                  summary={summary}
+            {membersDebts.map((memberDebts) => (
+              <li key={memberDebts.uuid}>
+                <MemberDebtsCard
+                  memberDebts={memberDebts}
                   members={members}
-                ></TotalSummary>
+                ></MemberDebtsCard>
               </li>
             ))}
           </ul>
