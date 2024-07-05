@@ -1,24 +1,22 @@
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { RoundedLink } from 'src/components/ui';
-import { MemberDebtsCard } from 'src/features/split-bills/components/MemberDebtsCard';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { MemberDebts, Summary } from 'src/features/split-bills/types/totals';
+import { Summary } from 'src/features/split-bills/types/totals';
 
 export function TotalsPage() {
   const { members } = useMembers();
   const { bills } = useBills();
-  const [membersDebts, setMembersDebts] = useState<MemberDebts[]>([]);
 
   useEffect(() => {
     const summary = new Summary(Object.values(bills));
-    setMembersDebts(Object.values(summary.getMembersDebts()));
+    // Get summary here
   }, [bills]);
 
   return (
     <>
-      <div className='space-y-4 md:flex md:gap-4'>
+      <div className='w-full space-y-4 md:flex md:gap-4'>
         <div className='w-full text-center md:pt-20 md:text-left'>
           <h1 className='text-xl font-bold'>Totales</h1>
           <p>
@@ -34,18 +32,17 @@ export function TotalsPage() {
               Boletas
             </RoundedLink>
           </div>
-
-          <ul className='w-full space-y-4'>
-            {membersDebts.map((memberDebts) => (
-              <li key={memberDebts.uuid}>
-                <MemberDebtsCard
-                  memberDebts={memberDebts}
-                  members={members}
-                ></MemberDebtsCard>
-              </li>
-            ))}
-          </ul>
         </div>
+        {/* <ul className='w-full space-y-4'>
+          {membersDebts.map((memberDebts) => (
+            <li key={memberDebts.uuid}>
+              <MemberDebtsCard
+                memberDebts={memberDebts}
+                members={members}
+              ></MemberDebtsCard>
+            </li>
+          ))}
+        </ul> */}
       </div>
     </>
   );

@@ -1,52 +1,66 @@
 import { Bill, BillItem } from './bill';
 
-export interface MemberDebts {
+export interface MemberSummary {
   uuid: string;
   member: string; // Member ID
   debts: Debt[];
+  incomes: Debt[];
 }
 
 export interface Debt {
-  bill: Bill;
-  items: BillItem[];
-  total: number;
+  uuid: string;
+  debtor: string; // Member ID
+  bill: Bill; // Bill detail (includes the paidBy field)
+  items: BillItem[]; // Items that debtor must pay
+  total: number; // Total amount of items
 }
 
 export class Summary {
   constructor(private readonly bills: Bill[]) {}
 
-  public getMembersDebts(): { [uuid: string]: MemberDebts } {
+  private getMembersDebts(): Record<string, Debt[]> {
     // Group bill to pay by member
-    const billsToPayByMember: {
-      [memberUuid: string]: { [billUuid: string]: Debt };
-    } = {};
+    // const billsToPayByMember: { [memberUuid: string]: Debt[] } = {};
+    const indexedDebts: Record<string, Record<string, Debt>> = {};
     this.bills.forEach((bill) => {
       bill.items.forEach((item) => {
         item.members.forEach((memberUuid) => {
-          // Add bill if not exists
-          billsToPayByMember[memberUuid] ??= {};
-          billsToPayByMember[memberUuid][bill.uuid] ??= {
+          // Add Debt if not exists
+          indexedDebts[memberUuid] ??= {};
+          indexedDebts[memberUuid][bill.uuid] ??= {
+            uuid: crypto.randomUUID(),
+            debtor: memberUuid,
             bill,
             items: [],
             total: 0,
           };
 
           // Add item to bill and update totalToPay
-          billsToPayByMember[memberUuid][bill.uuid].items.push(item);
-          billsToPayByMember[memberUuid][bill.uuid].total += item.price;
+          indexedDebts[memberUuid][bill.uuid].items.push(item);
+          indexedDebts[memberUuid][bill.uuid].total +=
+            item.price / item.members.length;
         });
       });
     });
 
-    // Format to MemberDebts
-    const memberDebts: { [uuid: string]: MemberDebts } = {};
-    Object.entries(billsToPayByMember).forEach(([memberUuid, billsToPay]) => {
-      memberDebts[memberUuid] = {
-        uuid: crypto.randomUUID(),
-        member: memberUuid,
-        debts: Object.values(billsToPay),
-      };
+    // Format to Record<string, Debt[]>
+    const debts: Record<string, Debt[]> = {};
+    Object.entries(indexedDebts).forEach(([member, memberDebts]) => {
+      debts[member] = Object.values(memberDebts);
     });
-    return memberDebts;
+    return debts;
+  }
+
+  private getMembersIncomes(): Record<string, Debt[]> {
+    this.bills.forEach((bill) => {
+      // Repensar como hacer todo el reusmen, no solo esto :(
+    });
+    return {};
+  }
+
+  // TODO: Return the member debts and incomes
+  public getMemberSummary() {
+    const memberDebts = this.getMembersDebts();
+    const memberIncomes = {};
   }
 }

@@ -26,7 +26,7 @@ export function BillsFormList() {
   const [invalidForms, setInvalidForms] = useState<string[]>([]);
 
   useEffect(() => {
-    console.log(billsOrder.length);
+    console.log(bills);
   }, [bills, billsOrder]);
 
   const handleAddBill = () => {
