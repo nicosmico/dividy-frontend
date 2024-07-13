@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog } from 'src/components/ui';
 import { MemberForm } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
@@ -7,22 +6,19 @@ import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { SubmitButton } from 'src/features/split-bills/types/forms';
 import { Member } from 'src/features/split-bills/types/member';
 
-export function EditMemberPage() {
-  const { memberUUID } = useParams();
+interface Props {
+  memberUUID: string;
+  onClose?: () => void;
+}
+export function EditMemberPage({ memberUUID, onClose }: Props) {
   const { members, updateMember } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
   const [open, setOpen] = useState(true);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!memberUUID) return;
     setMember(members[memberUUID]);
   }, [setMember, members, memberUUID]);
-
-  const handleClose = () => {
-    navigate('..');
-  };
 
   const handleEditMember = (values: TMemberForm) => {
     updateMember(memberUUID!, values);
@@ -30,7 +26,7 @@ export function EditMemberPage() {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} className='space-y-8'>
+    <Dialog open={open} onClose={onClose} className='space-y-8'>
       <div>
         {member && (
           <img

@@ -1,13 +1,22 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
+import EditMemberPage from './EditMemberPage';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [memberDetailId, setMemberDetailId] = useState(
+    searchParams.get('memberDetail')
+  );
+
+  useEffect(() => {
+    setMemberDetailId(searchParams.get('memberDetail'));
+  }, [searchParams]);
 
   const handleAddMember = (values: TMemberForm) => {
     const uuid = crypto.randomUUID();
@@ -44,13 +53,20 @@ export function MembersPage() {
             <MemberList
               members={membersOrder.map((uuid) => members[uuid])}
               onDelete={deleteMember}
-              onEdit={(member) => navigate(`${member.uuid}/edit`)}
+              onEdit={(member) =>
+                setSearchParams({ memberDetail: member.uuid })
+              }
             />
           </div>
         </div>
       </div>
 
-      <Outlet />
+      {memberDetailId && (
+        <EditMemberPage
+          memberUUID={memberDetailId}
+          onClose={() => setSearchParams()}
+        ></EditMemberPage>
+      )}
     </>
   );
 }
