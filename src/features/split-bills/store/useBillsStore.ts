@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface BillsStore {
   bills: { [id: string]: Bill };
   billsOrder: string[];
-  addBill: (bill: Bill) => void;
+  addBill: (bill: Omit<Bill, 'id'>) => void;
   deleteBill: (id: string) => void;
   updateBill: (id: string, billData: Partial<Bill>) => void;
   addItemToBill: (id: string, item: BillItem) => void;
@@ -22,10 +22,15 @@ export const useBillsStore = create<BillsStore>()(
     (set) => ({
       bills: {},
       billsOrder: [] as string[],
-      addBill: (bill) => {
+      addBill: (newBill) => {
+        const id = crypto.randomUUID();
+        const bill: Bill = {
+          id,
+          ...newBill,
+        };
         set((state) => ({
-          bills: { ...state.bills, [bill.id]: bill },
-          billsOrder: [...state.billsOrder, bill.id],
+          bills: { ...state.bills, [id]: bill },
+          billsOrder: [...state.billsOrder, id],
         }));
       },
       deleteBill: (id) => {

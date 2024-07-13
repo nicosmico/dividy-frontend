@@ -31,7 +31,6 @@ export function BillsFormList() {
 
   const handleAddBill = () => {
     addBill({
-      id: crypto.randomUUID(),
       name: `Boleta ${billsAdded}`,
       paidBy: membersOrder[0],
       total: 0,
@@ -51,7 +50,6 @@ export function BillsFormList() {
       updateBill(id, values);
     } else {
       addBill({
-        id,
         name: values.name,
         paidBy: values.paidBy,
         total: 0,
