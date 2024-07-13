@@ -22,10 +22,7 @@ function App() {
               element={<Navigate to='members' replace={true} />}
             ></Route>
             <Route path='members' element={<MembersPage />}>
-              <Route
-                path=':memberUUID/edit'
-                element={<EditMemberPage />}
-              ></Route>
+              <Route path=':memberId/edit' element={<EditMemberPage />}></Route>
             </Route>
             <Route path='bills' element={<BillsPage />}>
               <Route
