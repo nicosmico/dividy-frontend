@@ -1,22 +1,13 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { RoundedLink } from 'src/components/ui';
 import { MemberForm, MemberList } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
-import EditMemberPage from './EditMemberPage';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [memberDetailId, setMemberDetailId] = useState(
-    searchParams.get('memberDetail')
-  );
-
-  useEffect(() => {
-    setMemberDetailId(searchParams.get('memberDetail'));
-  }, [searchParams]);
+  const navigate = useNavigate();
 
   const handleAddMember = (values: TMemberForm) => {
     addMember({
@@ -51,18 +42,13 @@ export function MembersPage() {
             <MemberList
               members={membersOrder.map((id) => members[id])}
               onDelete={deleteMember}
-              onEdit={(member) => setSearchParams({ memberDetail: member.id })}
+              onEdit={(member) => navigate(`${member.id}/edit`)}
             />
           </div>
         </div>
       </div>
 
-      {memberDetailId && (
-        <EditMemberPage
-          memberId={memberDetailId}
-          onClose={() => setSearchParams()}
-        ></EditMemberPage>
-      )}
+      <Outlet />
     </>
   );
 }

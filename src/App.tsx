@@ -3,6 +3,7 @@ import { RootLayout } from './components/layout';
 import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
 import { BillsPage, EditBillItemPage, MembersPage, TotalsPage } from './pages';
 import { SplitBillsPage } from './pages/split-bills/SplitBillsPage';
+import { EditMemberPage } from './pages/split-bills/members/EditMemberPage';
 
 function App() {
   useUpdateBreakpoints();
@@ -15,22 +16,23 @@ function App() {
             path='/'
             element={<Navigate to='/split-bills' replace={true} />}
           ></Route>
-
           <Route path='split-bills' element={<SplitBillsPage />}>
             <Route
               path=''
               element={<Navigate to='members' replace={true} />}
             ></Route>
-
-            <Route path='members' element={<MembersPage />}></Route>
-
+            <Route path='members' element={<MembersPage />}>
+              <Route
+                path=':memberUUID/edit'
+                element={<EditMemberPage />}
+              ></Route>
+            </Route>
             <Route path='bills' element={<BillsPage />}>
               <Route
                 path=':billId/item/:itemId/edit'
                 element={<EditBillItemPage />}
               ></Route>
             </Route>
-
             <Route path='totals' element={<TotalsPage />}></Route>
           </Route>
         </Route>
