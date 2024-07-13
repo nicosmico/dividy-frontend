@@ -49,7 +49,7 @@ export function BillItemForm({
       members: members.reduce(
         (acc, member) => ({
           ...acc,
-          [member.uuid]: defaultValues?.members?.[member.uuid] ?? false,
+          [member.id]: defaultValues?.members?.[member.id] ?? false,
         }),
         {} as Record<string, boolean>
       ),
@@ -109,12 +109,12 @@ export function BillItemForm({
           {members.map((member) => (
             <label
               className='relative select-none items-center rounded-full border-2 border-neutral-200 px-2 py-1 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200'
-              key={member.uuid}
+              key={member.id}
             >
               <input
                 className='appearance-none'
                 type='checkbox'
-                {...register(`members.${member.uuid}`)}
+                {...register(`members.${member.id}`)}
               />
               {member.name}
             </label>

@@ -3,11 +3,11 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface MemberStore {
-  members: { [uuid: string]: Member };
+  members: { [id: string]: Member };
   membersOrder: string[];
   addMember: (member: Member) => void;
-  deleteMember: (uuid: string) => void;
-  updateMember: (uuid: string, memberData: Partial<Member>) => void;
+  deleteMember: (id: string) => void;
+  updateMember: (id: string, memberData: Partial<Member>) => void;
 }
 export const useMembersStore = create<MemberStore>()(
   persist(
@@ -16,25 +16,25 @@ export const useMembersStore = create<MemberStore>()(
       membersOrder: [],
       addMember: (member) => {
         set((state) => ({
-          members: { ...state.members, [member.uuid]: member },
-          membersOrder: [...state.membersOrder, member.uuid],
+          members: { ...state.members, [member.id]: member },
+          membersOrder: [...state.membersOrder, member.id],
         }));
       },
-      deleteMember: (uuid) => {
+      deleteMember: (id) => {
         set((state) => {
           const remainingMembers = { ...state.members };
-          delete remainingMembers[uuid];
+          delete remainingMembers[id];
           return {
             members: remainingMembers,
-            membersOrder: state.membersOrder.filter((m) => m !== uuid),
+            membersOrder: state.membersOrder.filter((m) => m !== id),
           };
         });
       },
-      updateMember: (uuid, memberData) => {
+      updateMember: (id, memberData) => {
         set((state) => {
-          const updatedMember = { ...state.members[uuid], ...memberData };
+          const updatedMember = { ...state.members[id], ...memberData };
           return {
-            members: { ...state.members, [uuid]: updatedMember },
+            members: { ...state.members, [id]: updatedMember },
           };
         });
       },

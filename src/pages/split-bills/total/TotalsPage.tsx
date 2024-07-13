@@ -35,7 +35,7 @@ export function TotalsPage() {
         </div>
         {/* <ul className='w-full space-y-4'>
           {membersDebts.map((memberDebts) => (
-            <li key={memberDebts.uuid}>
+            <li key={memberDebts.id}>
               <MemberDebtsCard
                 memberDebts={memberDebts}
                 members={members}

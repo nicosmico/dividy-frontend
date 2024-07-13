@@ -11,18 +11,18 @@ import { BillItemForm, TBillItemForm } from './BillItemForm';
 import { ItemsList } from './ItemsList';
 
 interface Props {
-  uuid: string;
+  id: string;
   bill?: Bill;
   members: Member[];
-  onRemoveBill: (uuid: string) => void;
-  onBillChange: (uuid: string, bill: TBillForm) => void;
-  onInvalidBill: (uuid: string) => void;
-  onAddItem: (uuid: string, item: TBillItemForm) => void;
-  onRemoveItem: (uuid: string, itemId: string) => void;
-  onEditItem: (uuid: string, itemId: string) => void;
+  onRemoveBill: (id: string) => void;
+  onBillChange: (id: string, bill: TBillForm) => void;
+  onInvalidBill: (id: string) => void;
+  onAddItem: (id: string, item: TBillItemForm) => void;
+  onRemoveItem: (id: string, itemId: string) => void;
+  onEditItem: (id: string, itemId: string) => void;
 }
 export function BillCard({
-  uuid,
+  id,
   bill,
   members,
   onRemoveBill,
@@ -36,13 +36,13 @@ export function BillCard({
 
   const handleValidBill = (values: TBillForm) => {
     setName(values.name);
-    debounceOnBillChange(uuid, values);
+    debounceOnBillChange(id, values);
   };
 
   const debounceOnBillChange = useMemo(
     () =>
-      debounce((uuid: string, values: TBillForm) => {
-        onBillChange(uuid, values);
+      debounce((id: string, values: TBillForm) => {
+        onBillChange(id, values);
       }, 300),
     [onBillChange]
   );
@@ -74,7 +74,7 @@ export function BillCard({
         }}
         members={members}
         onValid={handleValidBill}
-        onInvalid={() => onInvalidBill(uuid)}
+        onInvalid={() => onInvalidBill(id)}
       ></BillForm>
 
       {/* Detail */}
@@ -84,8 +84,8 @@ export function BillCard({
             <h3 className='font-medium'>Detalle</h3>
             <ItemsList
               items={bill.items}
-              onRemoveItem={(itemId) => onRemoveItem(uuid, itemId)}
-              onEditItem={(itemId) => onEditItem(uuid, itemId)}
+              onRemoveItem={(itemId) => onRemoveItem(id, itemId)}
+              onEditItem={(itemId) => onEditItem(id, itemId)}
             ></ItemsList>
           </div>
         </>
@@ -96,15 +96,15 @@ export function BillCard({
         <h3 className='font-medium'>Agregar item</h3>
         <BillItemForm
           members={members}
-          onValid={(item) => onAddItem(uuid, item)}
-          onInvalid={() => onInvalidBill(uuid)}
+          onValid={(item) => onAddItem(id, item)}
+          onInvalid={() => onInvalidBill(id)}
         ></BillItemForm>
       </div>
 
       <div>
         <RoundedButton
           className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
-          onClick={() => onRemoveBill(uuid)}
+          onClick={() => onRemoveBill(id)}
         >
           <IconX size={16}></IconX>
           Eliminar boleta

@@ -31,7 +31,7 @@ export function BillsFormList() {
 
   const handleAddBill = () => {
     addBill({
-      uuid: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       name: `Boleta ${billsAdded}`,
       paidBy: membersOrder[0],
       total: 0,
@@ -40,18 +40,18 @@ export function BillsFormList() {
     billsAdded++;
   };
 
-  const handleRemoveBill = (uuid: string) => {
-    removeFromInvalidForms(uuid);
-    deleteBill(uuid);
+  const handleRemoveBill = (id: string) => {
+    removeFromInvalidForms(id);
+    deleteBill(id);
   };
 
-  const handleBillChange = (uuid: string, values: TBillForm) => {
-    removeFromInvalidForms(uuid);
-    if (bills[uuid]) {
-      updateBill(uuid, values);
+  const handleBillChange = (id: string, values: TBillForm) => {
+    removeFromInvalidForms(id);
+    if (bills[id]) {
+      updateBill(id, values);
     } else {
       addBill({
-        uuid,
+        id,
         name: values.name,
         paidBy: values.paidBy,
         total: 0,
@@ -60,27 +60,27 @@ export function BillsFormList() {
     }
   };
 
-  const handleInvalidBill = (uuid: string) => {
-    setInvalidForms([...invalidForms, uuid]);
+  const handleInvalidBill = (id: string) => {
+    setInvalidForms([...invalidForms, id]);
   };
 
-  const handleAddItem = (uuid: string, item: TBillItemForm) => {
+  const handleAddItem = (id: string, item: TBillItemForm) => {
     const members = Object.entries(item.members)
       .filter(([, checked]) => checked)
-      .map(([uuid]) => uuid);
-    addItemToBill(uuid, {
-      uuid: crypto.randomUUID(),
+      .map(([id]) => id);
+    addItemToBill(id, {
+      id: crypto.randomUUID(),
       ...item,
       members,
     });
   };
 
-  const handleRemoveItem = (uuid: string, itemUuid: string) => {
-    removeItemFromBill(uuid, itemUuid);
+  const handleRemoveItem = (id: string, itemUuid: string) => {
+    removeItemFromBill(id, itemUuid);
   };
 
-  const removeFromInvalidForms = (uuid: string) => {
-    setInvalidForms([...invalidForms].filter((b) => b !== uuid));
+  const removeFromInvalidForms = (id: string) => {
+    setInvalidForms([...invalidForms].filter((b) => b !== id));
   };
 
   return (
@@ -88,12 +88,12 @@ export function BillsFormList() {
       {billsOrder.length ? (
         <div>
           <ul className='space-y-2'>
-            {billsOrder.map((uuid) => (
-              <li key={uuid}>
+            {billsOrder.map((id) => (
+              <li key={id}>
                 <BillCard
-                  uuid={uuid}
-                  bill={bills[uuid]}
-                  members={membersOrder.map((uuid) => members[uuid])}
+                  id={id}
+                  bill={bills[id]}
+                  members={membersOrder.map((id) => members[id])}
                   onRemoveBill={handleRemoveBill}
                   onBillChange={handleBillChange}
                   onInvalidBill={handleInvalidBill}

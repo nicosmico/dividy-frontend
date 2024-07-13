@@ -53,7 +53,7 @@ export function BillForm({
           className='bg-neutral-100'
         >
           {members.map((member) => (
-            <option key={member.uuid} value={member.uuid}>
+            <option key={member.id} value={member.id}>
               {member.name}
             </option>
           ))}

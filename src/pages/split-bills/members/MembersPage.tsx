@@ -19,11 +19,11 @@ export function MembersPage() {
   }, [searchParams]);
 
   const handleAddMember = (values: TMemberForm) => {
-    const uuid = crypto.randomUUID();
+    const id = crypto.randomUUID();
     addMember({
-      uuid,
+      id,
       ...values,
-      picture: `https://doodleipsum.com/100x100/avatar-4?n=${uuid}`,
+      picture: `https://doodleipsum.com/100x100/avatar-4?n=${id}`,
     });
   };
 
@@ -51,11 +51,9 @@ export function MembersPage() {
             <MemberForm onValid={handleAddMember} resetOnSubmit></MemberForm>
 
             <MemberList
-              members={membersOrder.map((uuid) => members[uuid])}
+              members={membersOrder.map((id) => members[id])}
               onDelete={deleteMember}
-              onEdit={(member) =>
-                setSearchParams({ memberDetail: member.uuid })
-              }
+              onEdit={(member) => setSearchParams({ memberDetail: member.id })}
             />
           </div>
         </div>

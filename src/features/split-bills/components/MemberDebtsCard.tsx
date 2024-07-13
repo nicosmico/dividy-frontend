@@ -5,7 +5,7 @@ import { MemberDebts } from '../types/totals';
 
 interface Props {
   memberDebts: MemberDebts;
-  members: { [uuid: string]: Member };
+  members: { [id: string]: Member };
 }
 export function MemberDebtsCard({ memberDebts, members }: Props) {
   const member = members[memberDebts.member];
@@ -23,7 +23,7 @@ export function MemberDebtsCard({ memberDebts, members }: Props) {
 
       <ul className='space-y-4'>
         {memberDebts.debts.map((debt) => (
-          <li key={debt.uuid}>
+          <li key={debt.id}>
             <div>
               <p className='text-sm font-medium'>
                 {members[debt.bill.paidBy].name}
@@ -36,7 +36,7 @@ export function MemberDebtsCard({ memberDebts, members }: Props) {
             <p className='text-sm'>{debt.bill.name}</p>
             <ul className='text-sm'>
               {debt.items.map((item) => (
-                <li key={item.uuid} className='ml-2 flex justify-between'>
+                <li key={item.id} className='ml-2 flex justify-between'>
                   <div>
                     {item.name}
                     <span className='ml-1 text-xs'>

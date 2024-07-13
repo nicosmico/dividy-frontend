@@ -26,11 +26,11 @@ export function EditBillItemPage() {
     const bill = bills[billId];
 
     if (!bill) return;
-    const item = bill.items.find((item) => item.uuid === itemId);
+    const item = bill.items.find((item) => item.id === itemId);
 
     const formMembers = Object.keys(members).reduce(
-      (acc, uuid) => {
-        acc[uuid] = !!item?.members.includes(uuid);
+      (acc, id) => {
+        acc[id] = !!item?.members.includes(id);
         return acc;
       },
       {} as Record<string, boolean>
@@ -51,7 +51,7 @@ export function EditBillItemPage() {
     if (!billId || !itemId) return;
     const members = Object.entries(values.members)
       .filter(([, checked]) => checked)
-      .map(([uuid]) => uuid);
+      .map(([id]) => id);
 
     updateItemInBill(billId, itemId, {
       ...values,
@@ -74,7 +74,7 @@ export function EditBillItemPage() {
       {item && (
         <BillItemForm
           defaultValues={item}
-          members={membersOrder.map((uuid) => members[uuid])}
+          members={membersOrder.map((id) => members[id])}
           onValid={handleEditMember}
           submitButton={SubmitButton.BOTTOM_SAVE_CANCEL}
           onCancel={() => setOpen(false)}

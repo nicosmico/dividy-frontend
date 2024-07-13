@@ -1,14 +1,14 @@
 import { Bill, BillItem } from './bill';
 
 export interface MemberSummary {
-  uuid: string;
+  id: string;
   member: string; // Member ID
   debts: Debt[];
   incomes: Debt[];
 }
 
 export interface Debt {
-  uuid: string;
+  id: string;
   debtor: string; // Member ID
   bill: Bill; // Bill detail (includes the paidBy field)
   items: BillItem[]; // Items that debtor must pay
@@ -27,8 +27,8 @@ export class Summary {
         item.members.forEach((memberUuid) => {
           // Add Debt if not exists
           indexedDebts[memberUuid] ??= {};
-          indexedDebts[memberUuid][bill.uuid] ??= {
-            uuid: crypto.randomUUID(),
+          indexedDebts[memberUuid][bill.id] ??= {
+            id: crypto.randomUUID(),
             debtor: memberUuid,
             bill,
             items: [],
@@ -36,8 +36,8 @@ export class Summary {
           };
 
           // Add item to bill and update totalToPay
-          indexedDebts[memberUuid][bill.uuid].items.push(item);
-          indexedDebts[memberUuid][bill.uuid].total +=
+          indexedDebts[memberUuid][bill.id].items.push(item);
+          indexedDebts[memberUuid][bill.id].total +=
             item.price / item.members.length;
         });
       });

@@ -3,15 +3,15 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface BillsStore {
-  bills: { [uuid: string]: Bill };
+  bills: { [id: string]: Bill };
   billsOrder: string[];
   addBill: (bill: Bill) => void;
-  deleteBill: (uuid: string) => void;
-  updateBill: (uuid: string, billData: Partial<Bill>) => void;
-  addItemToBill: (uuid: string, item: BillItem) => void;
-  removeItemFromBill: (uuid: string, itemUuid: string) => void;
+  deleteBill: (id: string) => void;
+  updateBill: (id: string, billData: Partial<Bill>) => void;
+  addItemToBill: (id: string, item: BillItem) => void;
+  removeItemFromBill: (id: string, itemUuid: string) => void;
   updateItemInBill: (
-    uuid: string,
+    id: string,
     itemUuid: string,
     itemData: Partial<BillItem>
   ) => void;
@@ -24,62 +24,62 @@ export const useBillsStore = create<BillsStore>()(
       billsOrder: [] as string[],
       addBill: (bill) => {
         set((state) => ({
-          bills: { ...state.bills, [bill.uuid]: bill },
-          billsOrder: [...state.billsOrder, bill.uuid],
+          bills: { ...state.bills, [bill.id]: bill },
+          billsOrder: [...state.billsOrder, bill.id],
         }));
       },
-      deleteBill: (uuid) => {
+      deleteBill: (id) => {
         set((state) => {
           const remainingBills = { ...state.bills };
-          delete remainingBills[uuid];
+          delete remainingBills[id];
 
           return {
             bills: remainingBills,
-            billsOrder: state.billsOrder.filter((b) => b !== uuid),
+            billsOrder: state.billsOrder.filter((b) => b !== id),
           };
         });
       },
-      updateBill: (uuid, billData) => {
+      updateBill: (id, billData) => {
         set((state) => {
-          const updatedBill = { ...state.bills[uuid], ...billData };
+          const updatedBill = { ...state.bills[id], ...billData };
           return {
-            bills: { ...state.bills, [uuid]: updatedBill },
+            bills: { ...state.bills, [id]: updatedBill },
           };
         });
       },
-      addItemToBill: (uuid, item) => {
+      addItemToBill: (id, item) => {
         set((state) => {
-          const bill = state.bills[uuid];
+          const bill = state.bills[id];
           bill.items.push(item);
           bill.total += item.price;
           return {
-            bills: { ...state.bills, [uuid]: bill },
+            bills: { ...state.bills, [id]: bill },
           };
         });
       },
-      removeItemFromBill: (uuid, itemUuid) => {
+      removeItemFromBill: (id, itemUuid) => {
         set((state) => {
-          const bill = state.bills[uuid];
-          bill.items = bill.items.filter((i) => i.uuid !== itemUuid);
-          const item = bill.items.find((i) => i.uuid === itemUuid);
+          const bill = state.bills[id];
+          bill.items = bill.items.filter((i) => i.id !== itemUuid);
+          const item = bill.items.find((i) => i.id === itemUuid);
           bill.total -= item?.price ?? 0;
           return {
-            bills: { ...state.bills, [uuid]: bill },
+            bills: { ...state.bills, [id]: bill },
           };
         });
       },
-      updateItemInBill: (uuid, itemUuid, itemData) => {
+      updateItemInBill: (id, itemUuid, itemData) => {
         set((state) => {
-          const bill = state.bills[uuid];
-          let item = bill.items.find((i) => i.uuid === itemUuid);
+          const bill = state.bills[id];
+          let item = bill.items.find((i) => i.id === itemUuid);
           if (!item) return state;
 
           item = { ...item, ...itemData };
           if (!item) return state;
 
-          bill.items = bill.items.map((i) => (i.uuid === itemUuid ? item! : i));
+          bill.items = bill.items.map((i) => (i.id === itemUuid ? item! : i));
           return {
-            bills: { ...state.bills, [uuid]: bill },
+            bills: { ...state.bills, [id]: bill },
           };
         });
       },
