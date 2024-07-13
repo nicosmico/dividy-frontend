@@ -26,7 +26,7 @@ function App() {
 
             <Route path='bills' element={<BillsPage />}>
               <Route
-                path=':billUUID/item/:itemUUID/edit'
+                path=':billId/item/:itemId/edit'
                 element={<EditBillItemPage />}
               ></Route>
             </Route>

@@ -7,21 +7,21 @@ import { SubmitButton } from 'src/features/split-bills/types/forms';
 import { Member } from 'src/features/split-bills/types/member';
 
 interface Props {
-  memberUUID: string;
+  memberId: string;
   onClose?: () => void;
 }
-export function EditMemberPage({ memberUUID, onClose }: Props) {
+export function EditMemberPage({ memberId, onClose }: Props) {
   const { members, updateMember } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    if (!memberUUID) return;
-    setMember(members[memberUUID]);
-  }, [setMember, members, memberUUID]);
+    if (!memberId) return;
+    setMember(members[memberId]);
+  }, [setMember, members, memberId]);
 
   const handleEditMember = (values: TMemberForm) => {
-    updateMember(memberUUID!, values);
+    updateMember(memberId!, values);
     setOpen(false);
   };
 

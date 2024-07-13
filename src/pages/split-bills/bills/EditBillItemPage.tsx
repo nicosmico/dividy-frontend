@@ -12,7 +12,7 @@ import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { SubmitButton } from 'src/features/split-bills/types/forms';
 
 export function EditBillItemPage() {
-  const { billUUID, itemUUID } = useParams();
+  const { billId, itemId } = useParams();
   const { bills, updateItemInBill } = useBills();
   const { members, membersOrder } = useMembers();
 
@@ -22,11 +22,11 @@ export function EditBillItemPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!billUUID || !itemUUID) return;
-    const bill = bills[billUUID];
+    if (!billId || !itemId) return;
+    const bill = bills[billId];
 
     if (!bill) return;
-    const item = bill.items.find((item) => item.uuid === itemUUID);
+    const item = bill.items.find((item) => item.uuid === itemId);
 
     const formMembers = Object.keys(members).reduce(
       (acc, uuid) => {
@@ -40,7 +40,7 @@ export function EditBillItemPage() {
       ...item,
       members: formMembers,
     });
-  }, [billUUID, itemUUID, bills, members]);
+  }, [billId, itemId, bills, members]);
 
   const handleClose = () => {
     navigate('..');
@@ -48,12 +48,12 @@ export function EditBillItemPage() {
 
   const handleEditMember = (values: TBillItemForm) => {
     console.log(values);
-    if (!billUUID || !itemUUID) return;
+    if (!billId || !itemId) return;
     const members = Object.entries(values.members)
       .filter(([, checked]) => checked)
       .map(([uuid]) => uuid);
 
-    updateItemInBill(billUUID, itemUUID, {
+    updateItemInBill(billId, itemId, {
       ...values,
       members,
     });

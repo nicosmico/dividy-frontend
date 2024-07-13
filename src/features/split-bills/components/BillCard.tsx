@@ -18,8 +18,8 @@ interface Props {
   onBillChange: (uuid: string, bill: TBillForm) => void;
   onInvalidBill: (uuid: string) => void;
   onAddItem: (uuid: string, item: TBillItemForm) => void;
-  onRemoveItem: (uuid: string, itemUUID: string) => void;
-  onEditItem: (uuid: string, itemUUID: string) => void;
+  onRemoveItem: (uuid: string, itemId: string) => void;
+  onEditItem: (uuid: string, itemId: string) => void;
 }
 export function BillCard({
   uuid,
@@ -84,8 +84,8 @@ export function BillCard({
             <h3 className='font-medium'>Detalle</h3>
             <ItemsList
               items={bill.items}
-              onRemoveItem={(itemUUID) => onRemoveItem(uuid, itemUUID)}
-              onEditItem={(itemUUID) => onEditItem(uuid, itemUUID)}
+              onRemoveItem={(itemId) => onRemoveItem(uuid, itemId)}
+              onEditItem={(itemId) => onEditItem(uuid, itemId)}
             ></ItemsList>
           </div>
         </>

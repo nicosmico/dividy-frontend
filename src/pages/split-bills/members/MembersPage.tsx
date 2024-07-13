@@ -63,7 +63,7 @@ export function MembersPage() {
 
       {memberDetailId && (
         <EditMemberPage
-          memberUUID={memberDetailId}
+          memberId={memberDetailId}
           onClose={() => setSearchParams()}
         ></EditMemberPage>
       )}

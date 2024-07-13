@@ -99,8 +99,8 @@ export function BillsFormList() {
                   onInvalidBill={handleInvalidBill}
                   onAddItem={handleAddItem}
                   onRemoveItem={handleRemoveItem}
-                  onEditItem={(billUUID, itemUUID) =>
-                    navigate(`${billUUID}/item/${itemUUID}/edit`)
+                  onEditItem={(billId, itemId) =>
+                    navigate(`${billId}/item/${itemId}/edit`)
                   }
                 ></BillCard>
               </li>
