@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 interface MemberStore {
   members: { [id: string]: Member };
   membersOrder: string[];
-  addMember: (member: Member) => void;
+  addMember: (member: Omit<Member, 'id'>) => void;
   deleteMember: (id: string) => void;
   updateMember: (id: string, memberData: Partial<Member>) => void;
 }
@@ -14,10 +14,15 @@ export const useMembersStore = create<MemberStore>()(
     (set) => ({
       members: {},
       membersOrder: [],
-      addMember: (member) => {
+      addMember: (newMember) => {
+        const id = crypto.randomUUID();
+        const member: Member = {
+          id,
+          ...newMember,
+        };
         set((state) => ({
-          members: { ...state.members, [member.id]: member },
-          membersOrder: [...state.membersOrder, member.id],
+          members: { ...state.members, [id]: member },
+          membersOrder: [...state.membersOrder, id],
         }));
       },
       deleteMember: (id) => {

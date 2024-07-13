@@ -19,11 +19,9 @@ export function MembersPage() {
   }, [searchParams]);
 
   const handleAddMember = (values: TMemberForm) => {
-    const id = crypto.randomUUID();
     addMember({
-      id,
       ...values,
-      picture: `https://doodleipsum.com/100x100/avatar-4?n=${id}`,
+      picture: `https://doodleipsum.com/100x100/avatar-4?n=${crypto.randomUUID()}`,
     });
   };
 
