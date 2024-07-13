@@ -12,10 +12,11 @@ export function RoundedLink({
 }: Props) {
   return (
     <Link
+      aria-disabled={disabled}
       className={twMerge(
         'flex items-center justify-center gap-2 rounded-full px-8 py-3 transition enabled:active:scale-95',
         'md:hover:enabled:opacity-95 md:hover:enabled:brightness-95',
-        disabled && 'bg-gray-200 text-gray-400 active:bg-gray-200',
+        disabled && 'pointer-events-none opacity-70 active:opacity-70',
         className
       )}
       {...props}

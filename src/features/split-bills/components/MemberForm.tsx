@@ -117,7 +117,7 @@ export function MemberForm({
       </div>
 
       {submitButton === SubmitButton.ASIDE_ROUNDED && (
-        <IconButton type='submit' className='mt-1 h-min bg-zinc-800 text-white'>
+        <IconButton type='submit' className='h-min bg-zinc-800 p-4 text-white'>
           <IconPlus />
         </IconButton>
       )}

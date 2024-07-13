@@ -9,7 +9,9 @@ export function IconButton({
     <button
       type='button'
       className={twMerge(
-        'flex items-center justify-center gap-2 rounded-full px-4 py-3 transition enabled:active:scale-95 disabled:opacity-60 disabled:active:opacity-60',
+        'flex items-center justify-center gap-2 rounded-full px-2 py-2 transition',
+        'enabled:active:scale-90',
+        'disabled:opacity-70 disabled:active:opacity-70',
         'md:hover:enabled:opacity-90 md:hover:enabled:brightness-90',
         className
       )}

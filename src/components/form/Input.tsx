@@ -13,6 +13,7 @@ export function Input({ label, icon, onIconClick, register, ...props }: Props) {
   const id = register?.name
     ? `${register.name}-${crypto.randomUUID()}`
     : props.id;
+
   return (
     <div className='relative w-full'>
       <input
