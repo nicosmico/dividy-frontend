@@ -1,21 +1,14 @@
-import { Bill, BillItem } from 'src/features/split-bills/types/bill';
+import { Bill, NewBill } from 'src/features/split-bills/types/bill';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-interface BillsStore {
+type BillsStore = {
   bills: { [id: string]: Bill };
   billsOrder: string[];
-  addBill: (bill: Omit<Bill, 'id'>) => void;
+  addBill: (newBill: NewBill) => void;
   deleteBill: (id: string) => void;
   updateBill: (id: string, billData: Partial<Bill>) => void;
-  addItemToBill: (id: string, item: BillItem) => void;
-  removeItemFromBill: (id: string, itemUuid: string) => void;
-  updateItemInBill: (
-    id: string,
-    itemUuid: string,
-    itemData: Partial<BillItem>
-  ) => void;
-}
+};
 
 export const useBillsStore = create<BillsStore>()(
   persist(
@@ -49,42 +42,6 @@ export const useBillsStore = create<BillsStore>()(
           const updatedBill = { ...state.bills[id], ...billData };
           return {
             bills: { ...state.bills, [id]: updatedBill },
-          };
-        });
-      },
-      addItemToBill: (id, item) => {
-        set((state) => {
-          const bill = state.bills[id];
-          bill.items.push(item);
-          bill.total += item.price;
-          return {
-            bills: { ...state.bills, [id]: bill },
-          };
-        });
-      },
-      removeItemFromBill: (id, itemUuid) => {
-        set((state) => {
-          const bill = state.bills[id];
-          bill.items = bill.items.filter((i) => i.id !== itemUuid);
-          const item = bill.items.find((i) => i.id === itemUuid);
-          bill.total -= item?.price ?? 0;
-          return {
-            bills: { ...state.bills, [id]: bill },
-          };
-        });
-      },
-      updateItemInBill: (id, itemUuid, itemData) => {
-        set((state) => {
-          const bill = state.bills[id];
-          let item = bill.items.find((i) => i.id === itemUuid);
-          if (!item) return state;
-
-          item = { ...item, ...itemData };
-          if (!item) return state;
-
-          bill.items = bill.items.map((i) => (i.id === itemUuid ? item! : i));
-          return {
-            bills: { ...state.bills, [id]: bill },
           };
         });
       },

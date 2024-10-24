@@ -1,14 +1,10 @@
-export interface Bill {
-  id: string;
-  name: string;
-  paidBy: string; // Member ID
-  total: number;
-  items: BillItem[];
-}
-
-export interface BillItem {
+export type Bill = {
   id: string;
   name: string;
   price: number;
-  members: string[]; // Member IDs
-}
+  paidBy: string; // Member ID
+  members: string[];
+  totalByMember: number;
+};
+
+export type NewBill = Omit<Bill, 'id'>;

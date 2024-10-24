@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RootLayout } from './components/layout';
 import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
-import { BillsPage, EditBillItemPage, MembersPage, TotalsPage } from './pages';
+import { BillsPage, MembersPage } from './pages';
 import { SplitBillsPage } from './pages/split-bills/SplitBillsPage';
 import { EditMemberPage } from './pages/split-bills/members/EditMemberPage';
 
@@ -24,13 +24,7 @@ function App() {
             <Route path='members' element={<MembersPage />}>
               <Route path=':memberId/edit' element={<EditMemberPage />}></Route>
             </Route>
-            <Route path='bills' element={<BillsPage />}>
-              <Route
-                path=':billId/item/:itemId/edit'
-                element={<EditBillItemPage />}
-              ></Route>
-            </Route>
-            <Route path='totals' element={<TotalsPage />}></Route>
+            <Route path='bills' element={<BillsPage />}></Route>
           </Route>
         </Route>
       </Routes>

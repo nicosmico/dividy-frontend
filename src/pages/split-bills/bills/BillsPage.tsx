@@ -1,19 +1,13 @@
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from '@tabler/icons-react';
-import { Outlet } from 'react-router-dom';
 import { RoundedLink } from 'src/components/ui';
 import { BillsFormList } from 'src/features/split-bills';
 
 export function BillsPage() {
   return (
     <>
-      <Outlet /> {/* For EditBillItemPage */}
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:grid-rows-[min-content_1fr]'>
         <div className='space-y-4 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
-          <h1 className='text-xl font-bold'>Boletas</h1>
-          <p>
-            Cada boleta que agregues contiene los items que fueron comprados por
-            uno de los miembros y entre quienes se dividirá cada item.
-          </p>
+          <h1 className='text-xl font-bold'>Gastos</h1>
         </div>
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
           <BillsFormList />
