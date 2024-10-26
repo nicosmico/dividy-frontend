@@ -1,6 +1,6 @@
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from '@tabler/icons-react';
 import { RoundedLink } from 'src/components/ui';
-import { BillsFormList } from 'src/features/split-bills';
+import { BillsList } from 'src/features/split-bills';
 
 export function BillsPage() {
   return (
@@ -10,8 +10,9 @@ export function BillsPage() {
           <h1 className='text-xl font-bold'>Gastos</h1>
         </div>
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
-          <BillsFormList />
+          <BillsList />
         </div>
+
         <div className='sticky bottom-2 grid grid-cols-2 gap-1 md:static md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
             to='../members'

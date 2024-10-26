@@ -1,18 +1,27 @@
 import { IconPlus, IconReceipt } from '@tabler/icons-react';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { RoundedButton, Status } from 'src/components/ui';
 import useBills from '../hooks/useBills';
 import useMembers from '../hooks/useMembers';
+import { BillCard } from './BillCard';
 
-export function BillsFormList() {
-  const { bills, billsOrder } = useBills();
+export function BillsList() {
+  const { bills, billsOrder, addBill, deleteBill } = useBills();
   const { members, membersOrder } = useMembers();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log(bills);
-  }, [bills, billsOrder]);
+  const handleAddBill = () => {
+    console.log(members);
+    addBill({
+      name: 'Nuevo gasto',
+      total: 0,
+      paidBy: members[membersOrder[0]].id,
+      members: [],
+      totalByMember: 0,
+    });
+  };
+
+  const handleDeleteBill = (billId: string) => {
+    deleteBill(billId);
+  };
 
   return (
     <>
@@ -21,27 +30,29 @@ export function BillsFormList() {
           <ul className='space-y-2'>
             {billsOrder.map((id) => (
               <li key={id}>
-                {/* <BillCard
+                <BillCard
                   id={id}
                   bill={bills[id]}
                   members={membersOrder.map((id) => members[id])}
-                  onEditItem={(billId, itemId) =>
-                    navigate(`${billId}/item/${itemId}/edit`)
-                  }
-                ></BillCard> */}
+                  onDelete={handleDeleteBill}
+                ></BillCard>
               </li>
             ))}
           </ul>
         </div>
       ) : (
         <Status
-          title='Agrega una boleta'
-          description='Debes agregar al menos una boleta'
+          title='Agrega una gasto'
+          description='Debes agregar al menos una gasto'
           icon={<IconReceipt size={48}></IconReceipt>}
           className='pt-8'
         />
       )}
-      <RoundedButton className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'>
+
+      <RoundedButton
+        className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
+        onClick={() => handleAddBill()}
+      >
         <IconPlus size={16} />
         Agregar boleta
       </RoundedButton>
