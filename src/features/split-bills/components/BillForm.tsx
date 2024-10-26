@@ -6,15 +6,17 @@ import { Member } from '../types/member';
 
 const BILL_FORM_SCHEMA = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
+  total: z.coerce.number().min(1, 'Debe ser mayor que 0'),
   paidBy: z.string().min(1, 'Ingresa quién hizo esta compra'),
+  // members: z.array(z.string()),
 });
-export type TBillForm = z.infer<typeof BILL_FORM_SCHEMA>;
+export type BillFormValues = z.infer<typeof BILL_FORM_SCHEMA>;
 
 interface Props {
-  defaultValues?: DefaultValues<TBillForm>;
+  defaultValues?: DefaultValues<BillFormValues>;
   members: Member[];
-  onValid: (values: TBillForm) => void;
-  onInvalid: (values: FieldErrors<TBillForm>) => void;
+  onValid: (values: BillFormValues) => void;
+  onInvalid: (values: FieldErrors<BillFormValues>) => void;
 }
 export function BillForm({
   defaultValues,
@@ -26,7 +28,7 @@ export function BillForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<TBillForm>({
+  } = useForm<BillFormValues>({
     resolver: zodResolver(BILL_FORM_SCHEMA),
     defaultValues,
   });
@@ -45,6 +47,15 @@ export function BillForm({
           className='bg-neutral-100'
         />
         <InputError error={errors.name}></InputError>
+      </div>
+      <div>
+        <Input
+          type='text'
+          label='Precio'
+          register={register('total')}
+          className='bg-neutral-100'
+        />
+        <InputError error={errors.total}></InputError>
       </div>
       <div>
         <Select
