@@ -36,7 +36,7 @@ export function BillsPage() {
   return (
     <>
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:grid-rows-[min-content_1fr]'>
-        <div className='space-y-4 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
+        <div className='space-y-2 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
           <h1 className='text-xl font-bold'>Gastos</h1>
           <p>
             Agrega a los miembros del grupo con quienes dividirás los gastos. En

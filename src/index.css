@@ -6,4 +6,11 @@
   html {
     @apply min-h-full bg-gradient-to-br from-[#F8F7F1] to-[#F1EEE4];
   }
+
+  /* Hide arrows in number inputs */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
