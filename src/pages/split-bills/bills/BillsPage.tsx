@@ -17,7 +17,7 @@ export function BillsPage() {
   const handleAddBill = () => {
     addBill({
       name: 'Nuevo gasto',
-      total: 0,
+      total: 1,
       paidBy: members[membersOrder[0]].id,
       members: [],
       totalByMember: 0,
@@ -29,6 +29,7 @@ export function BillsPage() {
   };
 
   const handleEditBill = (billId: string, values: Partial<Bill>) => {
+    console.log('Update store!', values);
     updateBill(billId, values);
   };
 

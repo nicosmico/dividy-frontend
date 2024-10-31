@@ -1,7 +1,6 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { Card, IconButton, RoundedButton } from 'src/components/ui';
-import { debounce } from 'src/utils/debounce';
 import { formatToCurrency } from 'src/utils/format-to';
 import { Bill } from '../types/bill';
 import { Member } from '../types/member';
@@ -11,7 +10,7 @@ interface Props {
   id: string;
   bill?: Bill;
   members: Member[];
-  onValueChange: (billId: string, values: BillFormValues) => void;
+  onValueChange: (billId: string, values: Partial<Bill>) => void;
   onDelete: (billId: string) => void;
 }
 export function BillCard({
@@ -22,17 +21,19 @@ export function BillCard({
   onDelete,
 }: Props) {
   const handleValidBill = (values: BillFormValues) => {
-    debounceOnBillChange(id, values);
+    onValueChange(id, values);
   };
 
-  // TODO: Check if remove debounce
-  const debounceOnBillChange = useMemo(
-    () =>
-      debounce((id: string, values: BillFormValues) => {
-        onValueChange(id, values);
-      }, 300),
-    [onValueChange]
-  );
+  const defaultFormValues = useMemo(() => {
+    if (!bill) return undefined;
+
+    return {
+      name: bill.name,
+      paidBy: bill.paidBy,
+      total: bill.total,
+      members: bill.members,
+    };
+  }, [bill]);
 
   return (
     <Card className='space-y-4 *:pt-4'>
@@ -54,11 +55,7 @@ export function BillCard({
       </div>
 
       <BillForm
-        defaultValues={{
-          name: bill?.name,
-          paidBy: bill?.paidBy,
-          total: bill?.total,
-        }}
+        defaultValues={defaultFormValues}
         members={members}
         onValid={handleValidBill}
         onInvalid={console.warn}
