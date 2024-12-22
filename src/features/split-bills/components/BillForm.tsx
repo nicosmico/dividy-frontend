@@ -100,7 +100,7 @@ export function BillForm({
                 key={member.id}
               >
                 <input
-                  className='appearance-none'
+                  className='w-0 appearance-none'
                   type='checkbox'
                   value={member.id}
                   {...register('members', { onChange: handleChange })}
