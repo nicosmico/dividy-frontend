@@ -26,7 +26,7 @@ const getGenreVariant = (name: string): string | null => {
       'variant47',
     ].join(',');
   }
-  if (lowerName.endsWith('a')) {
+  if (lowerName.endsWith('a') || lowerName.endsWith('i')) {
     return [
       'variant10',
       'variant13',
