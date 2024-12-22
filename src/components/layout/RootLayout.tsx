@@ -1,20 +1,13 @@
 import { Outlet } from 'react-router-dom';
 import { Container } from 'src/components/ui';
-import { useBreakpoint } from 'src/hooks/useBreakpoint';
 import { Header } from '.';
 
 export function RootLayout() {
-  const { md } = useBreakpoint();
-
   return (
     <>
-      {/* Header */}
-      {md && (
-        <Container className='sticky top-4 z-10 mt-4 flex justify-center'>
-          <Header />
-        </Container>
-      )}
-
+      <Container className='top-3 z-10 flex justify-center px-0 md:mt-4 md:justify-start'>
+        <Header />
+      </Container>
       <Outlet />
     </>
   );

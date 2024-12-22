@@ -27,7 +27,7 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
             className='flex items-center justify-between'
             onClick={() => onEdit(member)}
           >
-            <div className='flex min-w-0 items-center gap-4'>
+            <div className='flex w-full items-center gap-4'>
               <img
                 className='max-w-[50px] rounded-full bg-zinc-200 p-0.5'
                 src={member.picture}

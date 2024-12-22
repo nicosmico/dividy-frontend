@@ -9,12 +9,12 @@ export interface NavigationLink {
 }
 
 const navLinks: NavigationLink[] = [
-  { text: 'Dividir gastos', href: '/split-bills' },
-  { text: '¿Cómo funciona?', href: '/how-it-works' },
+  // { text: 'Dividir gastos', href: '/split-bills' },
+  // { text: '¿Cómo funciona?', href: '/how-it-works' },
 ];
 export function Header() {
   return (
-    <header className='flex w-fit items-center justify-between gap-10 rounded-full bg-zinc-800 p-1 shadow-lg'>
+    <header className='flex w-full items-center justify-center gap-10 rounded-b-2xl bg-zinc-800 p-1 shadow-lg md:w-fit md:rounded-full'>
       <Link
         to='/'
         className='flex items-center gap-2 rounded-full py-1 pl-4 pr-8 font-semibold text-white transition hover:bg-zinc-700 hover:text-slate-50 active:scale-95'
@@ -23,25 +23,27 @@ export function Header() {
         <p>Dividy</p>
       </Link>
 
-      <nav>
-        <ul className='flex gap-1'>
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <NavLink
-                to={link.href}
-                className={({ isActive }) =>
-                  twMerge(
-                    'flex items-center gap-2 rounded-full px-8 py-2 font-semibold text-slate-50 transition hover:bg-amber-200 hover:text-zinc-800 active:scale-95',
-                    isActive && 'bg-amber-200 text-zinc-800'
-                  )
-                }
-              >
-                {link.text}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {!!navLinks.length && (
+        <nav>
+          <ul className='flex gap-1'>
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <NavLink
+                  to={link.href}
+                  className={({ isActive }) =>
+                    twMerge(
+                      'flex items-center gap-2 rounded-full px-8 py-2 font-semibold text-slate-50 transition hover:bg-amber-200 hover:text-zinc-800 active:scale-95',
+                      isActive && 'bg-amber-200 text-zinc-800'
+                    )
+                  }
+                >
+                  {link.text}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }
