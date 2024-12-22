@@ -80,3 +80,5 @@ export function SimplifiedDebts() {
     </>
   );
 }
+
+export default SimplifiedDebts;
