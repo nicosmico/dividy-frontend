@@ -1,18 +1,12 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import BillsPage from './pages/split-bills/bills/BillsPage';
+import EditMemberPage from './pages/split-bills/members/EditMemberPage';
+import MembersPage from './pages/split-bills/members/MembersPage';
+import SimplifiedDebts from './pages/split-bills/total/SimplifiedDebts';
 import { DividyIcon, RootLayout } from './shared';
 
 const SplitBillsPage = lazy(() => import('./pages/split-bills/SplitBillsPage'));
-const MembersPage = lazy(
-  () => import('./pages/split-bills/members/MembersPage')
-);
-const BillsPage = lazy(() => import('./pages/split-bills/bills/BillsPage'));
-const EditMemberPage = lazy(
-  () => import('./pages/split-bills/members/EditMemberPage')
-);
-const SimplifiedDebts = lazy(
-  () => import('./pages/split-bills/total/SimplifiedDebts')
-);
 
 const AppRoutes = () => (
   <Suspense

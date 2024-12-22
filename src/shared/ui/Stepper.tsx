@@ -2,8 +2,7 @@ import { twMerge } from 'tailwind-merge';
 import IconButton from './IconButton';
 
 export interface Step {
-  name: string;
-  completed: boolean;
+  path: string;
   enabled: boolean;
   icon?: React.ReactNode;
 }
@@ -12,19 +11,21 @@ interface Props {
   steps: Step[];
   vertical?: boolean;
   onStepClick?: (index: number) => unknown;
-  currentStep?: number;
+  currentStep: number;
+  completeAll: boolean;
 }
 export function Stepper({
   steps,
   vertical = false,
   onStepClick,
   currentStep,
+  completeAll,
 }: Props) {
   return (
     <div className={twMerge('flex w-full gap-2', vertical && 'w-min flex-col')}>
       {steps.map((step, index) => (
         <div
-          key={step.name}
+          key={step.path}
           className={twMerge(
             'flex w-full flex-col items-center justify-center',
             vertical && 'flex-row'
@@ -41,10 +42,10 @@ export function Stepper({
                 'h-0 w-0 rounded-full transition-all',
                 twMerge(
                   vertical ? 'w-full' : 'h-full',
-                  step.completed && 'h-full w-full bg-amber-200',
                   index === currentStep &&
-                    !step.completed &&
-                    (vertical ? 'h-1/6 bg-amber-200' : 'w-1/6 bg-amber-200')
+                    (vertical ? 'h-1/6 bg-amber-200' : 'w-1/6 bg-amber-200'),
+                  (index < currentStep || completeAll) &&
+                    'h-full w-full bg-amber-200'
                 )
               )}
             ></div>

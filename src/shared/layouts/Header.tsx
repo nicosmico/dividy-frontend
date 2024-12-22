@@ -19,7 +19,7 @@ export function Header() {
         to='/'
         className='flex items-center gap-2 rounded-full py-1 pl-4 pr-8 font-semibold text-white transition hover:bg-zinc-700 hover:text-slate-50 active:scale-95'
       >
-        <DividyIcon className='rounded-lg bg-amber-200 p-1 text-zinc-800' />
+        <DividyIcon className='rounded-lg bg-gray-50 p-1 text-zinc-800' />
         <p>Dividy</p>
       </Link>
 

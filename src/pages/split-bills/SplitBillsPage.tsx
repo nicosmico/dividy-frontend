@@ -1,10 +1,11 @@
 import { Outlet } from 'react-router-dom';
+import { NavigationStep } from 'src/features/split-bills';
 import { Container } from 'src/shared';
 
 export function SplitBillsPage() {
   return (
     <Container className='flex flex-col gap-4 pb-4 pt-2 md:flex-row md:pt-4'>
-      {/* <NavigationStep /> */}
+      <NavigationStep />
       <Outlet />
     </Container>
   );
