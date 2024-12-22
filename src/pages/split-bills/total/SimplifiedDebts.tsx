@@ -39,7 +39,7 @@ export function SimplifiedDebts() {
   const copyToClipboard = () => {
     const text = formatSplitBillSummary(bills, members, transactions);
     navigator.clipboard.writeText(text);
-    showMessage('Woosh! Resumen copiado al portapapeles 🪄');
+    showMessage('🪄 Woosh! Resumen copiado al portapapeles');
   };
 
   return (

@@ -23,7 +23,7 @@ export function SnackBarProvider({ children }: { children: React.ReactNode }) {
     // Auto-remove after 5 seconds
     setTimeout(() => {
       setMessages((prev) => prev.filter((msg) => msg.id !== id));
-    }, 2000);
+    }, 3000);
   }, []);
 
   const handleClose = (id: string) => {
@@ -33,9 +33,9 @@ export function SnackBarProvider({ children }: { children: React.ReactNode }) {
   return (
     <SnackBarContext.Provider value={{ showMessage }}>
       {children}
-      <div className='sticky bottom-1 space-y-2 p-2'>
+      <div className='fixed bottom-1 w-full space-y-2 p-2'>
         {messages.map((msg) => (
-          <div key={msg.id} className='animate-slide-up'>
+          <div key={msg.id} className='mx-auto animate-slide-up md:max-w-fit'>
             <SnackBar
               message={msg.message}
               onClose={() => handleClose(msg.id)}
