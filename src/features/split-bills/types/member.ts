@@ -1,5 +1,6 @@
+export type MemberId = string;
 export interface Member {
-  id: string;
+  id: MemberId;
   name: string;
   email?: string;
   phone?: string;

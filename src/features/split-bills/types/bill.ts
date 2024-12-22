@@ -1,10 +1,17 @@
+import { MemberId } from './member';
+
+export type BillId = string;
+
 export type Bill = {
-  id: string;
+  id: BillId;
   name: string;
   total: number;
-  paidBy: string; // Member ID
-  members: string[];
-  totalByMember: number;
+  paidBy: MemberId;
+  members: MemberId[];
+  // members: { // TODO
+  //   id: string;
+  //   ammount: number;
+  // };
 };
 
 export type NewBill = Omit<Bill, 'id'>;

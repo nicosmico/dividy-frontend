@@ -4,6 +4,7 @@ import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
 import { BillsPage, MembersPage } from './pages';
 import { SplitBillsPage } from './pages/split-bills/SplitBillsPage';
 import { EditMemberPage } from './pages/split-bills/members/EditMemberPage';
+import { SimplifiedDebts } from './pages/split-bills/total/SimplifiedDebts';
 
 function App() {
   useUpdateBreakpoints();
@@ -25,6 +26,10 @@ function App() {
               <Route path=':memberId/edit' element={<EditMemberPage />}></Route>
             </Route>
             <Route path='bills' element={<BillsPage />}></Route>
+            <Route
+              path='simplified-debts'
+              element={<SimplifiedDebts />}
+            ></Route>
           </Route>
         </Route>
       </Routes>

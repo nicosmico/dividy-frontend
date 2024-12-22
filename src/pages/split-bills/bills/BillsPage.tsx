@@ -20,7 +20,6 @@ export function BillsPage() {
       total: 1,
       paidBy: members[membersOrder[0]].id,
       members: [],
-      totalByMember: 0,
     });
   };
 
@@ -87,10 +86,10 @@ export function BillsPage() {
             Miembros
           </RoundedLink>
           <RoundedLink
-            to='../totals'
+            to='../simplified-debts'
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
           >
-            Totales
+            Deudas
             <IconArrowNarrowRight></IconArrowNarrowRight>
           </RoundedLink>
         </div>
