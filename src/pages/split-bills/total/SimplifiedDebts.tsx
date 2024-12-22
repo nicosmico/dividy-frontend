@@ -1,9 +1,15 @@
-import { IconArrowNarrowLeft, IconReceipt } from '@tabler/icons-react';
+import {
+  IconArrowNarrowLeft,
+  IconCopy,
+  IconReceipt,
+} from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { RoundedLink, Status } from 'src/components/ui';
+import { RoundedButton, RoundedLink, Status } from 'src/components/ui';
+import { useSnackBar } from 'src/components/ui/snack-bar/useSnackBar';
 import { TransactionCard } from 'src/features/split-bills/components/TransactionCard';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
+import { formatSplitBillSummary } from 'src/features/split-bills/types/summary';
 import {
   simplifyDebts,
   Transaction,
@@ -12,6 +18,7 @@ import {
 export function SimplifiedDebts() {
   const { members } = useMembers();
   const { billsOrder, bills } = useBills();
+  const { showMessage } = useSnackBar();
 
   const transactions = useMemo(() => {
     return simplifyDebts(billsOrder.map((id) => bills[id]));
@@ -30,14 +37,20 @@ export function SimplifiedDebts() {
     );
   }, [transactions]);
 
+  const copyToClipboard = () => {
+    const text = formatSplitBillSummary(bills, members, transactions);
+    navigator.clipboard.writeText(text);
+    showMessage('Woosh! Resumen copiado al portapapeles 🪄');
+  };
+
   return (
     <>
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:grid-rows-[min-content_1fr]'>
         <div className='space-y-2 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
           <h1 className='text-xl font-bold'>Deudas simplificadas</h1>
           <p>
-            Aquí puedes ver las deudas simplificadas de cada miembro, es decir,
-            cuánto debe o le deben a cada uno.
+            Aquí puedes ver cuanto le debes a cada uno de tus amigos o cuanto te
+            deben.
           </p>
         </div>
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
@@ -67,7 +80,7 @@ export function SimplifiedDebts() {
           )}
         </div>
 
-        <div className='sticky bottom-2 md:static md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3'>
+        <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
             to='../bills'
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
@@ -75,6 +88,13 @@ export function SimplifiedDebts() {
             <IconArrowNarrowLeft></IconArrowNarrowLeft>
             Gastos
           </RoundedLink>
+          <RoundedButton
+            className='w-full bg-zinc-800 px-6 text-gray-50 shadow-sm md:max-w-lg'
+            onClick={copyToClipboard}
+          >
+            <IconCopy size={20}></IconCopy>
+            Copiar
+          </RoundedButton>
         </div>
       </div>
     </>

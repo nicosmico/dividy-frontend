@@ -38,8 +38,8 @@ export function BillsPage() {
         <div className='space-y-2 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
           <h1 className='text-xl font-bold'>Gastos</h1>
           <p>
-            Agrega a los miembros del grupo con quienes dividirás los gastos. En
-            el siguiente paso podrás agregar las deudas.
+            Agrega los gastos del grupo y Dividy se encargará de simplificar las
+            deudas
           </p>
         </div>
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
@@ -77,7 +77,7 @@ export function BillsPage() {
           </RoundedButton>
         </div>
 
-        <div className='sticky bottom-2 grid grid-cols-2 gap-1 md:static md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
+        <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
             to='../members'
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'

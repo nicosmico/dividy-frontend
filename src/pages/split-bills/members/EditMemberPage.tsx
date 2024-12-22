@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Dialog } from 'src/components/ui';
+import { useSnackBar } from 'src/components/ui/snack-bar/useSnackBar';
 import { MemberForm } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
@@ -12,6 +13,7 @@ export function EditMemberPage() {
   const { members, updateMember } = useMembers();
   const [member, setMember] = useState<Member | undefined>();
   const [open, setOpen] = useState(true);
+  const { showMessage } = useSnackBar();
 
   const navigate = useNavigate();
 
@@ -27,6 +29,7 @@ export function EditMemberPage() {
   const handleEditMember = (values: TMemberForm) => {
     updateMember(memberId!, values);
     setOpen(false);
+    showMessage('Miembro editado ✨');
   };
 
   return (

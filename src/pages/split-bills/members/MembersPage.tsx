@@ -27,8 +27,7 @@ export function MembersPage() {
         <div className='space-y-2 text-center md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 md:mt-20 md:text-left'>
           <h1 className='text-xl font-bold'>Miembros</h1>
           <p>
-            Agrega a los miembros del grupo con quienes dividirás los gastos. En
-            el siguiente paso podrás agregar las deudas.
+            Agrega a los miembros del grupo con quienes dividirás los gastos.
           </p>
         </div>
 
@@ -42,13 +41,13 @@ export function MembersPage() {
           />
         </div>
 
-        <div className='sticky bottom-2 md:static md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3'>
+        <div className='bottom-2 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3'>
           <RoundedLink
             to='../bills'
             disabled={membersOrder.length < 2}
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
           >
-            Deudas
+            Gastos
             <IconArrowNarrowRight></IconArrowNarrowRight>
           </RoundedLink>
         </div>
