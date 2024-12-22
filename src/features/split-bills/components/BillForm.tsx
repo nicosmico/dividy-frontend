@@ -5,9 +5,8 @@ import {
   FieldErrors,
   useForm,
 } from 'react-hook-form';
-import { Input, InputError, Select } from 'src/shared';
+import { formatToCurrency, Input, InputError, Select } from 'src/shared';
 import { debounce } from 'src/shared/utils/debounce';
-import { formatToCurrency } from 'src/shared/utils/format-to';
 import { z } from 'zod';
 import { Member } from '../types/member';
 
@@ -92,32 +91,31 @@ export function BillForm({
         </div>
 
         <fieldset>
-          <legend className='mb-2 text-center text-sm'>Dividir entre:</legend>
+          <legend className='mb-2 ml-3 text-sm'>Dividir entre:</legend>
           <div className='flex flex-wrap justify-center gap-1'>
             {members.map((member) => (
               <label
-                className='relative select-none items-center rounded-full border-2 border-neutral-200 px-2 py-1 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200'
+                className='flex w-full select-none justify-between gap-1 rounded-full border-2 border-neutral-200 px-3 py-3 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200 md:px-2 md:py-1'
                 key={member.id}
               >
-                <input
-                  className='w-0 appearance-none'
-                  type='checkbox'
-                  value={member.id}
-                  {...register('members', { onChange: handleChange })}
-                />
-                {member.name}
+                <span>
+                  <input
+                    className='mr-1 accent-zinc-800'
+                    type='checkbox'
+                    value={member.id}
+                    {...register('members', { onChange: handleChange })}
+                  />
+                  {member.name}
+                </span>
+
+                {selectedMembers.includes(member.id) &&
+                  formatToCurrency(totalByMember)}
               </label>
             ))}
           </div>
           {<InputError error={errors.members as FieldError}></InputError>}
         </fieldset>
       </form>
-      {!!selectedMembers.length && (
-        <div className='flex justify-between text-xs font-medium'>
-          <div>Dividido entre: {selectedMembers.length}</div>
-          <div>Total a pagar C/U: {formatToCurrency(totalByMember)}</div>
-        </div>
-      )}
     </>
   );
 }

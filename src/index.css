@@ -14,4 +14,12 @@
     -webkit-appearance: none;
     margin: 0;
   }
+
+  /* Hide details element arrow */
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+  details > summary {
+    list-style: none;
+  }
 }

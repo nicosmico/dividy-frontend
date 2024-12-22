@@ -36,8 +36,7 @@ export function Stepper({
               disabled={step.disabled}
               className={twMerge(
                 'text-zinc-300',
-                index === currentStep && 'scale-105 text-zinc-900 md:scale-125',
-                (index < currentStep || completeAll) && 'text-amber-300'
+                index === currentStep && 'scale-105 text-zinc-900 md:scale-125'
               )}
               onClick={() => {
                 onStepClick && onStepClick(index);

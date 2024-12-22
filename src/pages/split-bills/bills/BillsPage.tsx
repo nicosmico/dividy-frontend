@@ -4,6 +4,7 @@ import {
   IconPlus,
   IconReceipt,
 } from '@tabler/icons-react';
+import { useState } from 'react';
 import { BillCard } from 'src/features/split-bills';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
@@ -13,6 +14,9 @@ import { RoundedButton, RoundedLink, Status } from 'src/shared';
 export function BillsPage() {
   const { bills, billsOrder, addBill, deleteBill, updateBill } = useBills();
   const { members, membersOrder } = useMembers();
+  const [lastEditedBill, setLastEditedBill] = useState<number | null>(
+    billsOrder.length > 1 ? null : 0
+  );
 
   const handleAddBill = () => {
     addBill({
@@ -21,6 +25,8 @@ export function BillsPage() {
       paidBy: members[membersOrder[0]].id,
       members: [],
     });
+
+    setLastEditedBill(() => billsOrder.length);
   };
 
   const handleDeleteBill = (billId: string) => {
@@ -46,7 +52,7 @@ export function BillsPage() {
           {billsOrder.length ? (
             <div>
               <ul className='space-y-2'>
-                {billsOrder.map((id) => (
+                {billsOrder.map((id, index) => (
                   <li key={id}>
                     <BillCard
                       id={id}
@@ -54,6 +60,7 @@ export function BillsPage() {
                       members={membersOrder.map((id) => members[id])}
                       onDelete={handleDeleteBill}
                       onValueChange={handleEditBill}
+                      open={lastEditedBill === index}
                     ></BillCard>
                   </li>
                 ))}
