@@ -36,7 +36,7 @@ export function HomePage() {
         </RoundedLink>
       </div>
 
-      <Card className='flex w-full flex-col gap-4 p-4'>
+      <Card className='flex w-full flex-col gap-4 p-4 shadow-sm'>
         <h2 className='text-lg font-semibold md:text-xl'>¿Cómo funciona?</h2>
 
         <ul className='space-y-2 text-left'>

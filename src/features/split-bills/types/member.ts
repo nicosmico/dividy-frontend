@@ -4,5 +4,8 @@ export interface Member {
   name: string;
   email?: string;
   phone?: string;
-  picture?: string;
+  picture: {
+    happy: string;
+    sad: string;
+  };
 }

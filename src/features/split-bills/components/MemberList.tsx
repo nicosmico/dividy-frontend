@@ -24,13 +24,13 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
       {members.map((member) => (
         <li key={member.id}>
           <Card
-            className='flex items-center justify-between'
+            className='flex items-center justify-between shadow-sm'
             onClick={() => onEdit(member)}
           >
             <div className='flex w-full items-center gap-4'>
               <img
-                className='max-w-[50px] rounded-full bg-zinc-200 p-0.5'
-                src={member.picture}
+                className='max-w-[50px] rounded-full bg-amber-200 p-0.5 shadow-sm'
+                src={member.picture.happy}
                 alt={member.name}
               />
               <span>{member.name}</span>

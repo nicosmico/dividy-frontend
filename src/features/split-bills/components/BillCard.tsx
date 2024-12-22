@@ -36,7 +36,7 @@ export function BillCard({
   }, [bill]);
 
   return (
-    <Card className='space-y-4 p-4'>
+    <Card className='space-y-4 p-4 shadow-sm'>
       <div className='flex items-center justify-between gap-2'>
         <div className='aspect-square rounded-full bg-red-400 p-3 text-white'>
           <IconBottle />

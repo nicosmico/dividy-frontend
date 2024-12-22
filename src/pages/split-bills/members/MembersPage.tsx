@@ -16,7 +16,10 @@ export function MembersPage() {
   const handleAddMember = (values: TMemberForm) => {
     addMember({
       ...values,
-      picture: Avatar.happy(values.name),
+      picture: {
+        happy: Avatar.happy(values.name),
+        sad: Avatar.sad(values.name),
+      },
     });
   };
 

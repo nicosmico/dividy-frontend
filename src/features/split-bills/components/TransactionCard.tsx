@@ -2,7 +2,6 @@ import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { Card } from 'src/shared';
 import { formatToCurrency } from 'src/shared/utils/format-to';
-import { Avatar } from '../services/avatar';
 import { Member, MemberId } from '../types/member';
 import { Transaction } from '../types/transaction';
 
@@ -16,22 +15,20 @@ export function TransactionCard({ member, transactions, members }: Props) {
     return transactions.filter((t) => t.from === member.id);
   }, [member.id, transactions]);
 
-  const debtorAvatar = Avatar.sad(member.name);
-
   return (
-    <Card className='space-y-4 p-4'>
+    <Card className='space-y-4 p-4 shadow-sm'>
       {debts.map(({ to, amount }) => (
         <div key={to} className='min-w-0 flex-col items-center gap-2'>
           <div className='flex items-center justify-center gap-0.5'>
             <img
-              className='max-w-[50px] rounded-full bg-rose-300 p-0.5'
-              src={debtorAvatar}
+              className='max-w-[50px] rounded-full bg-rose-300 p-0.5 shadow-md'
+              src={member.picture.sad}
               alt={member.name}
             />
             <IconArrowNarrowRight></IconArrowNarrowRight>
             <img
-              className='max-w-[50px] rounded-full bg-blue-300 p-0.5'
-              src={members[to].picture}
+              className='max-w-[50px] rounded-full bg-blue-300 p-0.5 shadow-md'
+              src={members[to].picture.happy}
               alt={members[to].name}
             />
           </div>

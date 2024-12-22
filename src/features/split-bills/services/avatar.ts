@@ -1,3 +1,4 @@
+const monthNumber = new Date().getMonth() + 1;
 const baseUrl = 'https://api.dicebear.com/9.x/lorelei/svg';
 
 const buildConfigParams = (config: Record<string, string | null>): string => {
@@ -91,7 +92,7 @@ export class Avatar {
       'happy15',
       'happy16',
     ].join(',');
-    return `${baseUrl}?${getConfig(name)}&seed=${name}&eyes=${eyes}&mouth=${mouth}`;
+    return `${baseUrl}?${getConfig(name)}&seed=${name + monthNumber}&eyes=${eyes}&mouth=${mouth}`;
   }
 
   static sad(name: string): string {
@@ -107,6 +108,6 @@ export class Avatar {
       'sad08',
       'sad09',
     ].join(',');
-    return `${baseUrl}?${getConfig(name)}&seed=${name}&eyes=${eyes}&mouth=${mouth}`;
+    return `${baseUrl}?${getConfig(name)}&seed=${name + monthNumber}&eyes=${eyes}&mouth=${mouth}`;
   }
 }
