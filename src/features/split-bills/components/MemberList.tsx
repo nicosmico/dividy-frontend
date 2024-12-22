@@ -29,11 +29,11 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
           >
             <div className='flex min-w-0 items-center gap-4'>
               <img
-                className='max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
+                className='max-w-[50px] rounded-full bg-zinc-200 p-0.5'
                 src={member.picture}
                 alt={member.name}
               />
-              <span className='truncate'>{member.name}</span>
+              <span>{member.name}</span>
             </div>
 
             <IconButton

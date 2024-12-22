@@ -30,8 +30,6 @@ export function SimplifiedDebts() {
     );
   }, [transactions]);
 
-  console.log(transactionsByDebtor);
-
   return (
     <>
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2 md:grid-rows-[min-content_1fr]'>

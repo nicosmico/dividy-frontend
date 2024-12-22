@@ -34,7 +34,7 @@ export function EditMemberPage() {
       <div>
         {member && (
           <img
-            className='mx-auto max-w-[50px] rounded-full border-2 border-zinc-800 p-0.5'
+            className='mx-auto max-w-[50px] rounded-full bg-zinc-200 p-0.5'
             src={member.picture}
             alt={member.name}
           />

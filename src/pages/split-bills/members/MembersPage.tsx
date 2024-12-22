@@ -7,6 +7,7 @@ import {
   TMemberForm,
 } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
+import { Avatar } from 'src/features/split-bills/services/avatar';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();
@@ -15,7 +16,7 @@ export function MembersPage() {
   const handleAddMember = (values: TMemberForm) => {
     addMember({
       ...values,
-      picture: `https://doodleipsum.com/100x100/avatar-4?n=${crypto.randomUUID()}`,
+      picture: Avatar.happy(values.name),
     });
   };
 
