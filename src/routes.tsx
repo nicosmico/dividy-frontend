@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { RootLayout } from './components/layout';
-import { DividyIcon } from './components/ui';
+import { DividyIcon, RootLayout } from './shared';
 
 const SplitBillsPage = lazy(() => import('./pages/split-bills/SplitBillsPage'));
 const MembersPage = lazy(

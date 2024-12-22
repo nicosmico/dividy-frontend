@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { Container } from 'src/components/ui';
+import { Container } from 'src/shared';
 
 export function SplitBillsPage() {
   return (

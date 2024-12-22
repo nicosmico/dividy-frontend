@@ -1,4 +1,4 @@
-import { useBreakpointStore } from 'src/store/useBreakpointStore';
+import { useBreakpointStore } from 'src/shared/breakpoints/useBreakpointStore';
 
 export function useBreakpoint(): Breakpoints {
   const { breakpoints } = useBreakpointStore();

@@ -1,7 +1,7 @@
 import { MouseEventHandler } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { twMerge } from 'tailwind-merge';
-import { IconButton } from '../ui';
+import IconButton from '../IconButton';
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;

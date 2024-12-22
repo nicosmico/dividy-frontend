@@ -1,6 +1,5 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { RoundedLink } from 'src/components/ui';
 import { MemberList } from 'src/features/split-bills';
 import {
   MemberForm,
@@ -8,6 +7,7 @@ import {
 } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Avatar } from 'src/features/split-bills/services/avatar';
+import { RoundedLink } from 'src/shared';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();

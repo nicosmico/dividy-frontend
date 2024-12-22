@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useBreakpointStore } from 'src/store/useBreakpointStore';
+import { useBreakpointStore } from 'src/shared/breakpoints/useBreakpointStore';
 
 export function useUpdateBreakpoints() {
   const breakpoints = useBreakpointStore((state) => state.breakpoints);

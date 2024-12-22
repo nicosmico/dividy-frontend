@@ -1,5 +1,5 @@
 import { IconUsersGroup, IconX } from '@tabler/icons-react';
-import { Card, IconButton, Status } from '../../../components/ui';
+import { Card, IconButton, Status } from 'src/shared';
 import { Member } from '../types/member';
 
 interface Props {

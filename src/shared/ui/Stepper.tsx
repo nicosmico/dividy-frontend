@@ -1,5 +1,5 @@
 import { twMerge } from 'tailwind-merge';
-import { IconButton } from '.';
+import IconButton from './IconButton';
 
 export interface Step {
   name: string;

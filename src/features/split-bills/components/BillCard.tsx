@@ -1,7 +1,7 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { Card, IconButton, RoundedButton } from 'src/components/ui';
-import { formatToCurrency } from 'src/utils/format-to';
+import { Card, IconButton, RoundedButton } from 'src/shared';
+import { formatToCurrency } from 'src/shared/utils/format-to';
 import { Bill } from '../types/bill';
 import { Member } from '../types/member';
 import { BillForm, BillFormValues } from './BillForm';

@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
-import { DividyIcon } from '../ui';
+import DividyIcon from '../ui/DividyIcon';
 
 export interface NavigationLink {
   text: string;

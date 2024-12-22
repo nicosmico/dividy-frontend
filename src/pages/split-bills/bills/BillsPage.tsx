@@ -4,11 +4,11 @@ import {
   IconPlus,
   IconReceipt,
 } from '@tabler/icons-react';
-import { RoundedButton, RoundedLink, Status } from 'src/components/ui';
 import { BillCard } from 'src/features/split-bills';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Bill } from 'src/features/split-bills/types/bill';
+import { RoundedButton, RoundedLink, Status } from 'src/shared';
 
 export function BillsPage() {
   const { bills, billsOrder, addBill, deleteBill, updateBill } = useBills();

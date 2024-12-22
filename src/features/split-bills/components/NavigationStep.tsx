@@ -1,9 +1,7 @@
 import { IconReceipt, IconReceipt2, IconUsers } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stepper } from 'src/components/ui';
-import { Step } from 'src/components/ui/Stepper';
-import { useBreakpoint } from 'src/hooks/useBreakpoint';
+import { Step, Stepper, useBreakpoint } from 'src/shared';
 
 const steps: Step[] = [
   {

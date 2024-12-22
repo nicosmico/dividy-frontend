@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Dialog } from 'src/components/ui';
-import { useSnackBar } from 'src/components/ui/snack-bar/useSnackBar';
 import { MemberForm } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { SubmitButton } from 'src/features/split-bills/types/forms';
 import { Member } from 'src/features/split-bills/types/member';
+import { Dialog, useSnackBar } from 'src/shared';
 
 export function EditMemberPage() {
   const { memberId } = useParams();

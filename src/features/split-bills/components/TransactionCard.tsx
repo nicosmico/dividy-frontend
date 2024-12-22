@@ -1,7 +1,7 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { Card } from 'src/components/ui';
-import { formatToCurrency } from 'src/utils/format-to';
+import { Card } from 'src/shared';
+import { formatToCurrency } from 'src/shared/utils/format-to';
 import { Avatar } from '../services/avatar';
 import { Member, MemberId } from '../types/member';
 import { Transaction } from '../types/transaction';

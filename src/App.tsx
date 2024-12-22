@@ -1,6 +1,6 @@
-import { SnackBarProvider } from './components/ui/snack-bar/SnackBarProvider';
-import { useUpdateBreakpoints } from './hooks/useUpdateBreakpoints';
 import AppRoutes from './routes';
+import { SnackBarProvider } from './shared';
+import { useUpdateBreakpoints } from './shared/breakpoints/useUpdateBreakpoints';
 
 function App() {
   useUpdateBreakpoints();

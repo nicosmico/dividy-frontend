@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
-import { Container } from 'src/components/ui';
-import { Header } from '.';
+import Container from '../ui/Container';
+import Header from './Header';
 
 export function RootLayout() {
   return (

@@ -1,15 +1,15 @@
-import { formatToCurrency } from 'src/utils/format-to';
 import { Bill } from 'src/features/split-bills/types/bill';
 import { Member } from 'src/features/split-bills/types/member';
 import { Transaction } from 'src/features/split-bills/types/transaction';
+import { formatToCurrency } from 'src/shared/utils/format-to';
 
 export function formatSplitBillSummary(
   bills: Record<string, Bill>,
-  members: Record<string, Member>, 
+  members: Record<string, Member>,
   transactions: Transaction[]
 ): string {
   let summary = '';
-  
+
   // 1. Format members section
   summary += '*👥 Miembros*\n';
   Object.values(members).forEach((member) => {
@@ -22,7 +22,7 @@ export function formatSplitBillSummary(
   Object.values(bills).forEach((bill) => {
     const paidByMember = members[bill.paidBy];
     const total = formatToCurrency(bill.total);
-    const splitMembers = bill.members.map(id => members[id].name).join(', ');
+    const splitMembers = bill.members.map((id) => members[id].name).join(', ');
 
     summary += `• ${bill.name}\n`;
     summary += `  💰 ${total}\n`;

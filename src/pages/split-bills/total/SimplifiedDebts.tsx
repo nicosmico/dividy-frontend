@@ -4,8 +4,6 @@ import {
   IconReceipt,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { RoundedButton, RoundedLink, Status } from 'src/components/ui';
-import { useSnackBar } from 'src/components/ui/snack-bar/useSnackBar';
 import { TransactionCard } from 'src/features/split-bills/components/TransactionCard';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
@@ -14,6 +12,7 @@ import {
   simplifyDebts,
   Transaction,
 } from 'src/features/split-bills/types/transaction';
+import { RoundedButton, RoundedLink, Status, useSnackBar } from 'src/shared';
 
 export function SimplifiedDebts() {
   const { members } = useMembers();
