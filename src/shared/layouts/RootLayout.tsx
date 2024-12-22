@@ -1,12 +1,17 @@
 import { Outlet } from 'react-router-dom';
+import Container from '../ui/Container';
+import Header from './Header';
 
 export function RootLayout() {
   return (
     <>
-      {/* <Container className='top-3 z-10 flex justify-center px-0 md:mt-4 md:justify-start'>
+      <Container className='z-10 mb-3 mt-4'>
         <Header />
-      </Container> */}
-      <Outlet />
+      </Container>
+
+      <div>
+        <Outlet />
+      </div>
     </>
   );
 }

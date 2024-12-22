@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/homepage/HomePage';
 import BillsPage from './pages/split-bills/bills/BillsPage';
 import EditMemberPage from './pages/split-bills/members/EditMemberPage';
 import MembersPage from './pages/split-bills/members/MembersPage';
@@ -18,10 +19,10 @@ const AppRoutes = () => (
   >
     <Routes>
       <Route element={<RootLayout />}>
-        <Route
-          path='/'
-          element={<Navigate to='/split-bills' replace={true} />}
-        />
+        <Route path='/' element={<Navigate to='/home' replace={true} />} />
+
+        <Route path='home' element={<HomePage></HomePage>} />
+
         <Route path='/split-bills' element={<SplitBillsPage />}>
           <Route path='' element={<Navigate to='members' replace={true} />} />
           <Route path='members' element={<MembersPage />}>

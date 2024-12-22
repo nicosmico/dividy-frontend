@@ -4,7 +4,8 @@
 
 @layer base {
   html {
-    @apply min-h-full bg-gradient-to-br from-[#F8F7F1] to-[#F1EEE4];
+    /* @apply min-h-full bg-gradient-to-br from-[#F8F7F1] to-[#F1EEE4]; */
+    @apply bg-site-bg min-h-full;
   }
 
   /* Hide arrows in number inputs */

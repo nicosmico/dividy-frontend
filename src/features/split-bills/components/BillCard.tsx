@@ -1,6 +1,6 @@
-import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
+import { IconBottle, IconX } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { Card, IconButton, RoundedButton } from 'src/shared';
+import { Card, RoundedButton } from 'src/shared';
 import { formatToCurrency } from 'src/shared/utils/format-to';
 import { Bill } from '../types/bill';
 import { Member } from '../types/member';
@@ -49,9 +49,6 @@ export function BillCard({
           )}
           <h1 className='text-sm font-medium'>{bill?.name}</h1>
         </div>
-        <IconButton className='p-0'>
-          <IconChevronDown size={28}></IconChevronDown>
-        </IconButton>
       </div>
 
       <BillForm

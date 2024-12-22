@@ -3,8 +3,8 @@ import IconButton from './IconButton';
 
 export interface Step {
   path: string;
-  enabled: boolean;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }
 
 interface Props {
@@ -31,6 +31,22 @@ export function Stepper({
             vertical && 'flex-row'
           )}
         >
+          {step.icon && (
+            <IconButton
+              disabled={step.disabled}
+              className={twMerge(
+                'text-zinc-300',
+                index === currentStep && 'scale-105 text-zinc-900 md:scale-125',
+                (index < currentStep || completeAll) && 'text-amber-300'
+              )}
+              onClick={() => {
+                onStepClick && onStepClick(index);
+              }}
+            >
+              {step.icon}
+            </IconButton>
+          )}
+
           <div
             className={twMerge(
               'h-2 w-full rounded-full bg-gray-300 shadow-sm',
@@ -50,22 +66,6 @@ export function Stepper({
               )}
             ></div>
           </div>
-
-          {step.icon && (
-            <IconButton
-              disabled={!step.enabled}
-              className={twMerge(
-                'text-zinc-400',
-                step.enabled && 'text-zinc-500',
-                index === currentStep && 'text-zinc-900'
-              )}
-              onClick={() => {
-                onStepClick && onStepClick(index);
-              }}
-            >
-              {step.icon}
-            </IconButton>
-          )}
         </div>
       ))}
     </div>
