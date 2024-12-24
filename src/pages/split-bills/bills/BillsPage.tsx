@@ -49,6 +49,13 @@ export function BillsPage() {
           </p>
         </div>
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
+          <RoundedButton
+            className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
+            onClick={() => handleAddBill()}
+          >
+            <IconPlus size={16} />
+            Agregar boleta
+          </RoundedButton>
           {billsOrder.length ? (
             <div>
               <ul className='space-y-2'>
@@ -74,14 +81,6 @@ export function BillsPage() {
               className='pt-8'
             />
           )}
-
-          <RoundedButton
-            className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
-            onClick={() => handleAddBill()}
-          >
-            <IconPlus size={16} />
-            Agregar boleta
-          </RoundedButton>
         </div>
 
         <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>

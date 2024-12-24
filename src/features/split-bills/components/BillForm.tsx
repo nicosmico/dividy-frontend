@@ -95,7 +95,7 @@ export function BillForm({
           <div className='flex flex-wrap justify-center gap-1'>
             {members.map((member) => (
               <label
-                className='flex w-full select-none justify-between gap-1 rounded-full border-2 border-neutral-200 px-3 py-3 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200 md:px-2 md:py-1'
+                className='flex w-full select-none items-center justify-between gap-1 rounded-full border-2 border-neutral-100  px-3 py-3 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200 md:px-2 md:py-1'
                 key={member.id}
               >
                 <span>

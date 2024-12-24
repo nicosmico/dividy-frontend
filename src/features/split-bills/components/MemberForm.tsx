@@ -124,7 +124,7 @@ export function MemberForm({
       {submitButton === SubmitButton.BOTTOM_SAVE_CANCEL && (
         <div className='flex justify-end gap-2'>
           <RoundedButton
-            className='w-full bg-neutral-100 hover:bg-red-400 hover:text-white md:w-fit'
+            className='w-full bg-neutral-100 md:w-fit'
             onClick={onCancel}
           >
             Cancelar

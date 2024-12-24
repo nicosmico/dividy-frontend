@@ -66,17 +66,15 @@ export function BillCard({
           onInvalid={console.warn}
         ></BillForm>
 
-        <div>
-          {bill && (
-            <RoundedButton
-              className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
-              onClick={() => onDelete(bill.id)}
-            >
-              <IconX size={16}></IconX>
-              Eliminar boleta
-            </RoundedButton>
-          )}
-        </div>
+        {bill && (
+          <RoundedButton
+            className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
+            onClick={() => onDelete(bill.id)}
+          >
+            <IconX size={16}></IconX>
+            Eliminar
+          </RoundedButton>
+        )}
       </details>
     </Card>
   );
