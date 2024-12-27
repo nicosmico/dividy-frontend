@@ -8,10 +8,6 @@ export type Bill = {
   total: number;
   paidBy: MemberId;
   members: MemberId[];
-  // members: { // TODO
-  //   id: string;
-  //   ammount: number;
-  // };
 };
 
 export type NewBill = Omit<Bill, 'id'>;

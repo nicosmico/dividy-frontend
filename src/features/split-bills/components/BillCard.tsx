@@ -7,15 +7,13 @@ import { Member } from '../types/member';
 import { BillForm, BillFormValues } from './BillForm';
 
 interface Props {
-  id: string;
-  bill?: Bill;
+  bill: Partial<Bill>;
   members: Member[];
-  onValueChange: (billId: string, values: Partial<Bill>) => void;
-  onDelete: (billId: string) => void;
+  onValueChange: (values: BillFormValues) => void;
+  onDelete: () => void;
   open?: boolean;
 }
 export function BillCard({
-  id,
   bill,
   members,
   onValueChange,
@@ -23,7 +21,7 @@ export function BillCard({
   open,
 }: Props) {
   const handleValidBill = (values: BillFormValues) => {
-    onValueChange(id, values);
+    onValueChange(values);
   };
 
   const defaultFormValues = useMemo(() => {
@@ -37,6 +35,8 @@ export function BillCard({
     };
   }, [bill]);
 
+  const paidBy = members.find((m) => m.id === bill.paidBy);
+
   return (
     <Card className='p-4 shadow-sm'>
       <details className='group space-y-4' open={open}>
@@ -47,11 +47,20 @@ export function BillCard({
             </div>
             <div className='w-full'>
               {bill?.total !== undefined && (
-                <h2 className='text-lg font-medium'>
+                <span className='text-lg font-medium'>
                   {formatToCurrency(bill.total)}
-                </h2>
+                </span>
               )}
-              <h1 className='text-sm font-medium'>{bill?.name}</h1>
+              <div className='flex items-center gap-1'>
+                {!!bill?.members?.length && (
+                  <span className='rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-white'>
+                    {paidBy?.name}
+                  </span>
+                )}
+                <span className='text-sm font-medium'>
+                  {bill?.name ?? 'Nuevo gasto'}
+                </span>
+              </div>
             </div>
             <div className='transform transition-transform duration-300 group-open:rotate-180'>
               <IconChevronDown size={28}></IconChevronDown>
@@ -66,15 +75,13 @@ export function BillCard({
           onInvalid={console.warn}
         ></BillForm>
 
-        {bill && (
-          <RoundedButton
-            className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
-            onClick={() => onDelete(bill.id)}
-          >
-            <IconX size={16}></IconX>
-            Eliminar
-          </RoundedButton>
-        )}
+        <RoundedButton
+          className='mx-auto bg-red-400 px-4 py-1 text-sm text-white'
+          onClick={() => onDelete()}
+        >
+          <IconX size={16}></IconX>
+          Eliminar
+        </RoundedButton>
       </details>
     </Card>
   );

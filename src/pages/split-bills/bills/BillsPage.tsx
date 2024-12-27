@@ -6,36 +6,46 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { BillCard } from 'src/features/split-bills';
+import { BillFormValues } from 'src/features/split-bills/components/BillForm';
 import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Bill } from 'src/features/split-bills/types/bill';
 import { RoundedButton, RoundedLink, Status } from 'src/shared';
 
 export function BillsPage() {
-  const { bills, billsOrder, addBill, deleteBill, updateBill } = useBills();
+  const { bills, billsOrder, addBill, updateBill, deleteBill } = useBills();
   const { members, membersOrder } = useMembers();
+  const [billsForms, setBillsForms] = useState<Partial<Bill>[]>(
+    billsOrder.map((id) => bills[id])
+  );
   const [lastEditedBill, setLastEditedBill] = useState<number | null>(
-    billsOrder.length > 1 ? null : 0
+    billsForms.length > 1 ? null : 0
   );
 
-  const handleAddBill = () => {
-    addBill({
-      name: 'Nuevo gasto',
-      total: 1,
-      paidBy: members[membersOrder[0]].id,
-      members: [],
-    });
+  const handleAddBillForm = () => {
+    setBillsForms([
+      ...billsForms,
+      {
+        paidBy: members[membersOrder[0]].id,
+        members: [],
+      },
+    ]);
 
-    setLastEditedBill(() => billsOrder.length);
+    setLastEditedBill(() => billsForms.length);
   };
 
-  const handleDeleteBill = (billId: string) => {
-    deleteBill(billId);
+  const handleDeleteBill = (index: number) => {
+    setBillsForms((prev) => prev.filter((_, i) => i !== index));
+    const bill = billsForms[index];
+    if (bill?.id) {
+      deleteBill(bill.id);
+    }
   };
 
-  const handleEditBill = (billId: string, values: Partial<Bill>) => {
-    console.log('Update store!', values);
-    updateBill(billId, values);
+  const handleUpdateBill = (index: number, values: BillFormValues) => {
+    const billId = billsForms[index]?.id;
+    const bill = billId ? updateBill(billId, values) : addBill(values);
+    setBillsForms((prev) => prev.map((b, i) => (i === index ? bill : b)));
   };
 
   return (
@@ -51,22 +61,23 @@ export function BillsPage() {
         <div className='space-y-8 md:col-start-2 md:col-end-3 md:row-span-full'>
           <RoundedButton
             className='mx-auto bg-zinc-900 px-4 py-1 text-sm text-white'
-            onClick={() => handleAddBill()}
+            onClick={() => handleAddBillForm()}
           >
             <IconPlus size={16} />
             Agregar boleta
           </RoundedButton>
-          {billsOrder.length ? (
+          {billsForms.length ? (
             <div>
               <ul className='space-y-2'>
-                {billsOrder.map((id, index) => (
-                  <li key={id}>
+                {billsForms.map((bill, index) => (
+                  <li key={index}>
                     <BillCard
-                      id={id}
-                      bill={bills[id]}
+                      bill={bill}
                       members={membersOrder.map((id) => members[id])}
-                      onDelete={handleDeleteBill}
-                      onValueChange={handleEditBill}
+                      onDelete={() => handleDeleteBill(index)}
+                      onValueChange={(values) =>
+                        handleUpdateBill(index, values)
+                      }
                       open={lastEditedBill === index}
                     ></BillCard>
                   </li>

@@ -5,14 +5,14 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 type BillsStore = {
   bills: { [id: string]: Bill };
   billsOrder: string[];
-  addBill: (newBill: NewBill) => void;
+  addBill: (newBill: NewBill) => Bill;
   deleteBill: (id: string) => void;
-  updateBill: (id: string, billData: Partial<Bill>) => void;
+  updateBill: (id: string, billData: Partial<Bill>) => Bill;
 };
 
 export const useBillsStore = create<BillsStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       bills: {},
       billsOrder: [] as string[],
       addBill: (newBill) => {
@@ -25,6 +25,7 @@ export const useBillsStore = create<BillsStore>()(
           bills: { ...state.bills, [id]: bill },
           billsOrder: [...state.billsOrder, id],
         }));
+        return bill;
       },
       deleteBill: (id) => {
         set((state) => {
@@ -44,6 +45,7 @@ export const useBillsStore = create<BillsStore>()(
             bills: { ...state.bills, [id]: updatedBill },
           };
         });
+        return get().bills[id];
       },
     }),
     {
