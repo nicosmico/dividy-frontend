@@ -4,7 +4,7 @@ import { useDebtStore } from '../store/useDebtStore';
 
 export function useDebt(debtId?: DebtId) {
   const debt = useDebtStore(useCallback(state => debtId ? state.debts[debtId] : undefined, [debtId]));
-  const allDebts = useDebtStore(state => state.debts);
+  const debts = useDebtStore(state => state.debts);
   const debtsOrder = useDebtStore(state => state.debtsOrder);
 
   // Store actions
@@ -18,10 +18,14 @@ export function useDebt(debtId?: DebtId) {
   const updateMember = useDebtStore(state => state.updateMember);
   const removeMember = useDebtStore(state => state.removeMember);
 
+  const allDebts = useMemo(() => 
+    debtsOrder.map(id => debts[id]).filter(Boolean), 
+    [debts, debtsOrder]
+  );
   const globalActions = useMemo(() => ({
-    addDebt,
-    getAllDebts: () => debtsOrder.map(id => allDebts[id]).filter(Boolean)
-  }), [allDebts, debtsOrder, addDebt]);
+    allDebts,
+    addDebt
+  }), [addDebt, allDebts]);
 
   // Actions for the debtId
   const actions = useMemo(() => {

@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/homepage/HomePage';
 import ExpensesPage from './pages/debts/expenses/ExpensesPage';
-import EditMemberPage from './pages/debts/members/EditMemberPage';
-import MembersPage from './pages/debts/members/MembersPage';
+import EditMemberPage from './pages/debts/group/EditMemberPage';
+import MembersPage from './pages/debts/group/MembersPage';
 import SimplifiedDebtsPage from './pages/debts/summary/SimplifiedDebtsPage';
 import { DividyIcon, RootLayout } from './shared';
 

@@ -85,12 +85,13 @@ export function MemberForm({
             icon={<DetailIcon className='text-zinc-900' />}
             onIconClick={() => setShowDetail(!showDetail)}
             className={inputsClassName}
+            placeholder='Ej: Vitolo'
           />
           <InputError error={errors.name}></InputError>
         </div>
         {showDetail && (
           <>
-            <div>
+            {/* <div>
               <Input
                 label='Email'
                 type='email'
@@ -99,7 +100,7 @@ export function MemberForm({
                 className={inputsClassName}
               />
               <InputError error={errors.email}></InputError>
-            </div>
+            </div> */}
 
             <div>
               <Input

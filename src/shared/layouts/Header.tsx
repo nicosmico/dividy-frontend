@@ -16,7 +16,7 @@ export interface NavigationLink {
 }
 
 const navLinks: NavigationLink[] = [
-  { text: 'Dividir gastos', href: '/split-bills' },
+  { text: 'Dividir gastos', href: '/split-expenses' },
   // { text: '¿Cómo funciona?', href: '/how-it-works' },
 ];
 export function Header() {
