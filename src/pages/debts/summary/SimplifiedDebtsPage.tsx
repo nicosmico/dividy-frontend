@@ -14,7 +14,7 @@ import {
 } from 'src/features/split-bills/types/transaction';
 import { RoundedButton, RoundedLink, Status, useSnackBar } from 'src/shared';
 
-export function SimplifiedDebts() {
+export function SimplifiedDebtsPage() {
   const { members } = useMembers();
   const { billsOrder, bills } = useBills();
   const { showMessage } = useSnackBar();
@@ -81,7 +81,7 @@ export function SimplifiedDebts() {
 
         <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
-            to='../bills'
+            to='../expenses'
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
           >
             <IconArrowNarrowLeft></IconArrowNarrowLeft>
@@ -100,4 +100,4 @@ export function SimplifiedDebts() {
   );
 }
 
-export default SimplifiedDebts;
+export default SimplifiedDebtsPage;

@@ -1,13 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/homepage/HomePage';
-import BillsPage from './pages/split-bills/bills/BillsPage';
-import EditMemberPage from './pages/split-bills/members/EditMemberPage';
-import MembersPage from './pages/split-bills/members/MembersPage';
-import SimplifiedDebts from './pages/split-bills/total/SimplifiedDebts';
+import ExpensesPage from './pages/debts/expenses/ExpensesPage';
+import EditMemberPage from './pages/debts/members/EditMemberPage';
+import MembersPage from './pages/debts/members/MembersPage';
+import SimplifiedDebtsPage from './pages/debts/summary/SimplifiedDebtsPage';
 import { DividyIcon, RootLayout } from './shared';
 
-const SplitBillsPage = lazy(() => import('./pages/split-bills/SplitBillsPage'));
+const SplitExpensesPage = lazy(() => import('./pages/debts/SplitExpensesPage'));
 
 const AppRoutes = () => (
   <Suspense
@@ -23,13 +23,13 @@ const AppRoutes = () => (
 
         <Route path='home' element={<HomePage></HomePage>} />
 
-        <Route path='/split-bills' element={<SplitBillsPage />}>
+        <Route path='/split-expenses' element={<SplitExpensesPage />}>
           <Route path='' element={<Navigate to='members' replace={true} />} />
           <Route path='members' element={<MembersPage />}>
             <Route path=':memberId/edit' element={<EditMemberPage />} />
           </Route>
-          <Route path='bills' element={<BillsPage />} />
-          <Route path='simplified-debts' element={<SimplifiedDebts />} />
+          <Route path='expenses' element={<ExpensesPage />} />
+          <Route path='simplified-debts' element={<SimplifiedDebtsPage />} />
         </Route>
       </Route>
     </Routes>

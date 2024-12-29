@@ -46,7 +46,7 @@ export function MembersPage() {
 
         <div className='bottom-2 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3'>
           <RoundedLink
-            to='../bills'
+            to='../expenses'
             disabled={membersOrder.length < 2}
             className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
           >

@@ -19,7 +19,7 @@ export function NavigationStep() {
       icon: <IconUsers size={20} />,
     },
     {
-      path: 'bills',
+      path: 'expenses',
       icon: <IconReceipt size={20} />,
     },
     {

@@ -12,7 +12,7 @@ import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Bill } from 'src/features/split-bills/types/bill';
 import { RoundedButton, RoundedLink, Status } from 'src/shared';
 
-export function BillsPage() {
+export function ExpensesPage() {
   const { bills, billsOrder, addBill, updateBill, deleteBill } = useBills();
   const { members, membersOrder } = useMembers();
   const [billsForms, setBillsForms] = useState<Partial<Bill>[]>(
@@ -115,4 +115,4 @@ export function BillsPage() {
   );
 }
 
-export default BillsPage;
+export default ExpensesPage;

@@ -1,21 +1,21 @@
-import { IconArrowNarrowRight, IconCheck } from '@tabler/icons-react';
+import { IconArrowNarrowRight, IconReceipt, IconReceipt2, IconUsers } from '@tabler/icons-react';
 import { Card, Container, RoundedLink } from 'src/shared';
 
 const howItWorks = [
   {
     title: 'Agrega miembros',
-    description:
-      'Ingresa los nombres de las personas que compartirán los gastos',
+    description: 'Ingresa los nombres de las personas que compartirán los gastos',
+    icon: <IconUsers size={25} className='text-amber-500' />
   },
   {
     title: 'Registra gastos',
-    description:
-      'Añade cada gasto indicando quién pagó y entre quiénes se divide',
+    description: 'Añade cada gasto indicando quién pagó y entre quiénes se divide',
+    icon: <IconReceipt size={25} className='text-amber-500' />
   },
   {
     title: 'Simplifica deudas',
-    description:
-      'Dividy calculará automáticamente la forma más eficiente de saldar las cuentas y te permitirá copiar el resumen de las cuentas para que lo puedas compartir donde quieras',
+    description: 'Dividy calculará automáticamente la forma más eficiente de saldar las cuentas y te permitirá copiar el resumen de las cuentas para que lo puedas compartir donde quieras',
+    icon: <IconReceipt2 size={25} className='text-amber-500' />
   },
 ];
 export function HomePage() {
@@ -28,7 +28,7 @@ export function HomePage() {
           forma más fácil de calcular quién debe qué a quién 💸
         </h1>
         <RoundedLink
-          to='/split-bills'
+          to='/split-expenses'
           className='w-full bg-zinc-800 px-6 text-gray-50 shadow-sm'
         >
           Dividir gastos
@@ -42,11 +42,11 @@ export function HomePage() {
         <ul className='space-y-2 text-left'>
           {howItWorks.map((step, index) => (
             <li className='flex flex-col' key={index}>
-              <div className='flex gap-2'>
-                <IconCheck className='text-amber-500' />
+              <div className='flex gap-1'>
+                {step.icon}
                 <h3 className='font-medium'>{step.title} </h3>
               </div>
-              <p className='ml-8 text-sm'>{step.description}</p>
+              <p className='ml-7 text-sm'>{step.description}</p>
             </li>
           ))}
         </ul>
@@ -55,9 +55,11 @@ export function HomePage() {
           <p>Notas:</p>
           <ul className='list-inside list-disc'>
             <li>
-              Por el momento, Dividy solo funciona con Pesos Chilenos (CLP) y
-              monedas que no utilizan decimales. Además, toda la información se
-              guarda en tu navegador.
+              Por el momento, Dividy solo funciona con
+              monedas que no utilizan decimales, como Pesos Chilenos (CLP).
+            </li>
+            <li>
+              Toda la información se guarda en tu navegador.
             </li>
             <li>
               Pronto podrás compartir los resúmenes de cuentas con tus amigos,
