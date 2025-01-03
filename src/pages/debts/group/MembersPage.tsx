@@ -1,17 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { MemberList } from 'src/features/split-bills';
 import {
   MemberForm,
   TMemberForm,
 } from 'src/features/split-bills/components/MemberForm';
 import { useDebt } from 'src/features/split-bills/hooks/useDebt';
+import useUrlDebt from 'src/features/split-bills/hooks/useUrlDebt';
 import { Avatar } from 'src/features/split-bills/services/avatar';
 import { NewMember } from 'src/features/split-bills/types/debts';
-import { debounce, Input, InputError, RoundedLink } from 'src/shared';
+import { Input, InputError, RoundedLink } from 'src/shared';
 import { z } from 'zod';
 
 const debtSchema = z.object({
@@ -22,11 +23,9 @@ export type DebtSchema = z.infer<typeof debtSchema>;
 export function MembersPage() {
   const navigate = useNavigate();
 
-  const { debtId: debtIdParam } = useParams();
-  const debtId = debtIdParam !== 'new' ? debtIdParam : undefined;
+  const debt = useUrlDebt();
 
-  const { addDebt, updateDebt, debts, addMember, removeMember, indexedDebts } = useDebt();
-  const debt = debtId ? indexedDebts[debtId] : undefined;
+  const { addDebt, updateDebt, debts, addMember, removeMember } = useDebt();
 
   useEffect(() => {
     console.log(debts);
@@ -54,19 +53,12 @@ export function MembersPage() {
   };
 
   const onValidDebtTitle = ({ title }: DebtSchema) => {
-    if (debtId) {
-      updateDebt(debtId, { title });
+    if (debt?.id) {
+      updateDebt(debt.id, { title });
     } else {
       handleAddDebt(title);
     }
   };
-
-  const handleDebtTitleChange = useCallback(
-    debounce(() => {
-      handleSubmit(onValidDebtTitle, (e) => console.warn(e))();
-    }, 1000),
-    [onValidDebtTitle]
-  );
 
   const disableNextStep =
     !!formState.errors.title || !debt?.members || debt.members.length < 2;
@@ -92,7 +84,9 @@ export function MembersPage() {
             <div className='space-y-2'>
               <Input
                 register={register('title', {
-                  onChange: handleDebtTitleChange,
+                  onChange: handleSubmit(onValidDebtTitle, (e) =>
+                    console.warn(e)
+                  ),
                 })}
                 label='Título de grupo'
                 placeholder='Ej: Viaje a Dichato'
@@ -111,7 +105,7 @@ export function MembersPage() {
           </div>
           <MemberList
             members={debt?.members ?? []}
-            onDelete={(memberId) => debtId && removeMember(debtId, memberId)}
+            onDelete={(memberId) => debt?.id && removeMember(debt.id, memberId)}
             onEdit={(member) => navigate(`${member.id}/edit`)}
           />
         </div>

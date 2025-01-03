@@ -1,32 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MemberForm } from 'src/features/split-bills';
 import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
-import useMembers from 'src/features/split-bills/hooks/useMembers';
+import { useDebt } from 'src/features/split-bills/hooks/useDebt';
+import useUrlDebt from 'src/features/split-bills/hooks/useUrlDebt';
 import { SubmitButton } from 'src/features/split-bills/types/forms';
-import { Member } from 'src/features/split-bills/types/member';
 import { Dialog, useSnackBar } from 'src/shared';
 
 export function EditMemberPage() {
+  const debt = useUrlDebt();
+  const { updateMember } = useDebt();
+
   const { memberId } = useParams();
-  const { members, updateMember } = useMembers();
-  const [member, setMember] = useState<Member | undefined>();
+  const member = useMemo(
+    () => debt?.members.find((m) => m.id === memberId),
+    [debt, memberId]
+  );
   const [open, setOpen] = useState(true);
   const { showMessage } = useSnackBar();
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!memberId) return;
-    setMember(members[memberId]);
-  }, [setMember, members, memberId]);
 
   const handleClose = () => {
     navigate('..');
   };
 
   const handleEditMember = (values: TMemberForm) => {
-    updateMember(memberId!, values);
+    updateMember(debt!.id, memberId!, values);
     setOpen(false);
     showMessage('Miembro editado ✨');
   };
