@@ -23,13 +23,19 @@ const AppRoutes = () => (
 
         <Route path='home' element={<HomePage></HomePage>} />
 
-        <Route path='/split-expenses' element={<SplitExpensesPage />}>
-          <Route path='' element={<Navigate to='members' replace={true} />} />
-          <Route path='members' element={<MembersPage />}>
-            <Route path=':memberId/edit' element={<EditMemberPage />} />
+        <Route path='/debts' element={<SplitExpensesPage />}>
+          <Route
+            path=''
+            element={<Navigate to='new/members' replace={true} />}
+          />
+
+          <Route path=':debtId'>
+            <Route path='members' element={<MembersPage />}>
+              <Route path=':memberId/edit' element={<EditMemberPage />} />
+            </Route>
+            <Route path='expenses' element={<ExpensesPage />} />
+            <Route path='simplified-debts' element={<SimplifiedDebtsPage />} />
           </Route>
-          <Route path='expenses' element={<ExpensesPage />} />
-          <Route path='simplified-debts' element={<SimplifiedDebtsPage />} />
         </Route>
       </Route>
     </Routes>

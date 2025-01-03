@@ -3,7 +3,6 @@ export type NewDebt = Omit<Debt, 'id'>;
 export type Debt = {
     id: DebtId,
     title: string,
-    owner: MemberId,
     members: Member[],
     expenses: Expense[]
 }

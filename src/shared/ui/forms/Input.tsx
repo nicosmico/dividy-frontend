@@ -19,8 +19,8 @@ export function Input({ label, icon, onIconClick, register, ...props }: Props) {
       <input
         id={id}
         placeholder={props.placeholder ?? '_'}
-        {...props}
         {...register}
+        {...props}
         className={twMerge(
           'text-md peer block w-full rounded-xl border-gray-200 p-4 outline-zinc-800 placeholder:text-transparent autofill:pb-2 autofill:pt-6 focus:border-zinc-800 focus:pb-2 focus:pt-6 focus:ring-zinc-800 disabled:pointer-events-none disabled:opacity-50 [&:not(:placeholder-shown)]:pb-2 [&:not(:placeholder-shown)]:pt-6',
           props.className,
