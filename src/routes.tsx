@@ -5,7 +5,8 @@ import BillsPage from './pages/split-bills/bills/BillsPage';
 import EditMemberPage from './pages/split-bills/members/EditMemberPage';
 import MembersPage from './pages/split-bills/members/MembersPage';
 import SimplifiedDebts from './pages/split-bills/total/SimplifiedDebts';
-import { DividyIcon, RootLayout } from './shared';
+import { DividyIcon, RootLayout, RoundedButton } from './shared';
+import { PageNotFound } from './pages/error/PageNotFound';
 
 const SplitBillsPage = lazy(() => import('./pages/split-bills/SplitBillsPage'));
 
@@ -32,6 +33,8 @@ const AppRoutes = () => (
           <Route path='simplified-debts' element={<SimplifiedDebts />} />
         </Route>
       </Route>
+
+      <Route path='*' element={<PageNotFound />} />
     </Routes>
   </Suspense>
 );
