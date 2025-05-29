@@ -1,5 +1,5 @@
 import AppRoutes from './routes';
-import { SnackBarProvider } from './shared';
+import { DialogMessageProvider, SnackBarProvider } from './shared';
 import { useUpdateBreakpoints } from './shared/breakpoints/useUpdateBreakpoints';
 
 function App() {
@@ -7,9 +7,11 @@ function App() {
 
   return (
     <>
-      <SnackBarProvider>
-        <AppRoutes />
-      </SnackBarProvider>
+      <DialogMessageProvider>
+        <SnackBarProvider>
+          <AppRoutes />
+        </SnackBarProvider>
+      </DialogMessageProvider>
     </>
   );
 }

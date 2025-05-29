@@ -1,4 +1,3 @@
-// src/components/ui/SnackBarProvider.tsx
 import { createContext, useCallback, useState } from 'react';
 import SnackBar from './SnackBar';
 

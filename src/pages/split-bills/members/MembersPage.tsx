@@ -5,13 +5,17 @@ import {
   MemberForm,
   TMemberForm,
 } from 'src/features/split-bills/components/MemberForm';
+import useBills from 'src/features/split-bills/hooks/useBills';
 import useMembers from 'src/features/split-bills/hooks/useMembers';
 import { Avatar } from 'src/features/split-bills/services/avatar';
 import { RoundedLink } from 'src/shared';
+import { useDialogMessage } from 'src/shared/ui/dialog-message/useDialogMessage';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();
+  const { bills, deleteBill, updateBill } = useBills();
   const navigate = useNavigate();
+  const { showDialog } = useDialogMessage();
 
   const handleAddMember = (values: TMemberForm) => {
     addMember({
@@ -22,6 +26,70 @@ export function MembersPage() {
       },
     });
   };
+
+  const handleDeleteMember = (id: string) => {
+    console.log('Delete member', id);
+    const ownBills = Object.values(bills).filter((bill) => bill.paidBy === id);
+    const debtorBills = Object.values(bills).filter((bill) => bill.members.includes(id));
+    const member = members[id];
+
+    const debtorBillsName = debtorBills.map((bill) => `"${bill.name}"`).join(', ').replace(/, ([^,]*)$/, ' y $1');
+    const ownBillsNames = ownBills.map((bill) => `"${bill.name}"`).join(', ').replace(/, ([^,]*)$/, ' y $1');
+
+    // Remove member from bills where are debtor and update the bills
+    const updateDebtorBills = () => {
+      debtorBills.forEach((bill) => {
+        const updatedBill = {
+          ...bill,
+          members: bill.members.filter((memberId) => memberId !== id),
+        };
+        updateBill(bill.id, updatedBill);
+      });
+    }
+
+    if (ownBills.length) {
+      showDialog({
+        title: 'Eliminar miembro',
+        message: `Si eliminas a ${member.name} se eliminarán los gastos que pagó (${ownBillsNames}). También se eliminará de las deudas en las que está. ¿Estás seguro?`,
+        buttons: [
+          {
+            label: 'Cancelar',
+            onClick: () => { },
+          },
+          {
+            label: 'Eliminar',
+            className: 'bg-red-400 text-white',
+            onClick: () => {
+              deleteMember(id);
+              ownBills.forEach((bill) => {
+                deleteBill(bill.id);
+              });
+              updateDebtorBills();
+            }
+          },
+        ],
+      });
+    } else {
+      showDialog({
+        title: 'Eliminar miembro',
+        message: `Si eliminas a ${member.name} también se eliminará de las deudas ${debtorBillsName}. ¿Estás seguro?`,
+        buttons: [
+          {
+            label: 'Cancelar',
+            onClick: () => { },
+          },
+          {
+            label: 'Eliminar',
+            className: 'bg-red-400 text-white',
+            onClick: () => {
+              deleteMember(id);
+              updateDebtorBills();
+            }
+          },
+        ],
+      });
+    }
+  }
 
   return (
     <>
@@ -39,7 +107,7 @@ export function MembersPage() {
 
           <MemberList
             members={membersOrder.map((id) => members[id])}
-            onDelete={deleteMember}
+            onDelete={handleDeleteMember}
             onEdit={(member) => navigate(`${member.id}/edit`)}
           />
         </div>

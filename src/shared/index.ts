@@ -19,6 +19,7 @@ export { Select } from './ui/forms/Select';
 export { SnackBar } from './ui/snack-bar/SnackBar';
 export { SnackBarProvider } from './ui/snack-bar/SnackBarProvider';
 export { useSnackBar } from './ui/snack-bar/useSnackBar';
+export { DialogMessageProvider } from './ui/dialog-message/DialogMessageProvider';
 
 // Layout Components
 export { Header } from './layouts/Header';
