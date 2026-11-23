@@ -8,6 +8,7 @@ import { FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { EntityIcon } from '@/features/icons';
 import {
   MAX_GROUP_NAME_LENGTH,
   MAX_MEMBER_NAME_LENGTH,
@@ -95,17 +96,20 @@ export function NewGroupPage() {
             counter={{ length: groupName.length, max: MAX_GROUP_NAME_LENGTH }}
           >
             {(control) => (
-              <Input
-                {...control}
-                placeholder='Viaje a Pucón'
-                autoComplete='off'
-                {...register('name', {
-                  validate: (value) => {
-                    const result = validateGroupName(value);
-                    return result.ok || result.error.message;
-                  },
-                })}
-              />
+              <div className='flex items-center gap-2.5'>
+                <EntityIcon text={groupName} kind='group' size='header' />
+                <Input
+                  {...control}
+                  placeholder='Viaje a Pucón'
+                  autoComplete='off'
+                  {...register('name', {
+                    validate: (value) => {
+                      const result = validateGroupName(value);
+                      return result.ok || result.error.message;
+                    },
+                  })}
+                />
+              </div>
             )}
           </FormField>
 

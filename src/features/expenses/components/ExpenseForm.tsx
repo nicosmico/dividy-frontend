@@ -35,7 +35,8 @@ import {
   useGroupOperation,
   useServices,
 } from '@/features/groups/data';
-import { MemberAvatar } from '@/features/members';
+import { EntityIcon } from '@/features/icons';
+import { MemberAvatar, useMemberMoods } from '@/features/members';
 import { todayLocal } from '@/lib/dates';
 import { AmountInput } from './AmountInput';
 import {
@@ -120,6 +121,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   });
 
   const values = useWatch({ control });
+  const moods = useMemberMoods(group);
   const amount = parseAmount(values.amount ?? '');
   const shares =
     Number.isInteger(amount) && amount > 0
@@ -236,12 +238,19 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           }}
         >
           {(c) => (
-            <Input
-              {...c}
-              autoComplete='off'
-              placeholder='Ej: Supermercado'
-              {...register('description')}
-            />
+            <div className='flex items-center gap-2.5'>
+              <EntityIcon
+                text={values.description ?? ''}
+                kind='expense'
+                size='header'
+              />
+              <Input
+                {...c}
+                autoComplete='off'
+                placeholder='Ej: Supermercado'
+                {...register('description')}
+              />
+            </div>
           )}
         </FormField>
 
@@ -346,7 +355,11 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                           )
                         }
                       />
-                      <MemberAvatar member={member} className='size-7' />
+                      <MemberAvatar
+                        member={member}
+                        mood={moods.get(member.id)}
+                        className='size-7'
+                      />
                       <Label
                         htmlFor={id}
                         className='min-w-0 flex-1 cursor-pointer py-2 [overflow-wrap:anywhere]'

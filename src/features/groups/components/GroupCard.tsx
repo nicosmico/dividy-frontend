@@ -8,7 +8,8 @@ import {
   getTotalSpent,
   type Group,
 } from '@/domain';
-import { MemberAvatar } from '@/features/members';
+import { EntityIcon } from '@/features/icons';
+import { MemberAvatar, useMemberMoods } from '@/features/members';
 import { formatDate } from '@/lib/dates';
 
 const MAX_AVATARS = 5;
@@ -18,6 +19,7 @@ export function GroupCard({ group }: { group: Group }) {
   const hidden = group.members.length - shown.length;
   const count = group.members.length;
   const pending = getPendingAmount(group);
+  const moods = useMemberMoods(group);
 
   return (
     <Link
@@ -25,13 +27,16 @@ export function GroupCard({ group }: { group: Group }) {
       className='block rounded-card outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
     >
       <Card className='gap-3 rounded-card p-[1.125rem] transition-colors hover:bg-card/70'>
-        <div className='flex items-start justify-between gap-3'>
-          <h2 className='min-w-0 text-lg font-semibold break-words'>
-            {group.name}
-          </h2>
-          <p className='shrink-0 text-lg font-semibold tabular-nums'>
-            {formatAmount(getTotalSpent(group))}
-          </p>
+        <div className='flex items-center gap-3.5'>
+          <EntityIcon text={group.name} kind='group' size='card' />
+          <div className='flex min-w-0 flex-1 items-start justify-between gap-3'>
+            <h2 className='min-w-0 text-lg font-semibold break-words'>
+              {group.name}
+            </h2>
+            <p className='shrink-0 text-lg font-semibold tabular-nums'>
+              {formatAmount(getTotalSpent(group))}
+            </p>
+          </div>
         </div>
         <div className='flex items-center justify-between gap-3'>
           <div className='flex items-center'>
@@ -39,6 +44,7 @@ export function GroupCard({ group }: { group: Group }) {
               <MemberAvatar
                 key={member.id}
                 member={member}
+                mood={moods.get(member.id)}
                 className='-ml-2 size-8 ring-2 ring-card first:ml-0'
               />
             ))}
