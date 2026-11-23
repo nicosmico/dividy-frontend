@@ -36,7 +36,7 @@ src/
     ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
-    groups/            data/ (hooks y contexto), components/, pages/ (GroupsPage, NewGroupPage, GroupLayout)
+    groups/            data/ (hooks y contexto), components/ (Welcome: bienvenida animada sin grupos), pages/ (GroupsPage, NewGroupPage, GroupLayout)
     members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), useMemberMoods (carita según el saldo, a partir de `computeBalances`), diálogos de
                        renombrar y eliminar miembro (el de eliminar solo para miembros con movimientos)
     expenses/          ExpensesTab (lista por fecha), ExpenseDialog + ExpenseForm (crear/editar/eliminar),
@@ -44,7 +44,9 @@ src/
                        dominio), expense-list.ts (orden y agrupación por fecha)
     icons/             suggestIcon (función pura) + keywords.ts (diccionario) + ENTITY_ICONS (clave → Lucide)
                        + EntityIcon (tile). Calculado al mostrar; nada se guarda (decisión 89)
-    balances/          BalancesTab: SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
+    explanation/       buildExplanation(group) (pura: tramos por gasto de lo que pagó cada uno y de su parte, saldos, transferencias sugeridas y color por gasto, con `computeShares`, `computeBalances` y `suggestTransfers`), buildLegend, narrate (texto de cada paso), buildExampleGroup / settleGroup (el ejemplo de la bienvenida, en memoria),
+                       ExplanationPlayer (animación de 4 pasos; columnas verticales hasta 4 miembros, filas desde 5; CSS transitions) y LazyExplanationPlayer (su propio chunk)
+    balances/          BalancesTab: PaidVsShareChart ("Pagó vs. su parte", tramos con tooltip, leyenda, tabla y botón "Ver cómo se calculó" que abre la animación en un ResponsiveDialog), SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
                        PaymentsList, ShareSummaryButton (compartir o copiar el resumen)
   hooks/               use-media-query, use-theme (tema claro/oscuro; ver docs/design-system.md)
   lib/                 utils (cn), dates (todayLocal, formatDate), plural, id, query-client,

@@ -108,6 +108,22 @@ Si cambias un token, recalcula los pares que lo usan y corre `npm run test:e2e` 
 - `<meta name="theme-color">` tiene una versión para claro (`#F4F7F2`) y otra para oscuro (`#0B1730`), con `media`; al elegir un tema a mano, `useTheme` iguala ambas. El `theme_color` del manifest es el del modo claro, porque un manifest no puede depender del tema.
 - Para ver el modo oscuro en pruebas E2E: `test.use({ colorScheme: 'dark' })` o `page.emulateMedia({ colorScheme: 'dark' })`.
 
+## Colores de gráfico
+
+Siete tokens exclusivos de la visualización "Pagó vs. su parte" y de la animación (decisión 92). Se usan con `var(--chart-N)` (o `bg-chart-N`); **nunca** para saldos: el verde y el rojo quedan reservados para "Le deben" y "Debe".
+
+| Token                   | Claro     | Oscuro    | Color    |
+| ----------------------- | --------- | --------- | -------- |
+| `--chart-1`             | `#2A78D6` | `#3987E5` | azul     |
+| `--chart-2`             | `#EB6834` | `#D95926` | naranjo  |
+| `--chart-3`             | `#1BAF7A` | `#199E70` | aqua     |
+| `--chart-4`             | `#EDA100` | `#C98500` | amarillo |
+| `--chart-5`             | `#E87BA4` | `#D55181` | magenta  |
+| `--chart-6`             | `#6250D6` | `#9085E9` | violeta  |
+| `--chart-other` (Otros) | `#8D99AE` | `#7D8BA3` | gris     |
+
+Asignación (la hace `buildExplanation`, `src/features/explanation`): los gastos se ordenan por monto descendente (a igual monto, por `createdAt`) y reciben, según su lugar, **1 a 6**: los seis colores sólidos; **7 a 12**: los mismos seis con rayas diagonales (`fillStyle` alterna el color con `--card`); **13 en adelante**: gris "Otros" (la leyenda los agrupa en una fila "Otros (N gastos)"; el tooltip sigue nombrando cada gasto). El color nunca va solo: cada tramo tiene nombre accesible ("Cabaña: $30.000"), la leyenda lleva ícono, nombre y monto, y hay una tabla equivalente ("Ver como tabla").
+
 ## Logo
 
 Cuadrado redondeado con el símbolo de división girado 45° (una diagonal y dos puntos). Claro: cuadrado navy `#14305F`, símbolo menta `#D6FEC2`. Oscuro: invertido. El componente `DividyLogo` lo dibuja con los tokens `--logo-bg` y `--logo-fg`; `public/favicon.svg` es el mismo dibujo con la versión navy y colores fijos (es la del ícono de la app). Si cambias el logo, regenera los PNG de la PWA con `PW_CHROMIUM_PATH=/ruta/a/chrome node scripts/generate-icons.mjs`.

@@ -233,7 +233,7 @@ Mockups aprobados en el lienzo de diseño "Dividy · Nueva paleta" (artefacto pr
 
 ### Ronda 14 · Íconos y caritas (implementación)
 
-Primera mitad del ítem "Íconos y visualización" (decisiones 89, 91 y 93). Quedan la bienvenida animada (90) y el gráfico de Saldos con "Ver cómo se calculó" (92).
+Primera mitad del ítem "Íconos y visualización" (decisiones 89, 91 y 93). El vocabulario (91) y las caritas (93) quedaron resueltos aquí; la bienvenida animada (90) y el gráfico de Saldos (92) se hicieron en la Ronda 15.
 
 106. **Módulo `src/features/icons`** → `suggestIcon(text, kind)` (pura, sin React), diccionario en `keywords.ts`, mapa clave → Lucide en `entity-icons.ts` y `EntityIcon`. Se normaliza (minúsculas, sin tildes por NFD, palabras por no-letras), se ignoran los conectores (`de`, `la`, `al`…), se prueban plurales (`-s`, `-es`, `-ces`→`z`) y la coincidencia es por palabra completa. Gana la primera palabra con coincidencia; en la misma posición, la frase más larga. Documentado en `docs/design-system.md`.
 107. **Palabras ambiguas** → "arriendo" solo es la casa (cuentas); "arriendo cabaña/depto/hotel" es alojamiento y "arriendo auto/camioneta" es auto (frases). "pasaje" solo es bus; "pasaje avión/aéreo", avión. "gas" es cuenta de la casa (llama); la bencina del auto es "bencina". "once" y "desayuno" usan la taza. "té" (sin tilde, "te") coincide como palabra suelta: es el costo de entender "té" (el pronombre "te" casi no aparece en una descripción de gasto). "viaje" es avión también en gastos.
@@ -243,6 +243,17 @@ Primera mitad del ítem "Íconos y visualización" (decisiones 89, 91 y 93). Que
 111. **Vocabulario** → el desglose de Saldos dice "Pagó" y "Su parte" (también en cada gasto del desglose, antes "Le tocó", y en la fórmula "Saldo = pagó − su parte + …"). `CONTEXT.md` anota "Su parte" en Share y Balance. No hay otros textos con "Le corresponde" en la interfaz ni en el resumen copiado.
 112. **Tests** → tabla de más de 100 casos de `suggestIcon` y propiedades con fast-check (no lanza error y siempre devuelve una clave válida), tests de moods y de componentes, E2E (Viaje a Pucón → avión, "Uber al terminal" → taxi, caritas tristes y luego felices al saldar) y axe en claro y oscuro sobre las pantallas existentes.
 
+### Ronda 15 · Bienvenida animada y gráfico (implementación)
+
+Segunda mitad del ítem "Íconos y visualización" (decisiones 90 y 92).
+
+113. **Datos desde el dominio** → `buildExplanation(group)` (`src/features/explanation`, pura y con tests de tabla y de propiedades) entrega, por miembro, lo que pagó y su parte por gasto (con `computeShares`), los pagos enviados y recibidos y el saldo (`computeBalances`), más las transferencias (`suggestTransfers`) y el color de cada gasto. Propiedades: los tramos suman lo pagado y la parte, pagado − parte + enviados − recibidos = saldo, y cada gasto recibe un solo color según su rango.
+114. **Colores** → tokens `--chart-1..6` y `--chart-other` en `index.css` (claro y oscuro) y regla de asignación (1–6 sólidos, 7–12 rayas, 13+ "Otros") documentadas en `docs/design-system.md`.
+115. **Bienvenida** → `Welcome` reemplaza a `WelcomeCard`: el ejemplo es un grupo real en memoria (`buildExampleGroup`); en el paso 4 las caritas salen de `computeMemberMoods` sobre el grupo tras registrar en memoria los pagos sugeridos (`settleGroup`). Avanza sola cada 4 s en loop con anterior / pausar / siguiente, `aria-live`, sin autoplay ni transiciones con `prefers-reduced-motion` (se oculta Pausar) y se detiene con la pestaña oculta. El título del h1 es "Divide gastos sin enredos" (el del mockup).
+116. **Un solo componente** → `ExplanationPlayer` sirve para la bienvenida y para "Ver cómo se calculó" (en un `ResponsiveDialog`): columnas verticales hasta 4 miembros, filas horizontales desde 5. En el diálogo el último paso muestra el grupo tal como está: pagos ya registrados, transferencias que faltan o "¡Están al día!", y las caritas reales. Se carga con `lazy` en su propio chunk.
+117. **Gráfico** → `PaidVsShareChart` arriba de Saldos cuando hay gastos: dos barras por miembro en escala común, tramos con 2 px de separación y monto al final, leyenda en dos columnas, tabla equivalente en un `<details>` "Ver como tabla". Cada barra es un solo punto de tabulación y las flechas / Inicio / Fin pasan de un tramo a otro; el tooltip (Radix Popover, sin robar el foco) se abre al enfocar, pasar el mouse o tocar.
+118. **Desviaciones del mockup** → los montos de cada columna van debajo de las barras en dos filas (Pagó a la izquierda, Su parte a la derecha) para que no se choquen a 360 px; los tramos de la animación usan el color de su gasto (el mockup pintaba una barra lisa); los textos de cada paso se generan de los datos (por eso dicen "Ana pagó Carne" y no "la carne").
+
 ## Fases 4 y 5 · Roadmap acordado
 
 Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece su propio ADR o ronda de decisiones antes de empezar.
@@ -250,7 +261,7 @@ Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece s
 ### Fase 4 · Consolidar la app local (en este orden)
 
 1. ✅ **Tema de colores claro y oscuro + design system en código** (Ronda 12, decisiones 87–88; implementado en la Ronda 13). Incluye logo, favicon e íconos de la PWA y la revisión de contraste en ambos temas. **Pendiente de este ítem:** la pasada con lector de pantalla (VoiceOver/TalkBack), que es manual.
-2. **Íconos y visualización** (Ronda 12, decisiones 89–93): ícono automático de grupos y gastos, bienvenida animada, gráfico "Pagó vs. su parte" con "Ver cómo se calculó" y caritas según el saldo. ✅ Íconos, caritas y vocabulario (Ronda 14). **Pendiente:** bienvenida animada (90) y gráfico en Saldos (92).
+2. ✅ **Íconos y visualización** (Ronda 12, decisiones 89–93): ícono automático de grupos y gastos, bienvenida animada, gráfico "Pagó vs. su parte" con "Ver cómo se calculó" y caritas según el saldo. Íconos, caritas y vocabulario (Ronda 14); bienvenida animada y gráfico (Ronda 15).
 3. **Calidad continua.** Presupuesto de bundle en CI, pruebas visuales de regresión (capturas a 390 y 1280 px, claro y oscuro) y un E2E del aviso "Hay una nueva versión" (simular dos builds). Va después del tema y la visualización para que las capturas de referencia se tomen con el diseño definitivo.
 4. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es una unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
 5. **Historial de actividad y edición de pagos.** Ver qué pasó en el grupo ("Beto eliminó Supermercado $10.000") para responder "¿por qué cambió mi saldo?", y poder editar monto y fecha de un pago. Es también la base natural de la sincronización de la Fase 5.
