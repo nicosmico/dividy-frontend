@@ -48,7 +48,7 @@ describe('Mis grupos', () => {
     expect(within(items[0]).getByText('$15.000')).toBeInTheDocument();
     expect(within(items[0]).getByText('3 miembros')).toBeInTheDocument();
     expect(within(items[0]).getByText(/20 abr 2026/)).toBeInTheDocument();
-    expect(within(items[0]).getByAltText('Caro')).toBeInTheDocument();
+    expect(await within(items[0]).findByAltText('Caro')).toBeInTheDocument();
     expect(within(items[1]).getByText('$0')).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Bienvenido a Dividy' })

@@ -44,8 +44,8 @@ describe('Pestaña Miembros', () => {
       groups: [makeGroup({ members: ['Ana', 'Beto'] })],
     });
     expect(await screen.findByText('2 miembros')).toBeInTheDocument();
-    expect(screen.getByAltText('Ana')).toBeInTheDocument();
-    expect(screen.getByAltText('Beto')).toBeInTheDocument();
+    expect(await screen.findByAltText('Ana')).toBeInTheDocument();
+    expect(await screen.findByAltText('Beto')).toBeInTheDocument();
   });
 
   it('agrega un miembro y valida duplicados', async () => {
