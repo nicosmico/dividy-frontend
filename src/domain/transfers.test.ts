@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { suggestTransfers } from './transfers';
+import { getPendingAmount, suggestTransfers } from './transfers';
 import { billsGroup, makeGroup } from './test-utils/fixtures';
 
 describe('suggestTransfers', () => {
@@ -58,5 +58,34 @@ describe('suggestTransfers', () => {
     expect(suggestTransfers(group)).toEqual([
       { fromId: 'B', toId: 'A', amount: 300 },
     ]);
+  });
+});
+
+describe('getPendingAmount', () => {
+  it('es 0 si el grupo está al día o no tiene movimientos', () => {
+    expect(getPendingAmount(makeGroup({ members: ['A', 'B'] }))).toBe(0);
+    const settled = makeGroup({
+      members: ['A', 'B'],
+      expenses: [{ amount: 1000, payer: 'A', among: ['A', 'B'] }],
+      payments: [{ from: 'B', to: 'A', amount: 500 }],
+    });
+    expect(getPendingAmount(settled)).toBe(0);
+  });
+
+  it('suma las transferencias sugeridas', () => {
+    const group = makeGroup({
+      members: ['A', 'B', 'C'],
+      expenses: [{ amount: 10_000, payer: 'A', among: ['A', 'B', 'C'] }],
+    });
+    expect(getPendingAmount(group)).toBe(6666);
+  });
+
+  it('descuenta los pagos ya registrados', () => {
+    const group = makeGroup({
+      members: ['A', 'B', 'C'],
+      expenses: [{ amount: 10_000, payer: 'A', among: ['A', 'B', 'C'] }],
+      payments: [{ from: 'B', to: 'A', amount: 3333 }],
+    });
+    expect(getPendingAmount(group)).toBe(3333);
   });
 });

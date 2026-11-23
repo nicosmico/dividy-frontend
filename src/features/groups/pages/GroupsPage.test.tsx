@@ -57,4 +57,31 @@ describe('Mis grupos', () => {
     await user.click(screen.getByRole('link', { name: /Casa/ }));
     await waitFor(() => expect(currentPath()).toBe('/groups/old/expenses'));
   });
+
+  it('cada tarjeta muestra "Al día" o cuánto falta por saldar', async () => {
+    const settled = {
+      ...makeGroup({ members: ['Ana', 'Beto'], name: 'Casa' }),
+      id: 'settled',
+      updatedAt: '2026-01-10T10:00:00.000Z',
+    };
+    const pending = {
+      ...makeGroup({
+        members: ['Ana', 'Beto', 'Caro'],
+        name: 'Viaje',
+        expenses: [
+          { amount: 10_000, payer: 'Ana', among: ['Ana', 'Beto', 'Caro'] },
+        ],
+        payments: [{ from: 'Beto', to: 'Ana', amount: 1000 }],
+      }),
+      id: 'pending',
+      updatedAt: '2026-04-20T10:00:00.000Z',
+    };
+    renderWithProviders(undefined, { groups: [settled, pending] });
+
+    const items = await screen.findAllByRole('listitem');
+    expect(
+      within(items[0]).getByText('Pendiente: $5.666 por saldar')
+    ).toBeInTheDocument();
+    expect(within(items[1]).getByText('Al día')).toBeInTheDocument();
+  });
 });

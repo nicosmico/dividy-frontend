@@ -44,3 +44,11 @@ export function suggestTransfers(group: Group): SuggestedTransfer[] {
   }
   return transfers;
 }
+
+/**
+ * Total money still to be moved to settle the group: the sum of the suggested
+ * transfers. 0 when the group is settled.
+ */
+export function getPendingAmount(group: Group): Amount {
+  return suggestTransfers(group).reduce((sum, t) => sum + t.amount, 0);
+}

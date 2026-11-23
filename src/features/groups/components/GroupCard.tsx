@@ -1,7 +1,13 @@
 import { Link } from 'react-router';
 
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { formatAmount, getTotalSpent, type Group } from '@/domain';
+import {
+  formatAmount,
+  getPendingAmount,
+  getTotalSpent,
+  type Group,
+} from '@/domain';
 import { MemberAvatar } from '@/features/members';
 import { formatDate } from '@/lib/dates';
 
@@ -11,6 +17,7 @@ export function GroupCard({ group }: { group: Group }) {
   const shown = group.members.slice(0, MAX_AVATARS);
   const hidden = group.members.length - shown.length;
   const count = group.members.length;
+  const pending = getPendingAmount(group);
 
   return (
     <Link
@@ -45,9 +52,21 @@ export function GroupCard({ group }: { group: Group }) {
             {count} {count === 1 ? 'miembro' : 'miembros'}
           </p>
         </div>
-        <p className='text-xs text-muted-foreground'>
-          Actualizado el {formatDate(group.updatedAt)}
-        </p>
+        <div className='flex items-center justify-between gap-3'>
+          {pending === 0 ? (
+            <Badge variant='accent'>Al día</Badge>
+          ) : (
+            <Badge
+              variant='outline'
+              className='border-destructive/40 text-destructive'
+            >
+              Pendiente: {formatAmount(pending)} por saldar
+            </Badge>
+          )}
+          <p className='text-right text-xs text-muted-foreground'>
+            Actualizado el {formatDate(group.updatedAt)}
+          </p>
+        </div>
       </Card>
     </Link>
   );

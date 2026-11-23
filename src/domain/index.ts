@@ -25,7 +25,11 @@ export {
   type MemberBalance,
   type MemberBreakdown,
 } from './balances';
-export { suggestTransfers, type SuggestedTransfer } from './transfers';
+export {
+  getPendingAmount,
+  suggestTransfers,
+  type SuggestedTransfer,
+} from './transfers';
 export {
   addExpense,
   addMember,
