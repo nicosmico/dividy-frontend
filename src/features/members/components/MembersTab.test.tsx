@@ -140,7 +140,7 @@ describe('Pestaña Miembros', () => {
       within(dialog).getByText('Participa en 2 gastos')
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByText('Tiene 1 pago enviados o recibidos')
+      within(dialog).getByText('Tiene 1 pago enviado o recibido')
     ).toBeInTheDocument();
     expect(
       within(dialog).getByRole('button', { name: 'Eliminar a Beto' })

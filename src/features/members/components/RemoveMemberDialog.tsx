@@ -207,8 +207,9 @@ function StrategyDialog({
             {pluralize(impact.participatingExpenses.length, 'gasto', 'gastos')}
           </li>
           <li>
-            Tiene {pluralize(impact.payments.length, 'pago', 'pagos')} enviados
-            o recibidos
+            {impact.payments.length === 1
+              ? 'Tiene 1 pago enviado o recibido'
+              : `Tiene ${impact.payments.length} pagos enviados o recibidos`}
           </li>
         </ul>
 

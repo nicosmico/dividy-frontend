@@ -14,7 +14,7 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 | ---- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
 | 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada |
 | 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada |
-| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Pendiente  |
+| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | En curso   |
 | 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Pendiente  |
 | 4    | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas         | —          |
 
@@ -42,6 +42,8 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 - **Criterio de salida**: cobertura ≥ 95 % en `src/domain`, sin dependencias de React en el dominio.
 
 ### Fase 2 · Nueva UI
+
+**Estado: en curso.** Fase 2a (base de la app, grupos y miembros): **completada**. Fase 2b (gastos, saldos, pagos y resumen): pendiente.
 
 - shadcn/ui + sonner + vaul, iconos lucide. Se eliminan los componentes propios y Zustand.
 - TanStack Query sobre el repositorio.
@@ -136,3 +138,14 @@ Decisiones tomadas en rondas. Las de las rondas 0 vienen del dueño del producto
 ### Ronda 6 · Decisiones de la Fase 2a
 
 40. **Validación por grupo** → `parseDocument` valida cada grupo por separado: los válidos se cargan y cada grupo inválido (forma o invariantes rotas) se omite y se copia a `dividy.corrupted.<ISO>` como `{ reason, group }` (con sufijo `#n` si hay varios en la misma lectura), una sola vez por contenido. Así un grupo roto no deja la app vacía. JSON inválido, sin versión o versión desconocida siguen siendo corrupción del documento entero. El próximo `save` reescribe `dividy` solo con los grupos válidos; los respaldos permanecen.
+41. **Alcance de la 2a** → Base (shadcn/ui, tema, `ResponsiveDialog`, providers, router, error boundary, 404), Mis grupos, Crear grupo, página del grupo (renombrar y eliminar) y pestaña Miembros (agregar, renombrar y eliminar con reasignación o cascada). Gastos y Saldos son placeholders "Próximamente" que reemplaza la 2b. Se eliminó la UI antigua, Zustand y `@tabler/icons-react`.
+42. **shadcn escrito a mano** → El registro de shadcn no es accesible desde el entorno de desarrollo, así que los componentes de `src/components/ui` se escribieron siguiendo el estilo new-york (paquete único `radix-ui`, `vaul`, `sonner`, `lucide-react`) con `components.json` listo para `npx shadcn add`. Se agregaron solo los que se usan; no hay `tabs` (las pestañas son enlaces de ruta en un `nav`) ni `form` (react-hook-form se integra con `FormField`).
+43. **Tema** → Variables de shadcn en `src/index.css`: fondo `#F8F7F1`, tarjetas blancas, primario zinc-900, acento `#FDE68A`, radio 1rem, sombra `shadow-soft`. Solo modo claro. Botones e inputs de 44 px de alto, `prefers-reduced-motion` respetado. Columna `max-w-lg` centrada en todos los tamaños.
+44. **Drawer o Dialog** → `ResponsiveDialog` usa `matchMedia('(min-width: 768px)')` (`useMediaQuery`); sin `matchMedia` (jsdom) asume escritorio. Las confirmaciones simples usan `AlertDialog`.
+45. **Hooks de datos** → `useGroupOperation(groupId).run(fn)` siempre resuelve con `Result<Group, OperationError>`: lee el grupo del repositorio (no de la caché, para no pisar datos nuevos con una pantalla vieja), aplica la función del dominio, hace `touch(group, now())` y guarda. Errores de guardado y grupo inexistente muestran toast y se devuelven como `save_failed` / `group_not_found`. `now` y `newId` se inyectan con `RepositoryProvider`. Las queries no reintentan y lanzan al error boundary (que limpia los errores de queries al volver al inicio).
+46. **Total gastado** → Se agregó `getTotalSpent(group)` al dominio (suma de gastos, sin pagos) con test, para la tarjeta del grupo; la 2b lo reutiliza en la pestaña Gastos.
+47. **Crear grupo** → Nombre y miembros en un solo formulario; Enter agrega un miembro (no envía el formulario); el nombre escrito pero no agregado se incluye al crear; mínimo 2 miembros (regla de la UI, decisión 12). Validación con `validateGroupName` / `validateMemberName`, mensajes del dominio.
+48. **Eliminar miembro** → Sin movimientos: `AlertDialog`. Con movimientos: `ResponsiveDialog` con vista previa (gastos pagados, gastos en que participa, pagos) y `RadioGroup` "Reasignar a…" (+ `Select`) o "Eliminar con sus gastos" (lista `expensesDeletedByCascade`, pagos que se borran y gastos donde las partes de los demás cambian). El botón se habilita al elegir. Al reasignar, los pagos entre ambos miembros se eliminan (el dominio descarta pagos a uno mismo) y el diálogo lo avisa. Los errores del dominio se muestran en el diálogo.
+49. **Avatares** → `@dicebear/core` + `@dicebear/lorelei` (el estilo suelto en vez de `@dicebear/collection`: el bundle es idéntico porque el build elimina los demás estilos, pero los tests no cargan 30 estilos). Cuesta unos 52 kB gzip (bundle total 259 kB gzip; sin code splitting todavía). `mood: 'happy' | 'sad'` elige entre las bocas `happy01-18` y `sad01-09`; semilla = id del miembro, así el avatar no cambia al renombrar. Resultado en caché por semilla y ánimo.
+50. **Tests** → `renderWithProviders` / `renderHookWithProviders` en `src/test/`; Vitest con `pool: 'vmThreads'` (suite de ~7 s a ~3 s). E2E: flujo completo de grupo y miembros, 404 / grupo inexistente y migración desde `members-store` / `bills-store`, en desktop y móvil. `tsconfig.node.json` incluye la lib DOM para los `page.evaluate` de los E2E.
+51. **Pendiente para la 2b / 3** → Gastos, Saldos, pagos y resumen; usar `useGroupOperation`, `ResponsiveDialog`, `FormField`, `todayLocal`, `formatDate` y `MemberAvatar mood='sad'` para quien debe. Code splitting de rutas si el bundle sigue sobre 500 kB. Los avatares no tienen heurística de género por decisión 17.

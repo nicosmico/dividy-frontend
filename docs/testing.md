@@ -22,6 +22,10 @@ Para cualquier grupo válido generado al azar:
 6. Los cálculos son determinísticos: la misma entrada da la misma salida.
 7. Reasignar o eliminar en cascada un miembro deja un grupo válido (sin referencias a ese miembro y sin gastos sin participantes).
 
+## Tests de componentes
+
+`renderWithProviders(ui?, { route, groups, repository, now, newId })` (`src/test/render-with-providers.tsx`) renderiza con QueryClient, `InMemoryGroupRepository`, reloj e ids fijos (`TEST_NOW`, `id1`, `id2`...), toaster y `MemoryRouter`; sin `ui` renderiza `<AppRoutes />` completo en `route`. Devuelve `user` (user-event) y el `repository`, para verificar lo guardado, y `currentPath()` para verificar la navegación. `renderHookWithProviders` hace lo mismo para hooks. Vitest corre con `pool: 'vmThreads'` (un jsdom por worker, sin perder aislamiento entre archivos).
+
 ## Convenciones
 
 - Los tests describen comportamiento en español del dominio (`it('reparte el resto de a un peso a los primeros participantes')`).

@@ -26,17 +26,49 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 
 ### `src/app` + `src/features`: interfaz
 
-- `src/app`: arranque, providers (QueryClient, repositorio, toaster), router y error boundary.
-- `src/features/<feature>`: pantallas y componentes de cada área (`groups`, `expenses`, `balances`, `members`). Una feature usa el dominio para calcular y los hooks de datos para leer y escribir.
-- `src/components/ui`: componentes de shadcn/ui (copiados, modificables).
-- `src/lib`: utilidades transversales (`cn`, formato de moneda y fechas).
+```
+src/
+  app/                 main.tsx, App.tsx (BrowserRouter + repositorio real), providers.tsx
+                       (QueryClient + RepositoryProvider + Toaster), router.tsx (AppRoutes),
+                       AppLayout (header + columna max-w-lg), ErrorBoundary, NotFoundPage
+  components/          dividy-logo, form-field, responsive-dialog
+    ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
+                       dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
+  features/
+    groups/            data/ (hooks y contexto), components/, pages/ (GroupsPage, NewGroupPage, GroupLayout)
+    members/           MembersTab, MemberAvatar, diálogos de renombrar y eliminar miembro
+    expenses/          ExpensesTab (placeholder hasta la fase 2b)
+    balances/          BalancesTab (placeholder hasta la fase 2b)
+  hooks/               use-media-query
+  lib/                 utils (cn), dates (todayLocal, formatDate), id, query-client
+  test/                setup.ts, render-with-providers.tsx, test-providers.tsx
+```
 
-Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `domain`; la UI importa ambos. Una feature no importa archivos internos de otra feature.
+- `src/features/<feature>`: pantallas y componentes de cada área. Una feature usa el dominio para calcular y los hooks de datos para leer y escribir.
+- `src/components/ui`: componentes de shadcn/ui (copiados, modificables; ADR 0005).
+- `src/lib`: utilidades transversales (`cn`, fechas locales, ids).
+
+Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `domain`; la UI importa ambos. Una feature no importa archivos internos de otra feature: usa su `index.ts`. La excepción es la capa de datos de grupos, que es la base compartida: las demás features la importan desde `@/features/groups/data` (que no carga páginas, así no hay ciclos con `@/features/groups`, cuyas páginas usan `@/features/members`). Las rutas se ensamblan en `src/app/router.tsx`: `GroupLayout` carga el grupo y lo entrega a la pestaña activa por `Outlet context`.
+
+#### Hooks de datos (`@/features/groups/data`)
+
+- `RepositoryProvider({ repository, now?, newId? })` y `useServices()`: inyectan el `GroupRepository`, el reloj (`now(): string` ISO) y el generador de ids. En producción, `LocalStorageGroupRepository`; en tests, `InMemoryGroupRepository` con `now` y `newId` fijos.
+- `useGroups()` y `useGroup(groupId)` (`data: Group | null`): queries de TanStack Query.
+- `useCurrentGroup(): Group`: el grupo de la ruta, dentro de una pestaña de `GroupLayout`.
+- `useGroupOperation(groupId)` → `{ run(operation), isPending }`. `operation` es una función del dominio `(group) => Result<Group>`, p. ej. `(g) => addExpense(g, input)`. `run` lee el grupo del repositorio, aplica la operación y: si el dominio falla devuelve `{ ok: false, error }` sin guardar; si funciona hace `touch(group, now())`, `repository.save` e invalida las queries (`{ ok: true, value }`). Si el guardado falla (por ejemplo, cuota llena) muestra un toast de error y devuelve `code: 'save_failed'`; `isInfrastructureError(error)` distingue estos casos de los errores de dominio, que el formulario muestra en línea.
+- `useCreateGroup()` → `{ create({ name, memberNames }), isPending }` y `useDeleteGroup()` → `{ remove(groupId): Promise<boolean>, isPending }`.
+
+#### Piezas reutilizables
+
+- `ResponsiveDialog({ open, onOpenChange, title, description?, children })` + `ResponsiveDialogFooter`: Drawer (vaul) bajo 768 px, Dialog desde 768 px. Se usa en todos los formularios.
+- `FormField({ label, error?, hint?, children: (control) => ReactNode })`: label, mensaje de error y `aria-*`; se usa con react-hook-form (`<Input {...control} {...register('x')} />`).
+- `MemberAvatar({ member, mood?: 'happy' | 'sad' })`: avatar `lorelei` generado localmente con `@dicebear/core` + `@dicebear/lorelei`, semilla = id del miembro.
+- `formatAmount` (dominio), `todayLocal()` y `formatDate(value)` (`@/lib/dates`).
 
 ## Flujo de una escritura
 
-1. El usuario guarda un gasto en el drawer.
-2. El hook `useGroupMutation` toma el grupo actual, aplica `addExpense(group, input)` del dominio y, si es válido, llama `repository.save(nextGroup)`.
+1. El usuario guarda un gasto en el drawer (`ResponsiveDialog`).
+2. El hook `useGroupOperation` toma el grupo actual, aplica `addExpense(group, input)` del dominio y, si es válido, llama `repository.save(nextGroup)`.
 3. TanStack Query invalida la query del grupo; la UI recalcula saldos con `computeBalances` (derivados, nunca guardados).
 
 Los saldos y transferencias **no se persisten**: siempre se derivan de gastos y pagos. Así no se pueden desincronizar.
