@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { buttonVariants } from '@/components/ui/button';
 import type { Group } from '@/domain';
 import { useDeleteGroup } from '../data';
 
@@ -44,7 +45,7 @@ export function DeleteGroupDialog({
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
-            className='bg-destructive text-white hover:bg-destructive/90'
+            className={buttonVariants({ variant: 'destructive' })}
             onClick={async (event) => {
               event.preventDefault();
               if (await remove(group.id)) {

@@ -14,8 +14,8 @@ test('instalable: el manifest declara nombre, colores, idioma e íconos', async 
     name: 'Dividy',
     lang: 'es-CL',
     display: 'standalone',
-    theme_color: '#18181b',
-    background_color: '#F8F7F1',
+    theme_color: '#F4F7F2',
+    background_color: '#F4F7F2',
   });
   const icons = manifest.icons as {
     src: string;

@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router';
 
 import { DividyLogo } from '@/components/dividy-logo';
 import { PageFallback } from '@/components/page-fallback';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { MAIN_ID } from '@/lib/focus';
 
 export function AppHeader() {
@@ -10,11 +11,12 @@ export function AppHeader() {
     <header className='mx-auto flex h-16 w-full max-w-lg items-center px-4'>
       <Link
         to='/'
-        className='-ml-1 flex items-center gap-2 rounded-xl p-1 text-xl font-bold tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
+        className='-ml-1 flex items-center gap-2 rounded-xl p-1 text-xl font-extrabold tracking-tight text-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
       >
         <DividyLogo />
         Dividy
       </Link>
+      <ThemeToggle />
     </header>
   );
 }

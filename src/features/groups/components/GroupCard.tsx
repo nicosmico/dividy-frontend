@@ -22,9 +22,9 @@ export function GroupCard({ group }: { group: Group }) {
   return (
     <Link
       to={`/groups/${group.id}`}
-      className='block rounded-2xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
+      className='block rounded-card outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
     >
-      <Card className='gap-3 transition-colors hover:bg-card/70'>
+      <Card className='gap-3 rounded-card p-[1.125rem] transition-colors hover:bg-card/70'>
         <div className='flex items-start justify-between gap-3'>
           <h2 className='min-w-0 text-lg font-semibold break-words'>
             {group.name}
@@ -56,10 +56,7 @@ export function GroupCard({ group }: { group: Group }) {
           {pending === 0 ? (
             <Badge variant='accent'>Al día</Badge>
           ) : (
-            <Badge
-              variant='outline'
-              className='border-destructive/40 text-destructive'
-            >
+            <Badge variant='negative'>
               Pendiente: {formatAmount(pending)} por saldar
             </Badge>
           )}

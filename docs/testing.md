@@ -2,15 +2,15 @@
 
 En una app de plata, los tests son la evidencia de que los números son correctos. La mayor parte del esfuerzo va donde vive el dinero: el dominio.
 
-| Capa          | Herramienta                      | Qué se prueba                                                                                                       | Dónde                                      |
-| ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Dominio       | Vitest                           | Casos concretos en tablas: divisiones, restos, saldos, transferencias, operaciones del grupo, errores de validación | `src/domain/**/*.test.ts`                  |
-| Dominio       | Vitest + fast-check              | Propiedades que deben cumplirse para **cualquier** grupo generado al azar (ver abajo)                               | `src/domain/**/*.property.test.ts`         |
-| Persistencia  | Vitest                           | Suite de contrato del `GroupRepository`, ejecutada contra cada implementación; migraciones del formato guardado     | `src/data/**/*.test.ts`                    |
-| Componentes   | Vitest + Testing Library (jsdom) | Formularios y componentes con lógica: validaciones visibles, lo que se envía al guardar, estados vacíos             | junto al componente                        |
-| End-to-end    | Playwright (desktop y móvil)     | Flujos completos en un navegador real y regresiones de bugs conocidos                                               | `e2e/`                                     |
-| Accesibilidad | Playwright + axe-core            | Auditoría de cada pantalla principal (sin violaciones `serious` ni `critical`) y navegación con teclado             | `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts` |
-| Sin conexión  | Playwright contra `vite preview` | Manifest e íconos, y que tras una carga la app abre y escribe con `context.setOffline(true)`                        | `e2e/offline.spec.ts`                      |
+| Capa          | Herramienta                      | Qué se prueba                                                                                                             | Dónde                                                           |
+| ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Dominio       | Vitest                           | Casos concretos en tablas: divisiones, restos, saldos, transferencias, operaciones del grupo, errores de validación       | `src/domain/**/*.test.ts`                                       |
+| Dominio       | Vitest + fast-check              | Propiedades que deben cumplirse para **cualquier** grupo generado al azar (ver abajo)                                     | `src/domain/**/*.property.test.ts`                              |
+| Persistencia  | Vitest                           | Suite de contrato del `GroupRepository`, ejecutada contra cada implementación; migraciones del formato guardado           | `src/data/**/*.test.ts`                                         |
+| Componentes   | Vitest + Testing Library (jsdom) | Formularios y componentes con lógica: validaciones visibles, lo que se envía al guardar, estados vacíos                   | junto al componente                                             |
+| End-to-end    | Playwright (desktop y móvil)     | Flujos completos en un navegador real y regresiones de bugs conocidos                                                     | `e2e/`                                                          |
+| Accesibilidad | Playwright + axe-core            | Auditoría de cada pantalla principal en claro y oscuro (sin violaciones `serious` ni `critical`) y navegación con teclado | `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts`, `e2e/theme.spec.ts` |
+| Sin conexión  | Playwright contra `vite preview` | Manifest e íconos, y que tras una carga la app abre y escribe con `context.setOffline(true)`                              | `e2e/offline.spec.ts`                                           |
 
 ## Propiedades del dominio
 
@@ -30,7 +30,9 @@ Para cualquier grupo válido generado al azar:
 
 ## Accesibilidad (axe)
 
-`e2e/a11y.spec.ts` usa `@axe-core/playwright` con las etiquetas `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` y `best-practice`, y falla ante cualquier violación `serious` o `critical` (el mensaje lista la regla y los selectores). Audita, en desktop y móvil: Mis grupos vacío, Crear grupo (también con errores), Mis grupos con grupos, Gastos con lista, formulario de gasto abierto (también con errores), Saldos (con el desglose abierto y con el diálogo de pago), Miembros y el diálogo de eliminar miembro (con la opción de reasignar). Si agregas una pantalla o diálogo nuevo, agrega su caso ahí. Los datos de prueba salen de `e2e/seed.ts` (`seedGroups` escribe en `localStorage` antes de que cargue la app).
+`e2e/a11y.spec.ts` usa `@axe-core/playwright` con las etiquetas `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` y `best-practice`, y falla ante cualquier violación `serious` o `critical` (el mensaje lista la regla y los selectores). Audita, en desktop y móvil y **en claro y en oscuro** (`test.use({ colorScheme })`): Mis grupos vacío, Crear grupo (también con errores), Mis grupos con grupos, Gastos con lista, formulario de gasto abierto (también con errores), Saldos (con el desglose abierto y con el diálogo de pago), Miembros y el diálogo de eliminar miembro (con la opción de reasignar). Si agregas una pantalla o diálogo nuevo, agrega su caso ahí. Los datos de prueba salen de `e2e/seed.ts` (`seedGroups` escribe en `localStorage` antes de que cargue la app).
+
+`e2e/theme.spec.ts` cubre el selector de tema: elegir "Oscuro" y recargar (sigue oscuro y sin destello: registra desde `addInitScript` la clase `dark` al crear `<body>` y el fondo cuando React monta), el sistema oscuro sin elección, "Sistema" en vivo y las metas `theme-color`.
 
 `e2e/keyboard.spec.ts` recorre con Tab toda una pantalla comprobando que cada control muestra el foco, que el enlace "Saltar al contenido" es lo primero, que el foco queda atrapado en los diálogos y que vuelve a un lugar lógico al cerrarlos o al borrar algo.
 

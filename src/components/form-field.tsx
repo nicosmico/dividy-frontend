@@ -40,7 +40,7 @@ export function FormField({
             className={cn(
               'text-xs tabular-nums',
               counter.length > counter.max
-                ? 'font-medium text-destructive'
+                ? 'font-medium text-negative'
                 : 'text-muted-foreground'
             )}
           >
@@ -54,7 +54,7 @@ export function FormField({
         'aria-describedby': describedBy,
       })}
       {error ? (
-        <p id={messageId} role='alert' className='text-sm text-destructive'>
+        <p id={messageId} role='alert' className='text-sm text-negative'>
           {error}
         </p>
       ) : hint ? (

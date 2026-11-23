@@ -4,7 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#18181b" />
+    <meta
+      name="theme-color"
+      content="#f4f7f2"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b1730"
+      media="(prefers-color-scheme: dark)"
+    />
+    <script>
+      // Applies the saved theme before first paint so there is no flash.
+      // Keep the key in sync with THEME_STORAGE_KEY (src/hooks/use-theme.ts).
+      (function () {
+        var theme = null;
+        try {
+          theme = localStorage.getItem('dividy-theme');
+        } catch (error) {}
+        var dark =
+          theme === 'dark' ||
+          (theme !== 'light' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+        if (theme === 'dark' || theme === 'light') {
+          var color = dark ? '#0b1730' : '#f4f7f2';
+          var metas = document.querySelectorAll('meta[name="theme-color"]');
+          for (var i = 0; i < metas.length; i++) {
+            metas[i].dataset.systemColor = metas[i].content;
+            metas[i].content = color;
+          }
+        }
+      })();
+    </script>
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

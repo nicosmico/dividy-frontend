@@ -74,7 +74,7 @@ export function GroupLayout() {
 
       <nav
         aria-label='Secciones del grupo'
-        className='grid h-12 grid-cols-3 gap-1 rounded-2xl bg-secondary p-1'
+        className='grid h-[3.25rem] grid-cols-3 gap-1 rounded-full bg-secondary p-1'
       >
         {TABS.map((tab) => (
           <NavLink
@@ -82,10 +82,10 @@ export function GroupLayout() {
             to={tab.to}
             className={({ isActive }) =>
               cn(
-                'flex items-center justify-center rounded-xl text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+                'flex items-center justify-center rounded-full text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
                 isActive
-                  ? 'bg-card text-foreground shadow-soft'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-tab-active font-semibold text-tab-active-foreground shadow-soft'
+                  : 'font-medium text-muted-foreground hover:text-foreground'
               )
             }
           >

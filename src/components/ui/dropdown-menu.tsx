@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
+import { CheckIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -31,7 +32,7 @@ function DropdownMenuContent({
         data-slot='dropdown-menu-content'
         sideOffset={sideOffset}
         className={cn(
-          'z-50 min-w-48 overflow-hidden rounded-2xl border bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+          'z-50 min-w-48 overflow-hidden rounded-2xl border bg-popover p-1.5 text-popover-foreground shadow-pop data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
           className
         )}
         {...props}
@@ -52,11 +53,46 @@ function DropdownMenuItem({
       data-slot='dropdown-menu-item'
       data-variant={variant}
       className={cn(
-        'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm outline-none select-none focus:bg-secondary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[variant=destructive]:text-destructive [&_svg]:size-4 [&_svg]:shrink-0',
+        'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm outline-none select-none focus:bg-secondary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[variant=destructive]:text-negative [&_svg]:size-4 [&_svg]:shrink-0',
         className
       )}
       {...props}
     />
+  );
+}
+
+function DropdownMenuRadioGroup(
+  props: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>
+) {
+  return (
+    <DropdownMenuPrimitive.RadioGroup
+      data-slot='dropdown-menu-radio-group'
+      {...props}
+    />
+  );
+}
+
+function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      data-slot='dropdown-menu-radio-item'
+      className={cn(
+        'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-xl py-2 pr-9 pl-3 text-sm outline-none select-none focus:bg-secondary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <span className='absolute right-3 flex size-4 items-center justify-center'>
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CheckIcon aria-hidden='true' />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+    </DropdownMenuPrimitive.RadioItem>
   );
 }
 
@@ -77,6 +113,8 @@ export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 };
