@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,16 @@ export function ExpensesTab() {
   const addButton = useRef<HTMLButtonElement>(null);
   const canAdd = group.members.length >= MIN_MEMBERS;
   const count = group.expenses.length;
+  const hasExpenses = count > 0;
   const days = groupByDate(sortExpenses(group.expenses));
+
+  // Lets the toasts rise above the fixed button on mobile (see index.css).
+  useEffect(() => {
+    if (!hasExpenses) return;
+    const root = document.documentElement;
+    root.setAttribute('data-floating-action', '');
+    return () => root.removeAttribute('data-floating-action');
+  }, [hasExpenses]);
 
   return (
     <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>

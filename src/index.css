@@ -52,6 +52,27 @@
     0 1px 2px rgb(24 24 27 / 0.04), 0 4px 16px rgb(24 24 27 / 0.06);
 }
 
+/* Toasts sit at the bottom, centered. On mobile, when the fixed "Agregar gasto"
+   button is on screen (its box is 6rem + the bottom inset tall at most), they
+   rise above it so they never cover it. */
+:root {
+  --toast-bottom: calc(1rem + env(safe-area-inset-bottom));
+  --toast-top: calc(1rem + env(safe-area-inset-top));
+}
+/* Radix sets pointer-events: none on <body> while a modal is open and the
+   toaster lives outside it: without this "Deshacer" could not be tapped. */
+[data-sonner-toaster] {
+  pointer-events: none;
+}
+[data-sonner-toast] {
+  pointer-events: auto;
+}
+@media (max-width: 767px) {
+  :root[data-floating-action] {
+    --toast-bottom: calc(5.5rem + max(1rem, env(safe-area-inset-bottom)));
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

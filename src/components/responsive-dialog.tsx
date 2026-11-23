@@ -54,10 +54,23 @@ export function ResponsiveDialog({
     }
   };
 
+  // A tap on a toast ("Deshacer") is outside the dialog for Radix and would
+  // close it, losing what the user was typing. Toasts are not "outside".
+  const keepOpenOnToast = (event: Event) => {
+    const target =
+      (event as CustomEvent<{ originalEvent?: Event }>).detail?.originalEvent
+        ?.target ?? event.target;
+    if (target instanceof Element && target.closest('[data-sonner-toaster]'))
+      event.preventDefault();
+  };
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent onCloseAutoFocus={returnFocus}>
+        <DialogContent
+          onCloseAutoFocus={returnFocus}
+          onInteractOutside={keepOpenOnToast}
+        >
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description ? (
@@ -82,6 +95,7 @@ export function ResponsiveDialog({
     <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent
         onCloseAutoFocus={returnFocus}
+        onInteractOutside={keepOpenOnToast}
         // The drawer does not move focus in by itself: put it on the drawer
         // (not on the first field, so the on-screen keyboard stays closed).
         onOpenAutoFocus={(event) => {
