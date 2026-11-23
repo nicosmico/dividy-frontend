@@ -33,8 +33,8 @@ describe('useTheme', () => {
     document.documentElement.classList.remove('dark');
     document.head.insertAdjacentHTML(
       'beforeend',
-      '<meta name="theme-color" content="#f4f7f2" media="(prefers-color-scheme: light)">' +
-        '<meta name="theme-color" content="#0b1730" media="(prefers-color-scheme: dark)">'
+      '<meta name="theme-color" content="light-bar" media="(prefers-color-scheme: light)">' +
+        '<meta name="theme-color" content="dark-bar" media="(prefers-color-scheme: dark)">'
     );
   });
 
@@ -180,11 +180,11 @@ describe('useTheme', () => {
   it('actualiza theme-color: el del sistema en "Sistema" y el elegido si no', () => {
     mockSystemTheme(false);
     const { result } = renderHook(() => useTheme());
-    expect(metaColors()).toBe('#f4f7f2,#0b1730');
+    expect(metaColors()).toBe('light-bar,dark-bar');
     act(() => result.current.setTheme('dark'));
-    expect(metaColors()).toBe('#0b1730,#0b1730');
+    expect(metaColors()).toBe('dark-bar,dark-bar');
     act(() => result.current.setTheme('system'));
-    expect(metaColors()).toBe('#f4f7f2,#0b1730');
+    expect(metaColors()).toBe('light-bar,dark-bar');
   });
 
   it('deja de escuchar al sistema al desmontar', () => {

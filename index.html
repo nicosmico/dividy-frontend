@@ -30,7 +30,10 @@
         if (theme === 'dark' || theme === 'light') {
           var color = dark ? '#0b1730' : '#f4f7f2';
           var metas = document.querySelectorAll('meta[name="theme-color"]');
-          for (var i = 0; i < metas.length; i++) metas[i].content = color;
+          for (var i = 0; i < metas.length; i++) {
+            metas[i].dataset.systemColor = metas[i].content;
+            metas[i].content = color;
+          }
         }
       })();
     </script>

@@ -6,12 +6,6 @@ export type ResolvedTheme = 'light' | 'dark';
 /** Same key as the inline script in `index.html`, which runs before React. */
 export const THEME_STORAGE_KEY = 'dividy-theme';
 
-/** Page colors, for `<meta name="theme-color">` (browser bar, PWA window). */
-const THEME_COLORS: Record<ResolvedTheme, string> = {
-  light: '#f4f7f2',
-  dark: '#0b1730',
-};
-
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 function isPreference(value: unknown): value is ThemePreference {
@@ -40,20 +34,29 @@ function resolve(preference: ThemePreference): ResolvedTheme {
 }
 
 /**
- * Puts the theme in the document: the `dark` class on <html> and, when the
- * user chose a theme, the same color in every `theme-color` meta (otherwise
- * their `media` attribute follows the system, not the choice).
+ * Puts the theme in the document: the `dark` class on <html> and the browser
+ * bar color. The `theme-color` metas in index.html carry a `media` attribute,
+ * which follows the system; when the user chose a theme every meta takes the
+ * color of that theme, and "Sistema" restores each one. The colors are read
+ * from the metas themselves (`data-system-color` keeps the original).
  */
 function applyToDocument(preference: ThemePreference, resolved: ResolvedTheme) {
-  const root = document.documentElement;
-  root.classList.toggle('dark', resolved === 'dark');
-  for (const meta of document.querySelectorAll<HTMLMetaElement>(
-    'meta[name="theme-color"]'
-  )) {
-    const own: ResolvedTheme = meta.getAttribute('media')?.includes('dark')
-      ? 'dark'
-      : 'light';
-    meta.content = THEME_COLORS[preference === 'system' ? own : resolved];
+  document.documentElement.classList.toggle('dark', resolved === 'dark');
+  const metas = [
+    ...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'),
+  ];
+  for (const meta of metas) meta.dataset.systemColor ??= meta.content;
+  const colorOf = (scheme: ResolvedTheme) =>
+    metas.find(
+      (meta) =>
+        (meta.getAttribute('media')?.includes('dark') ? 'dark' : 'light') ===
+        scheme
+    )?.dataset.systemColor;
+  for (const meta of metas) {
+    meta.content =
+      (preference === 'system'
+        ? meta.dataset.systemColor
+        : colorOf(resolved)) ?? meta.content;
   }
 }
 
