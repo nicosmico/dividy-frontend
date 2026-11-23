@@ -52,7 +52,7 @@ export function GroupCard({ group }: { group: Group }) {
             {count} {count === 1 ? 'miembro' : 'miembros'}
           </p>
         </div>
-        <div className='flex items-center justify-between gap-3'>
+        <div className='flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5'>
           {pending === 0 ? (
             <Badge variant='accent'>Al día</Badge>
           ) : (
@@ -63,7 +63,7 @@ export function GroupCard({ group }: { group: Group }) {
               Pendiente: {formatAmount(pending)} por saldar
             </Badge>
           )}
-          <p className='text-right text-xs text-muted-foreground'>
+          <p className='text-xs whitespace-nowrap text-muted-foreground'>
             Actualizado el {formatDate(group.updatedAt)}
           </p>
         </div>
