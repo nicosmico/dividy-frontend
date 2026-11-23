@@ -10,13 +10,14 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ## Fases
 
-| Fase | Objetivo                                                                                                         | Estado     |
-| ---- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
-| 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada |
-| 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada |
-| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Completada |
-| 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Completada |
-| 4    | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas         | —          |
+| Fase | Objetivo                                                                                                         | Estado      |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ----------- |
+| 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada  |
+| 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada  |
+| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Completada  |
+| 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Completada  |
+| 4    | Consolidar la app local: tema y modo oscuro, calidad continua, divisiones, historial, monedas, búsqueda          | Planificada |
+| 5    | Compartir: backend y grupos compartidos, foto de la boleta, recordatorios                                        | Futura      |
 
 ### Fase 0 · Fundaciones
 
@@ -58,7 +59,7 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ### Fase 3 · Pulido
 
-**Estado: completada.** Decisiones en la ronda 8; ideas para lo que sigue, en "Siguientes pasos sugeridos (Fase 4)".
+**Estado: completada.** Decisiones en la ronda 8; ideas para lo que sigue, en "Fases 4 y 5 · Roadmap acordado".
 
 - Deshacer al borrar (toast), estados vacíos con guía, revisión de accesibilidad (teclado, lectores de pantalla, contraste), compartir con Web Share API, instalable como PWA, revisión de textos.
 - Además: estado del grupo en Mis grupos ("Al día" / "Pendiente"), contadores de caracteres, avatares con carga diferida y auditoría axe en los E2E.
@@ -193,15 +194,36 @@ Decisiones tomadas en rondas. Las de las rondas 0 vienen del dueño del producto
 78. **Exportar e importar datos: descartado** → Por decisión del dueño del producto, el respaldo en archivo no se hará: se resolverá con el backend (ítem final de la Fase 4). **Riesgo aceptado:** hasta entonces los datos viven solo en el navegador; borrar los datos del sitio, usar un modo privado o cambiar de dispositivo los pierde sin forma de recuperarlos. Se quitó el ítem de los siguientes pasos.
 79. **Pruebas** → Dominio: tabla de casos (el ejemplo, gasto posterior al último pago, grupo sin pagos, edición que no cambia saldos) y propiedades (`previewBalanceChange(g, g)` es `[]`; los cambios suman 0, siguen el orden del grupo y ninguno tiene `before === after`). Componentes: aviso al eliminar y al guardar con los montos, cancelar sin cambios y con foco de vuelta, confirmar con "Deshacer", gasto no cubierto y cubierto solo con cambio de descripción sin aviso. E2E (desktop y móvil): el flujo del ejemplo completo con montos calculados por el dominio, agregar un gasto después de los pagos sin aviso, el toast en la mitad inferior sin superponerse al botón "Agregar gasto" (bounding boxes) y el toast con un sheet abierto (no tapa sus botones, "Deshacer" funciona y el sheet sigue abierto). `ConfirmCoveredChange` y `describeBalance` (`@/lib/balance-text`, compartido con Saldos) son las piezas nuevas de UI.
 
-## Siguientes pasos sugeridos (Fase 4)
+### Ronda 11 · Prioridades de las fases 4 y 5 (dueño del producto)
 
-Ordenados por el valor que aportan a quien usa la app hoy, de mayor a menor. Cada uno merece su propio ADR antes de empezar. Por decisión del dueño del producto, el backend va al final: primero se consolida la app local. Exportar e importar datos quedó **descartado** (Ronda 10, decisión 78): el respaldo llegará con el backend.
+80. **Orden de la Fase 4** → tema de colores (claro y oscuro) → calidad continua → división por montos o partes → historial → monedas por grupo → búsqueda y filtros.
+81. **Moneda** → por grupo, elegida al crear el grupo, no por gasto. Solo editable mientras el grupo no tenga gastos.
+82. **Tema** → el dueño del producto entrega una imagen con dos colores para modo claro y oscuro; reemplaza la paleta amarilla/anaranjada actual.
+83. **Foto de la boleta y recordatorios** → a la Fase 5: sin backend no tienen sentido (no hay dónde guardar la foto, y una notificación con la app cerrada necesita un servidor).
+84. **Mejoras de la lista** → por ahora solo búsqueda y filtros; categorías y notas no entran.
+85. **Cerrar cuentas por períodos** → descartado: cuando termina una etapa se crea un grupo nuevo.
+86. **Backend** → Fase 5, después de consolidar la app local.
 
-1. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es un unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
-2. **Varias monedas.** Moneda por grupo (`currency` ya existe en el modelo) con formato por moneda y sus decimales; el dinero entero pasa a "unidad menor" (ADR 0001 tendría que reescribirse). Conversión entre monedas solo si hay demanda real.
-3. **Pasada con lector de pantalla y revisión de contraste a mano.** axe cubre lo automatizable (pasa limpio), pero falta probar VoiceOver y TalkBack en los flujos principales (diálogos, toasts, el `Select`), el orden de lectura del toast con **Deshacer** y el modo de alto contraste. Considerar un modo oscuro (hoy solo claro).
-4. **Historial y edición de pagos.** Hoy los pagos solo se registran o se eliminan; editar monto y fecha, y ver un historial de actividad del grupo ("Ana agregó Supermercado"), ayudaría a resolver dudas ("¿quién anotó esto?") y es la base natural de la sincronización.
-5. **Mejoras de la lista de gastos.** Búsqueda y filtro (por persona o fecha), categorías o notas, adjuntar foto de la boleta (guardada en el dispositivo), y recordatorios para saldar ("Pendiente: $X") usando las notificaciones de la PWA.
-6. **Calidad continua.** Reglas de rendimiento en CI (presupuesto de bundle), pruebas visuales de regresión (capturas a 390 y 1280 px) y un E2E con el aviso "Hay una nueva versión" (simular dos builds).
-7. **Cerrar cuentas por períodos (baja prioridad).** Archivar los gastos y pagos de un período ya saldado (por ejemplo, un mes) y bloquear su edición salvo con "Reabrir". Complementa el aviso de gastos ya saldados (Ronda 10): en vez de advertir, el período cerrado no se toca por accidente. Útil si se usan grupos de largo plazo (la casa, la pareja); en viajes y asados no hace falta.
-8. **Backend y grupos compartidos.** Es el salto que el producto pide: que todos vean el mismo grupo. Implementar `HttpGroupRepository` detrás del puerto actual (pasando la suite de contrato), identidad ligera (enlace de invitación, sin cuenta al inicio), resolución de conflictos (hoy `updatedAt` sirve para deshacer; en un servidor haría falta versionado por grupo u operaciones) y sincronización con la cola offline que la PWA ya hace posible.
+## Fases 4 y 5 · Roadmap acordado
+
+Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece su propio ADR o ronda de decisiones antes de empezar.
+
+### Fase 4 · Consolidar la app local (en este orden)
+
+1. **Tema de colores claro y oscuro.** Nueva paleta a partir de dos colores que entrega el dueño del producto (reemplaza el acento amarillo/anaranjado actual), con modo oscuro. Incluye la pasada con lector de pantalla (VoiceOver/TalkBack) y la revisión de contraste a mano en ambos temas. Va primero para que las capturas de referencia de los tests visuales se tomen con el tema definitivo.
+2. **Calidad continua.** Presupuesto de bundle en CI, pruebas visuales de regresión (capturas a 390 y 1280 px, claro y oscuro) y un E2E del aviso "Hay una nueva versión" (simular dos builds).
+3. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es una unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
+4. **Historial de actividad y edición de pagos.** Ver qué pasó en el grupo ("Beto eliminó Supermercado $10.000") para responder "¿por qué cambió mi saldo?", y poder editar monto y fecha de un pago. Es también la base natural de la sincronización de la Fase 5.
+5. **Monedas por grupo.** La moneda se elige **al crear el grupo** (no por gasto) y todos sus gastos y pagos se expresan en ella; solo se puede cambiar mientras el grupo no tenga gastos. Sin conversión entre monedas. El dinero entero pasa a "unidad menor" de cada moneda (ADR 0001 tendrá que actualizarse).
+6. **Búsqueda y filtros en la lista de gastos.** Por texto, persona o fecha.
+
+### Fase 5 · Compartir (requiere backend)
+
+- **Backend y grupos compartidos.** Que todos vean el mismo grupo. `HttpGroupRepository` detrás del puerto actual (pasando la suite de contrato), identidad ligera (enlace de invitación, sin cuenta al inicio), resolución de conflictos (versionado por grupo u operaciones) y sincronización con la cola offline que la PWA hace posible. Trae también el respaldo de los datos (exportar/importar quedó descartado, Ronda 10).
+- **Foto de la boleta.** Sin backend no tiene sentido guardarla solo en el dispositivo.
+- **Recordatorios para saldar.** Notificaciones del tipo "Tienes $3.333 pendientes con Ana": para que lleguen con la app cerrada las tiene que enviar un servidor (Web Push), y en iPhone solo funcionan con la app instalada.
+
+### Descartado
+
+- **Exportar e importar datos** (Ronda 10, decisión 78): se resolverá con el backend.
+- **Cerrar cuentas por períodos** (Ronda 11): cuando termina una etapa, se crea un grupo nuevo.
