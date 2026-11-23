@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/form-field';
@@ -8,7 +8,12 @@ import {
 } from '@/components/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { renameGroup, validateGroupName, type Group } from '@/domain';
+import {
+  MAX_GROUP_NAME_LENGTH,
+  renameGroup,
+  validateGroupName,
+  type Group,
+} from '@/domain';
 import { isInfrastructureError, useGroupOperation } from '../data';
 
 interface RenameGroupDialogProps {
@@ -43,10 +48,12 @@ function RenameGroupForm({
   const operation = useGroupOperation(group.id);
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
   } = useForm<{ name: string }>({ defaultValues: { name: group.name } });
+  const draftName = useWatch({ control, name: 'name' });
 
   const onSubmit = handleSubmit(async ({ name }) => {
     const result = await operation.run((g) => renameGroup(g, name));
@@ -60,7 +67,11 @@ function RenameGroupForm({
 
   return (
     <form onSubmit={onSubmit} className='grid gap-4' noValidate>
-      <FormField label='Nombre del grupo' error={errors.name?.message}>
+      <FormField
+        label='Nombre del grupo'
+        error={errors.name?.message}
+        counter={{ length: draftName.length, max: MAX_GROUP_NAME_LENGTH }}
+      >
         {(control) => (
           <Input
             {...control}

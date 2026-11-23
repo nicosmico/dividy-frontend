@@ -66,7 +66,11 @@ export function SuggestedTransfers({
                 <p className='font-medium break-words'>
                   {from.name} → {to.name}
                 </p>
-                <Button variant='outline' onClick={() => setPaying(t)}>
+                <Button
+                  variant='outline'
+                  aria-label={`Marcar como pagado: ${from.name} le paga ${formatAmount(t.amount)} a ${to.name}`}
+                  onClick={() => setPaying(t)}
+                >
                   Marcar como pagado
                 </Button>
               </Card>

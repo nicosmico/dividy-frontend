@@ -1,6 +1,6 @@
 import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -8,7 +8,12 @@ import { FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { validateGroupName, validateMemberName } from '@/domain';
+import {
+  MAX_GROUP_NAME_LENGTH,
+  MAX_MEMBER_NAME_LENGTH,
+  validateGroupName,
+  validateMemberName,
+} from '@/domain';
 import { isInfrastructureError, useCreateGroup } from '../data';
 
 const MIN_MEMBERS = 2;
@@ -22,10 +27,12 @@ export function NewGroupPage() {
   const [memberError, setMemberError] = useState<string>();
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
   } = useForm<{ name: string }>({ defaultValues: { name: '' } });
+  const groupName = useWatch({ control, name: 'name' });
 
   /** Validates `draft` against the current members; returns the new list or null. */
   function withDraft(current: string[], draft: string): string[] | null {
@@ -82,7 +89,11 @@ export function NewGroupPage() {
       <h1 className='text-2xl font-bold tracking-tight'>Crear grupo</h1>
       <Card className='p-5'>
         <form onSubmit={onSubmit} className='grid gap-5' noValidate>
-          <FormField label='Nombre del grupo' error={errors.name?.message}>
+          <FormField
+            label='Nombre del grupo'
+            error={errors.name?.message}
+            counter={{ length: groupName.length, max: MAX_GROUP_NAME_LENGTH }}
+          >
             {(control) => (
               <Input
                 {...control}
@@ -103,6 +114,10 @@ export function NewGroupPage() {
               label='Miembros'
               error={memberError}
               hint='Escribe un nombre y presiona Enter. Mínimo 2 miembros.'
+              counter={{
+                length: memberDraft.length,
+                max: MAX_MEMBER_NAME_LENGTH,
+              }}
             >
               {(control) => (
                 <div className='flex gap-2'>

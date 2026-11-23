@@ -104,7 +104,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   // Mark every suggested transfer as paid.
   for (let remaining = transfers.length; remaining > 0; remaining--) {
     await page
-      .getByRole('button', { name: 'Marcar como pagado' })
+      .getByRole('button', { name: /^Marcar como pagado/ })
       .first()
       .click();
     await page
@@ -115,7 +115,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   }
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Marcar como pagado' })
+    page.getByRole('button', { name: /^Marcar como pagado/ })
   ).toHaveCount(0);
 
   await page.reload();

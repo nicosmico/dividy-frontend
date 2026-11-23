@@ -19,6 +19,7 @@ import {
   addExpense,
   computeShares,
   formatAmount,
+  MAX_DESCRIPTION_LENGTH,
   removeExpense,
   updateExpense,
   type Expense,
@@ -173,7 +174,14 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
 
   return (
     <form onSubmit={onSubmit} noValidate className='grid gap-4'>
-      <FormField label='Descripción' error={errors.description?.message}>
+      <FormField
+        label='Descripción'
+        error={errors.description?.message}
+        counter={{
+          length: (values.description ?? '').length,
+          max: MAX_DESCRIPTION_LENGTH,
+        }}
+      >
         {(c) => (
           <Input
             {...c}

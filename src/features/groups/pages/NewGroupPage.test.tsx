@@ -14,6 +14,15 @@ async function setup() {
 }
 
 describe('Crear grupo', () => {
+  it('muestra contadores de caracteres en el nombre del grupo y en el del miembro', async () => {
+    const { user } = await setup();
+    expect(screen.getAllByText('0/40')).toHaveLength(2);
+    await user.type(screen.getByLabelText('Nombre del grupo'), 'Asado');
+    await user.type(screen.getByLabelText('Miembros'), 'Ana');
+    expect(screen.getByText('5/40')).toBeInTheDocument();
+    expect(screen.getByText('3/40')).toBeInTheDocument();
+  });
+
   it('muestra el error del nombre vacío', async () => {
     const { user } = await setup();
     await user.click(screen.getByRole('button', { name: 'Crear grupo' }));

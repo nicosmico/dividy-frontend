@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/form-field';
@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  MAX_MEMBER_NAME_LENGTH,
   renameMember,
   validateMemberName,
   type Group,
@@ -61,10 +62,12 @@ function RenameMemberForm({
   const operation = useGroupOperation(group.id);
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
   } = useForm<{ name: string }>({ defaultValues: { name: member.name } });
+  const draftName = useWatch({ control, name: 'name' });
 
   const onSubmit = handleSubmit(async ({ name }) => {
     const result = await operation.run((g) => renameMember(g, member.id, name));
@@ -78,7 +81,11 @@ function RenameMemberForm({
 
   return (
     <form onSubmit={onSubmit} className='grid gap-4' noValidate>
-      <FormField label='Nombre' error={errors.name?.message}>
+      <FormField
+        label='Nombre'
+        error={errors.name?.message}
+        counter={{ length: draftName.length, max: MAX_MEMBER_NAME_LENGTH }}
+      >
         {(control) => (
           <Input
             {...control}

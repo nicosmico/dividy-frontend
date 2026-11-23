@@ -80,8 +80,13 @@ describe('Pestaña Saldos', () => {
       groups: [groupWithDebts()],
     });
     const pay = await screen.findAllByRole('button', {
-      name: 'Marcar como pagado',
+      name: /^Marcar como pagado: /,
     });
+    // Each button names who pays whom, so a screen reader can tell them apart.
+    expect(pay.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Marcar como pagado: Carla le paga $3.333 a Ana',
+      'Marcar como pagado: Beto le paga $1.833 a Ana',
+    ]);
     await user.click(pay[0]);
     const confirm = await screen.findByRole('alertdialog');
     expect(
@@ -109,14 +114,16 @@ describe('Pestaña Saldos', () => {
 
     // Only Beto → Ana is left.
     await user.click(
-      await screen.findByRole('button', { name: 'Marcar como pagado' })
+      await screen.findByRole('button', {
+        name: 'Marcar como pagado: Beto le paga $1.833 a Ana',
+      })
     );
     await user.click(
       await screen.findByRole('button', { name: 'Sí, registrar pago' })
     );
     expect(await screen.findByText('¡Están al día! 🎉')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Marcar como pagado' })
+      screen.queryByRole('button', { name: /^Marcar como pagado/ })
     ).not.toBeInTheDocument();
     expect((await repository.get('g1'))?.payments).toHaveLength(2);
   });
@@ -127,7 +134,7 @@ describe('Pestaña Saldos', () => {
       groups: [groupWithDebts()],
     });
     await user.click(
-      (await screen.findAllByRole('button', { name: 'Marcar como pagado' }))[0]
+      (await screen.findAllByRole('button', { name: /^Marcar como pagado/ }))[0]
     );
     const confirm = await screen.findByRole('alertdialog');
     await user.click(within(confirm).getByRole('button', { name: 'Cancelar' }));

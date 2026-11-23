@@ -180,6 +180,48 @@ describe('Pestaña Gastos', () => {
       expect(await screen.findByText('1 gasto')).toBeInTheDocument();
     });
 
+    it('guarda quién pagó al cambiar "Pagado por" con el selector', async () => {
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [makeGroup({ members: ['Ana', 'Beto', 'Caro'] })],
+      });
+      const dialog = await openNewForm(user);
+      expect(within(dialog).getByLabelText('Pagado por')).toHaveTextContent(
+        'Ana'
+      );
+      await user.type(within(dialog).getByLabelText('Descripción'), 'Bencina');
+      await user.type(within(dialog).getByLabelText('Monto en pesos'), '5000');
+      await user.click(within(dialog).getByLabelText('Pagado por'));
+      await user.click(await screen.findByRole('option', { name: 'Caro' }));
+      expect(within(dialog).getByLabelText('Pagado por')).toHaveTextContent(
+        'Caro'
+      );
+      await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+      await waitFor(async () =>
+        expect((await repository.get('g1'))?.expenses).toHaveLength(1)
+      );
+      expect((await repository.get('g1'))?.expenses[0]).toMatchObject({
+        description: 'Bencina',
+        payerId: 'Caro',
+        amount: 5000,
+      });
+    });
+
+    it('muestra un contador de caracteres en la descripción', async () => {
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [makeGroup({ members: ['Ana', 'Beto'] })],
+      });
+      const dialog = await openNewForm(user);
+      expect(within(dialog).getByText('0/80')).toBeInTheDocument();
+      await user.type(
+        within(dialog).getByLabelText('Descripción'),
+        'Supermercado'
+      );
+      expect(within(dialog).getByText('12/80')).toBeInTheDocument();
+    });
+
     it('acepta solo dígitos y cambia el separador de miles al escribir', async () => {
       const { user } = renderWithProviders(undefined, {
         route: ROUTE,
