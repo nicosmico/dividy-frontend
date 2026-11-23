@@ -17,7 +17,7 @@ describe('Mis grupos', () => {
       )
     ).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Crear grupo' }));
-    expect(currentPath()).toBe('/groups/new');
+    await waitFor(() => expect(currentPath()).toBe('/groups/new'));
   });
 
   it('lista los grupos del más reciente al más antiguo con miembros y total gastado', async () => {

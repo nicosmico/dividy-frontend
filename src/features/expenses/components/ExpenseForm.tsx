@@ -108,7 +108,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     control,
     handleSubmit,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitted },
   } = useForm<ExpenseFormValues>({
     defaultValues: initialValues(group, expense),
     resolver,
@@ -247,7 +247,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 setValue(
                   'participantIds',
                   group.members.map((m) => m.id),
-                  { shouldValidate: Boolean(errors.participantIds) }
+                  { shouldValidate: isSubmitted }
                 )
               }
             >
@@ -260,7 +260,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
               className='-my-1 h-9'
               onClick={() =>
                 setValue('participantIds', [], {
-                  shouldValidate: Boolean(errors.participantIds),
+                  shouldValidate: isSubmitted,
                 })
               }
             >
