@@ -1,4 +1,3 @@
-import { PartyPopper } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { Card } from '@/components/ui/card';
@@ -37,7 +36,6 @@ export function BalancesTab() {
     <div className='grid gap-5'>
       {settled ? (
         <Card className='items-center gap-1 bg-accent py-6 text-center text-accent-foreground'>
-          <PartyPopper aria-hidden='true' className='size-7' />
           <h2 className='text-xl font-bold'>¡Están al día! 🎉</h2>
           <p className='text-sm'>Nadie le debe nada a nadie.</p>
         </Card>

@@ -115,7 +115,7 @@ function AddExpenseButton({
   );
   if (!floating) return button;
   return (
-    <div className='fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-lg bg-gradient-to-t from-background via-background/95 to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:w-auto md:max-w-none md:bg-none md:p-0'>
+    <div className='fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-lg bg-gradient-to-t from-background via-background/95 to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:w-auto md:max-w-none md:bg-none md:p-0'>
       {button}
     </div>
   );

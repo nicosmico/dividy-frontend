@@ -334,13 +334,13 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
         </p>
       )}
 
-      <ResponsiveDialogFooter className='md:items-center'>
+      <ResponsiveDialogFooter className='grid grid-cols-2 md:flex md:items-center'>
         {expense && (
           <Button
             type='button'
             variant='ghost'
             disabled={busy}
-            className='text-destructive hover:text-destructive md:mr-auto'
+            className='order-last col-span-2 text-destructive hover:text-destructive md:order-none md:col-span-1 md:mr-auto'
             onClick={() => setConfirmingDelete(true)}
           >
             Eliminar gasto
