@@ -251,4 +251,72 @@ describe('Pestaña Saldos', () => {
     });
     expect((box as HTMLTextAreaElement).value).toContain('Supermercado');
   });
+
+  describe('compartir resumen', () => {
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'share');
+    });
+
+    function stubShare(impl: () => Promise<void>) {
+      const share = vi.fn(impl);
+      Object.defineProperty(navigator, 'share', {
+        value: share,
+        configurable: true,
+        writable: true,
+      });
+      return share;
+    }
+
+    it('con Web Share API el botón dice "Compartir resumen" y comparte el texto', async () => {
+      const share = stubShare(() => Promise.resolve());
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      expect(
+        screen.queryByRole('button', { name: 'Copiar resumen' })
+      ).not.toBeInTheDocument();
+      await user.click(
+        await screen.findByRole('button', { name: 'Compartir resumen' })
+      );
+      expect(share).toHaveBeenCalledTimes(1);
+      expect(share.mock.calls[0]).toEqual([
+        expect.objectContaining({
+          text: expect.stringContaining('Supermercado'),
+        }),
+      ]);
+    });
+
+    it('si el usuario cancela, no muestra errores ni diálogos', async () => {
+      const share = stubShare(() =>
+        Promise.reject(new DOMException('cancelled', 'AbortError'))
+      );
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      await user.click(
+        await screen.findByRole('button', { name: 'Compartir resumen' })
+      );
+      await waitFor(() => expect(share).toHaveBeenCalled());
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.queryByText('Resumen copiado')).not.toBeInTheDocument();
+    });
+
+    it('si compartir falla por otra causa, copia el resumen', async () => {
+      stubShare(() => Promise.reject(new Error('boom')));
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      const writeText = vi
+        .spyOn(navigator.clipboard, 'writeText')
+        .mockResolvedValue(undefined);
+      await user.click(
+        await screen.findByRole('button', { name: 'Compartir resumen' })
+      );
+      expect(await screen.findByText('Resumen copiado')).toBeInTheDocument();
+      expect(writeText).toHaveBeenCalledTimes(1);
+    });
+  });
 });

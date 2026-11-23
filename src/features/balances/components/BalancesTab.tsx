@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Card } from '@/components/ui/card';
 import { isSettled, suggestTransfers } from '@/domain';
 import { useCurrentGroup } from '@/features/groups/data';
-import { CopySummaryButton } from './CopySummaryButton';
+import { ShareSummaryButton } from './ShareSummaryButton';
 import { MemberBalances } from './MemberBalances';
 import { PaymentsList } from './PaymentsList';
 import { SuggestedTransfers } from './SuggestedTransfers';
@@ -44,7 +44,7 @@ export function BalancesTab() {
       )}
       <MemberBalances group={group} />
       {group.payments.length > 0 && <PaymentsList group={group} />}
-      <CopySummaryButton group={group} />
+      <ShareSummaryButton group={group} />
     </div>
   );
 }
