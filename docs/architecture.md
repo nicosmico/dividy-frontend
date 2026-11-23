@@ -37,11 +37,13 @@ src/
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
     groups/            data/ (hooks y contexto), components/, pages/ (GroupsPage, NewGroupPage, GroupLayout)
-    members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), diálogos de
+    members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), useMemberMoods (carita según el saldo, a partir de `computeBalances`), diálogos de
                        renombrar y eliminar miembro (el de eliminar solo para miembros con movimientos)
     expenses/          ExpensesTab (lista por fecha), ExpenseDialog + ExpenseForm (crear/editar/eliminar),
                        AmountInput (pesos con separador de miles), expense-form.ts (validación con el
                        dominio), expense-list.ts (orden y agrupación por fecha)
+    icons/             suggestIcon (función pura) + keywords.ts (diccionario) + ENTITY_ICONS (clave → Lucide)
+                       + EntityIcon (tile). Calculado al mostrar; nada se guarda (decisión 89)
     balances/          BalancesTab: SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
                        PaymentsList, ShareSummaryButton (compartir o copiar el resumen)
   hooks/               use-media-query, use-theme (tema claro/oscuro; ver docs/design-system.md)

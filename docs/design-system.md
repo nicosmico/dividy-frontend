@@ -119,6 +119,19 @@ Cuadrado redondeado con el símbolo de división girado 45° (una diagonal y dos
 - **Decorativos con `aria-hidden='true'`** (el texto de al lado ya dice lo mismo). Si el ícono es lo único que hay en un botón, el botón lleva `aria-label` (por ejemplo, el selector de tema: "Tema de colores").
 - Los íconos heredan el color del texto (`currentColor`): no les pongas color propio salvo con un token.
 
+### Íconos de grupos y gastos
+
+Cada grupo y cada gasto muestra un ícono que se **deduce del texto** (nombre del grupo o descripción del gasto); no se guarda ni se elige, y no hay categorías (decisión 89).
+
+- **Diccionario:** `src/features/icons/keywords.ts`. Es una lista de entradas `{ icon, words, only? }` en español de Chile. Sin React. Para agregar palabras, ponlas en las `words` del ícono que corresponda: sin importar mayúsculas ni tildes, en singular (se entienden `-s`, `-es` y `-ces`), y con frases si hace falta (`'santa isabel'`, `'arriendo auto'`; los conectores `de`, `la`, `al`… se ignoran). `only: 'group'` limita una entrada a grupos.
+- **Reglas:** coincidencia por palabra completa (nunca por subcadena: "gas" no es "gastos"); gana la primera palabra del texto con coincidencia, y a igual posición, la frase más larga ("Uber al supermercado" es transporte; "Arriendo de auto" es auto aunque "arriendo" solo sea casa). Una palabra apunta a un solo ícono por tipo (un test lo exige). Sin coincidencia: `receipt` (gastos) o `users` (grupos).
+- **Ícono nuevo:** agrega la clave en `ICON_KEYS` (`keywords.ts`) y su componente de Lucide en `ENTITY_ICONS` (`entity-icons.ts`); el test de diccionario falla si falta uno de los dos. Agrega un caso a `suggest-icon.test.ts`.
+- **Componente:** `EntityIcon` (`text`, `kind`, `size`). Tile con `bg-surface-2` e ícono `text-primary`, `aria-hidden`. Tamaños: `list` (40 px, filas de gasto), `header` (44 px, encabezado del grupo y junto a los campos, a la altura del input) y `card` (52 px, tarjeta de grupo). Sin colores por grupo ni por gasto.
+
+### Caritas
+
+El humor del avatar sale del saldo (decisión 93): **triste** si el saldo es distinto de 0 (debe o le deben), **feliz** si está al día. Usa `useMemberMoods(group)` (`@/features/members`) y pasa `mood={moods.get(member.id)}` a `MemberAvatar`; no decidas el humor a mano. El avatar lleva `data-mood` para los tests.
+
 ## Cómo agregar un componente de shadcn
 
 1. `npx shadcn@latest add <componente>`. Se instala en `src/components/ui/`.
