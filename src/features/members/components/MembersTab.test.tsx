@@ -209,7 +209,7 @@ describe('Pestaña Miembros', () => {
     expect(within(dialog).getByText('Bebidas ($3.000)')).toBeInTheDocument();
     expect(within(dialog).getByText('Pan ($1.000)')).toBeInTheDocument();
     expect(
-      within(dialog).getByText(/También se borrarán 1 pago/)
+      within(dialog).getByText(/También se borrará 1 pago/)
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(/las partes de los demás cambian/)

@@ -38,6 +38,7 @@ import {
   isInfrastructureError,
   useGroupOperation,
 } from '@/features/groups/data';
+import { plural } from '@/lib/plural';
 
 interface RemoveMemberDialogProps {
   group: Group;
@@ -134,10 +135,6 @@ function ConfirmDialog({
 
 type Choice = 'reassign' | 'cascade';
 
-function pluralize(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`;
-}
-
 function StrategyDialog({
   group,
   member,
@@ -199,17 +196,16 @@ function StrategyDialog({
     >
       <div className='grid gap-4'>
         <ul className='grid gap-1 rounded-xl bg-secondary p-3 text-sm'>
-          <li>
-            Pagó {pluralize(impact.paidExpenses.length, 'gasto', 'gastos')}
-          </li>
+          <li>Pagó {plural(impact.paidExpenses.length, 'gasto', 'gastos')}</li>
           <li>
             Participa en{' '}
-            {pluralize(impact.participatingExpenses.length, 'gasto', 'gastos')}
+            {plural(impact.participatingExpenses.length, 'gasto', 'gastos')}
           </li>
           <li>
+            Tiene {plural(impact.payments.length, 'pago', 'pagos')}{' '}
             {impact.payments.length === 1
-              ? 'Tiene 1 pago enviado o recibido'
-              : `Tiene ${impact.payments.length} pagos enviados o recibidos`}
+              ? 'enviado o recibido'
+              : 'enviados o recibidos'}
           </li>
         </ul>
 
@@ -235,7 +231,7 @@ function StrategyDialog({
                 </p>
                 {betweenBoth > 0 && (
                   <p className='text-sm'>
-                    {pluralize(betweenBoth, 'pago', 'pagos')} entre ambos se
+                    {plural(betweenBoth, 'pago', 'pagos')} entre ambos se
                     eliminará{betweenBoth === 1 ? '' : 'n'}, porque nadie se
                     paga a sí mismo.
                   </p>
@@ -271,8 +267,9 @@ function StrategyDialog({
                 {deleted.length > 0 ? (
                   <>
                     <p>
-                      Se borrarán {pluralize(deleted.length, 'gasto', 'gastos')}
-                      :
+                      {deleted.length === 1
+                        ? 'Se borrará 1 gasto:'
+                        : `Se borrarán ${deleted.length} gastos:`}
                     </p>
                     <ul className='list-disc pl-5 text-muted-foreground'>
                       {deleted.map((e) => (
@@ -287,15 +284,15 @@ function StrategyDialog({
                 )}
                 {impact.payments.length > 0 && (
                   <p>
-                    También se borrarán{' '}
-                    {pluralize(impact.payments.length, 'pago', 'pagos')} que
-                    envió o recibió.
+                    {impact.payments.length === 1
+                      ? 'También se borrará 1 pago que envió o recibió.'
+                      : `También se borrarán ${impact.payments.length} pagos que envió o recibió.`}
                   </p>
                 )}
                 {changedShares.length > 0 && (
                   <p>
                     Se quitará de{' '}
-                    {pluralize(changedShares.length, 'gasto', 'gastos')} donde
+                    {plural(changedShares.length, 'gasto', 'gastos')} donde
                     participa, así que las partes de los demás cambian.
                   </p>
                 )}
