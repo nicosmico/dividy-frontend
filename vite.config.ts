@@ -20,8 +20,22 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/vite-env.d.ts'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.contract.ts',
+        'src/test/**',
+        'src/domain/test-utils/**',
+        'src/vite-env.d.ts',
+      ],
       reporter: ['text', 'html'],
+      thresholds: {
+        'src/domain/**': {
+          statements: 95,
+          branches: 95,
+          functions: 95,
+          lines: 95,
+        },
+      },
     },
   },
 });

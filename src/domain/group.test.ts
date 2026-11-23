@@ -1,0 +1,408 @@
+import { describe, expect, it } from 'vitest';
+import {
+  addExpense,
+  addMember,
+  addPayment,
+  createGroup,
+  getMemberRemovalImpact,
+  removeExpense,
+  removeMember,
+  removePayment,
+  renameGroup,
+  renameMember,
+  touch,
+  updateExpense,
+} from './group';
+import { getGroupIssues } from './validation';
+import type { Group, Result } from './types';
+import { NOW, makeGroup, members } from './test-utils/fixtures';
+
+function unwrap<T>(result: Result<T>): T {
+  if (!result.ok)
+    throw new Error(`${result.error.code}: ${result.error.message}`);
+  return result.value;
+}
+const code = (r: Result<unknown>) => (r.ok ? 'ok' : r.error.code);
+
+const expenseInput = {
+  id: 'e9',
+  description: 'Pizza',
+  amount: 900,
+  payerId: 'A',
+  split: { type: 'equal' as const, participantIds: ['A', 'B'] },
+  date: '2026-01-02',
+  createdAt: NOW,
+};
+
+describe('createGroup', () => {
+  it('crea un grupo en CLP con los timestamps recibidos', () => {
+    const group = unwrap(
+      createGroup({
+        id: 'g1',
+        name: '  Viaje ',
+        members: members('A', 'B'),
+        now: NOW,
+      })
+    );
+    expect(group).toEqual({
+      id: 'g1',
+      name: 'Viaje',
+      currency: 'CLP',
+      members: members('A', 'B'),
+      expenses: [],
+      payments: [],
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+  });
+
+  it.each([
+    [
+      'nombre vacío',
+      { name: ' ', members: members('A') },
+      'invalid_group_name',
+    ],
+    [
+      'miembro con nombre vacío',
+      { name: 'G', members: [{ id: 'a', name: '' }] },
+      'invalid_member_name',
+    ],
+    [
+      'nombres repetidos',
+      {
+        name: 'G',
+        members: [
+          { id: 'a', name: 'Ana' },
+          { id: 'b', name: ' ana ' },
+        ],
+      },
+      'duplicate_member_name',
+    ],
+    [
+      'ids repetidos',
+      {
+        name: 'G',
+        members: [
+          { id: 'a', name: 'Ana' },
+          { id: 'a', name: 'Beto' },
+        ],
+      },
+      'duplicate_member_id',
+    ],
+  ])('rechaza %s', (_n, input, expected) => {
+    expect(code(createGroup({ id: 'g', now: NOW, ...input }))).toBe(expected);
+  });
+
+  it('acepta un grupo sin miembros', () => {
+    expect(
+      code(createGroup({ id: 'g', name: 'G', members: [], now: NOW }))
+    ).toBe('ok');
+  });
+});
+
+describe('renameGroup / touch', () => {
+  const group = makeGroup({ members: ['A'] });
+  it('renombra con trim y no toca updatedAt', () => {
+    const renamed = unwrap(renameGroup(group, ' Nuevo '));
+    expect(renamed.name).toBe('Nuevo');
+    expect(renamed.updatedAt).toBe(group.updatedAt);
+  });
+  it('rechaza nombres inválidos', () => {
+    expect(code(renameGroup(group, ''))).toBe('invalid_group_name');
+  });
+  it('touch actualiza sólo updatedAt sin mutar el original', () => {
+    const touched = touch(group, '2027-01-01T00:00:00.000Z');
+    expect(touched.updatedAt).toBe('2027-01-01T00:00:00.000Z');
+    expect({ ...touched, updatedAt: group.updatedAt }).toEqual(group);
+    expect(group.updatedAt).toBe(NOW);
+  });
+});
+
+describe('addMember / renameMember', () => {
+  const group = makeGroup({ members: ['Ana', 'Beto'] });
+
+  it('agrega al final con el nombre recortado', () => {
+    const next = unwrap(addMember(group, { id: 'c', name: ' Cami ' }));
+    expect(next.members.map((m) => m.name)).toEqual(['Ana', 'Beto', 'Cami']);
+    expect(group.members).toHaveLength(2);
+  });
+
+  it.each([
+    ['nombre repetido', { id: 'x', name: 'ANA' }, 'duplicate_member_name'],
+    ['id repetido', { id: 'Ana', name: 'Otra' }, 'duplicate_member_id'],
+    ['nombre vacío', { id: 'x', name: '' }, 'invalid_member_name'],
+  ])('addMember rechaza %s', (_n, member, expected) => {
+    expect(code(addMember(group, member))).toBe(expected);
+  });
+
+  it('renameMember cambia el nombre manteniendo el id y el orden', () => {
+    const next = unwrap(renameMember(group, 'Ana', 'Anita'));
+    expect(next.members).toEqual([
+      { id: 'Ana', name: 'Anita' },
+      { id: 'Beto', name: 'Beto' },
+    ]);
+  });
+
+  it('renameMember permite cambiar sólo mayúsculas de sí mismo', () => {
+    expect(unwrap(renameMember(group, 'Ana', 'ANA')).members[0].name).toBe(
+      'ANA'
+    );
+  });
+
+  it('renameMember rechaza el nombre de otro y miembros inexistentes', () => {
+    expect(code(renameMember(group, 'Ana', 'beto'))).toBe(
+      'duplicate_member_name'
+    );
+    expect(code(renameMember(group, 'Z', 'X'))).toBe('member_not_found');
+  });
+});
+
+describe('expenses', () => {
+  const group = makeGroup({ members: ['A', 'B', 'C'] });
+
+  it('addExpense agrega el gasto con id y createdAt recibidos', () => {
+    const next = unwrap(addExpense(group, expenseInput));
+    expect(next.expenses).toEqual([expenseInput]);
+    expect(group.expenses).toEqual([]);
+  });
+
+  it('addExpense rechaza datos inválidos e ids repetidos', () => {
+    expect(code(addExpense(group, { ...expenseInput, amount: 0 }))).toBe(
+      'invalid_amount'
+    );
+    const withOne = unwrap(addExpense(group, expenseInput));
+    expect(code(addExpense(withOne, expenseInput))).toBe('duplicate_id');
+  });
+
+  it('updateExpense reemplaza los campos y conserva id y createdAt', () => {
+    const withOne = unwrap(addExpense(group, expenseInput));
+    const { id: _id, createdAt: _c, ...fields } = expenseInput;
+    void _id;
+    void _c;
+    const next = unwrap(
+      updateExpense(withOne, 'e9', {
+        ...fields,
+        amount: 1200,
+        description: ' Cena ',
+      })
+    );
+    expect(next.expenses[0]).toMatchObject({
+      id: 'e9',
+      createdAt: NOW,
+      amount: 1200,
+      description: 'Cena',
+    });
+  });
+
+  it('updateExpense falla si el gasto no existe o los datos son inválidos', () => {
+    const withOne = unwrap(addExpense(group, expenseInput));
+    const { id: _id, createdAt: _c, ...fields } = expenseInput;
+    void _id;
+    void _c;
+    expect(code(updateExpense(withOne, 'nope', fields))).toBe(
+      'expense_not_found'
+    );
+    expect(
+      code(updateExpense(withOne, 'e9', { ...fields, payerId: 'Z' }))
+    ).toBe('payer_not_found');
+  });
+
+  it('updateExpense sólo modifica el gasto indicado (regresión del bug de tarjetas)', () => {
+    let g = unwrap(addExpense(group, expenseInput));
+    g = unwrap(
+      addExpense(g, { ...expenseInput, id: 'e10', description: 'Otro' })
+    );
+    const { id: _id, createdAt: _c, ...fields } = expenseInput;
+    void _id;
+    void _c;
+    g = unwrap(updateExpense(g, 'e10', { ...fields, description: 'Editado' }));
+    expect(g.expenses.map((e) => e.description)).toEqual(['Pizza', 'Editado']);
+  });
+
+  it('removeExpense elimina por id, no por posición', () => {
+    let g = unwrap(addExpense(group, expenseInput));
+    g = unwrap(
+      addExpense(g, { ...expenseInput, id: 'e10', description: 'Otro' })
+    );
+    g = unwrap(removeExpense(g, 'e9'));
+    expect(g.expenses.map((e) => e.id)).toEqual(['e10']);
+    expect(code(removeExpense(g, 'e9'))).toBe('expense_not_found');
+  });
+});
+
+describe('payments', () => {
+  const group = makeGroup({ members: ['A', 'B'] });
+  const input = {
+    id: 'p1',
+    fromId: 'A',
+    toId: 'B',
+    amount: 100,
+    date: '2026-01-02',
+    createdAt: NOW,
+  };
+
+  it('addPayment agrega y removePayment elimina', () => {
+    const g = unwrap(addPayment(group, input));
+    expect(g.payments).toEqual([input]);
+    expect(unwrap(removePayment(g, 'p1')).payments).toEqual([]);
+  });
+
+  it.each([
+    ['a sí mismo', { ...input, toId: 'A' }, 'same_member_payment'],
+    ['monto 0', { ...input, amount: 0 }, 'invalid_amount'],
+    ['miembro inexistente', { ...input, toId: 'Z' }, 'member_not_found'],
+  ])('addPayment rechaza %s', (_n, p, expected) => {
+    expect(code(addPayment(group, p))).toBe(expected);
+  });
+
+  it('addPayment rechaza ids repetidos y removePayment ids inexistentes', () => {
+    const g = unwrap(addPayment(group, input));
+    expect(code(addPayment(g, input))).toBe('duplicate_id');
+    expect(code(removePayment(g, 'nope'))).toBe('payment_not_found');
+  });
+});
+
+describe('getMemberRemovalImpact / removeMember', () => {
+  // A paga e1 (A,B,C); B paga e2 (B,C); C paga e3 (A); D paga e4 (D sola) ; E sin movimientos
+  const group: Group = makeGroup({
+    members: ['A', 'B', 'C', 'D', 'E'],
+    expenses: [
+      { id: 'e1', amount: 900, payer: 'A', among: ['A', 'B', 'C'] },
+      { id: 'e2', amount: 300, payer: 'B', among: ['B', 'C'] },
+      { id: 'e3', amount: 90, payer: 'C', among: ['A'] },
+      { id: 'e4', amount: 50, payer: 'D', among: ['D'] },
+    ],
+    payments: [
+      { id: 'p1', from: 'B', to: 'A', amount: 10 },
+      { id: 'p2', from: 'A', to: 'C', amount: 20 },
+    ],
+  });
+
+  it('describe el impacto: pagados, participaciones, pagos y borrados en cascada', () => {
+    const impact = unwrap(getMemberRemovalImpact(group, 'A'));
+    expect(impact.paidExpenses.map((e) => e.id)).toEqual(['e1']);
+    expect(impact.participatingExpenses.map((e) => e.id)).toEqual(['e1', 'e3']);
+    expect(impact.payments.map((p) => p.id)).toEqual(['p1', 'p2']);
+    // e1 (la pagó) y e3 (A era su único participante)
+    expect(impact.expensesDeletedByCascade.map((e) => e.id)).toEqual([
+      'e1',
+      'e3',
+    ]);
+    expect(impact.requiresStrategy).toBe(true);
+  });
+
+  it('un miembro sin movimientos no requiere estrategia', () => {
+    const impact = unwrap(getMemberRemovalImpact(group, 'E'));
+    expect(impact).toEqual({
+      paidExpenses: [],
+      participatingExpenses: [],
+      payments: [],
+      expensesDeletedByCascade: [],
+      requiresStrategy: false,
+    });
+  });
+
+  it('el impacto de un miembro inexistente es un error', () => {
+    expect(code(getMemberRemovalImpact(group, 'Z'))).toBe('member_not_found');
+    expect(code(removeMember(group, 'Z', { type: 'none' }))).toBe(
+      'member_not_found'
+    );
+  });
+
+  describe('none', () => {
+    it('elimina a quien no tiene movimientos', () => {
+      const next = unwrap(removeMember(group, 'E', { type: 'none' }));
+      expect(next.members.map((m) => m.id)).toEqual(['A', 'B', 'C', 'D']);
+      expect(next.expenses).toEqual(group.expenses);
+    });
+    it.each(['A', 'B', 'D'])('rechaza a %s porque tiene movimientos', (id) => {
+      expect(code(removeMember(group, id, { type: 'none' }))).toBe(
+        'member_has_activity'
+      );
+    });
+    it('rechaza a quien sólo aparece en pagos', () => {
+      const g = makeGroup({
+        members: ['A', 'B'],
+        payments: [{ from: 'A', to: 'B', amount: 5 }],
+      });
+      expect(code(removeMember(g, 'A', { type: 'none' }))).toBe(
+        'member_has_activity'
+      );
+    });
+  });
+
+  describe('reassign', () => {
+    it('traspasa pagador, participación y pagos al destino sin duplicar', () => {
+      const next = unwrap(
+        removeMember(group, 'B', { type: 'reassign', toMemberId: 'C' })
+      );
+      expect(next.members.map((m) => m.id)).toEqual(['A', 'C', 'D', 'E']);
+      const byId = Object.fromEntries(next.expenses.map((e) => [e.id, e]));
+      expect(byId.e1.split.participantIds).toEqual(['A', 'C']);
+      expect(byId.e2.payerId).toBe('C');
+      expect(byId.e2.split.participantIds).toEqual(['C']); // C ya participaba: sin duplicar
+      expect(next.payments.map((p) => [p.id, p.fromId, p.toId])).toEqual([
+        ['p1', 'C', 'A'],
+        ['p2', 'A', 'C'],
+      ]);
+      expect(getGroupIssues(next)).toEqual([]);
+    });
+
+    it('elimina los pagos que quedarían de alguien a sí mismo', () => {
+      const next = unwrap(
+        removeMember(group, 'B', { type: 'reassign', toMemberId: 'A' })
+      );
+      expect(next.payments.map((p) => p.id)).toEqual(['p2']);
+    });
+
+    it('conserva el total de dinero de los gastos', () => {
+      const next = unwrap(
+        removeMember(group, 'A', { type: 'reassign', toMemberId: 'B' })
+      );
+      expect(next.expenses.map((e) => e.amount)).toEqual([900, 300, 90, 50]);
+    });
+
+    it.each([
+      ['a sí mismo', 'A'],
+      ['a alguien inexistente', 'Z'],
+    ])('rechaza reasignar %s', (_n, toMemberId) => {
+      expect(
+        code(removeMember(group, 'A', { type: 'reassign', toMemberId }))
+      ).toBe('invalid_reassign_target');
+    });
+  });
+
+  describe('cascade', () => {
+    it('borra sus gastos y pagos y lo quita de los demás', () => {
+      const next = unwrap(removeMember(group, 'B', { type: 'cascade' }));
+      expect(next.members.map((m) => m.id)).toEqual(['A', 'C', 'D', 'E']);
+      expect(next.expenses.map((e) => [e.id, e.split.participantIds])).toEqual([
+        ['e1', ['A', 'C']],
+        ['e3', ['A']],
+        ['e4', ['D']],
+      ]);
+      expect(next.payments.map((p) => p.id)).toEqual(['p2']);
+    });
+
+    it('borra los gastos que quedarían sin participantes (nunca deja gastos huérfanos)', () => {
+      const next = unwrap(removeMember(group, 'A', { type: 'cascade' }));
+      // e1 la pagó A; e3 tenía a A como único participante
+      expect(next.expenses.map((e) => e.id)).toEqual(['e2', 'e4']);
+      expect(next.payments).toEqual([]);
+      expect(
+        next.expenses.every((e) => e.split.participantIds.length > 0)
+      ).toBe(true);
+      expect(getGroupIssues(next)).toEqual([]);
+    });
+
+    it('lo que dice el impacto coincide con lo que se borra', () => {
+      for (const m of group.members) {
+        const impact = unwrap(getMemberRemovalImpact(group, m.id));
+        const next = unwrap(removeMember(group, m.id, { type: 'cascade' }));
+        expect(group.expenses.length - next.expenses.length).toBe(
+          impact.expensesDeletedByCascade.length
+        );
+      }
+    });
+  });
+});
