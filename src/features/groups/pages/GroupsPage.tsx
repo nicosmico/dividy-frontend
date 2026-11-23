@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GroupCard } from '../components/GroupCard';
-import { WelcomeCard } from '../components/WelcomeCard';
+import { Welcome } from '../components/Welcome';
 import { useGroups } from '../data';
 
 /** `/`: my groups, or a short welcome when there are none. */
@@ -21,7 +21,7 @@ export function GroupsPage() {
     );
   }
 
-  if (groups.length === 0) return <WelcomeCard />;
+  if (groups.length === 0) return <Welcome />;
 
   return (
     <div className='grid gap-4'>

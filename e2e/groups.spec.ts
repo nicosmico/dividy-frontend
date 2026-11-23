@@ -6,12 +6,12 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   await page.goto('/');
   await expect(page).toHaveTitle('Dividy');
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
   await expect(page.getByText('Solo pesos chilenos.')).toBeVisible();
 
   // Create a group with 3 members.
-  await page.getByRole('link', { name: 'Crear grupo' }).click();
+  await page.getByRole('link', { name: 'Crear mi primer grupo' }).click();
   await expect(page).toHaveURL(/\/groups\/new$/);
   const newGroupIcons = page.locator('[data-slot="entity-icon"] svg');
   await expect(newGroupIcons.first()).toHaveClass(/lucide-users/);
@@ -83,7 +83,7 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   await page.getByRole('button', { name: 'Eliminar grupo' }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
 });
 

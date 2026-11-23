@@ -5,18 +5,22 @@ import { makeGroup } from '@/domain/test-utils/fixtures';
 import { currentPath, renderWithProviders } from '@/test/render-with-providers';
 
 describe('Mis grupos', () => {
-  it('sin grupos muestra la bienvenida con los 3 pasos y el botón para crear', async () => {
+  it('sin grupos muestra la bienvenida animada y el botón para crear', async () => {
     const { user } = renderWithProviders();
     expect(
-      await screen.findByRole('heading', { name: 'Bienvenido a Dividy' })
+      await screen.findByRole('heading', { name: 'Divide gastos sin enredos' })
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(
+      await screen.findByRole('region', { name: /Ejemplo animado/ })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         'Solo pesos chilenos. Tus datos se guardan en este dispositivo.'
       )
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('link', { name: 'Crear grupo' }));
+    await user.click(
+      screen.getByRole('link', { name: 'Crear mi primer grupo' })
+    );
     await waitFor(() => expect(currentPath()).toBe('/groups/new'));
   });
 
@@ -51,7 +55,7 @@ describe('Mis grupos', () => {
     expect(await within(items[0]).findByAltText('Caro')).toBeInTheDocument();
     expect(within(items[1]).getByText('$0')).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { name: 'Bienvenido a Dividy' })
+      screen.queryByRole('heading', { name: 'Divide gastos sin enredos' })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: /Casa/ }));
