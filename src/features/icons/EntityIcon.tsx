@@ -3,9 +3,11 @@ import { ENTITY_ICONS } from './entity-icons';
 import type { IconKind } from './keywords';
 import { suggestIcon } from './suggest-icon';
 
-type EntityIconSize = 'list' | 'header' | 'card';
+type EntityIconSize = 'legend' | 'list' | 'header' | 'card';
 
 const SIZES: Record<EntityIconSize, { tile: string; icon: string }> = {
+  /** Chart legend and tooltip (28 px). */
+  legend: { tile: 'size-7 rounded-lg', icon: 'size-4' },
   /** Expense rows (40 px). */
   list: { tile: 'size-10 rounded-xl', icon: 'size-5' },
   /** Group header and next to a text field, as tall as the input (44 px). */

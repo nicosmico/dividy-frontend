@@ -69,9 +69,12 @@ describe('Pestaña Saldos', () => {
       route: ROUTE,
       groups: [groupWithDebts()],
     });
-    expect(await screen.findByText('Le deben $5.166')).toBeInTheDocument();
-    expect(screen.getByText('Debe $1.833')).toBeInTheDocument();
-    expect(screen.getByText('Debe $3.333')).toBeInTheDocument();
+    const section = (
+      await screen.findByRole('heading', { name: 'Saldo por miembro' })
+    ).closest('section')!;
+    expect(within(section).getByText('Le deben $5.166')).toBeInTheDocument();
+    expect(within(section).getByText('Debe $1.833')).toBeInTheDocument();
+    expect(within(section).getByText('Debe $3.333')).toBeInTheDocument();
   });
 
   it('marca una transferencia como pagada tras confirmar y, si era la última, queda al día', async () => {

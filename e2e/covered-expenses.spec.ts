@@ -136,6 +136,7 @@ test('eliminar un gasto ya pagado advierte, se puede cancelar, confirmar y desha
   await tab(page, 'Saldos').click();
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
   await tab(page, 'Gastos').click();
+  await expect(page).toHaveURL(/\/expenses$/);
 
   // Confirm: balances change.
   await page.getByRole('button', { name: /Supermercado/ }).click();

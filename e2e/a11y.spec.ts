@@ -30,11 +30,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('Mis grupos vacío y Crear grupo', async ({ page }) => {
       await page.goto('/');
       await expect(
-        page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+        page.getByRole('heading', { name: 'Divide gastos sin enredos' })
       ).toBeVisible();
       await expectNoSeriousViolations(page);
 
-      await page.getByRole('link', { name: 'Crear grupo' }).click();
+      await page.getByRole('link', { name: 'Crear mi primer grupo' }).click();
       await expect(
         page.getByRole('heading', { name: 'Crear grupo' })
       ).toBeVisible();
@@ -81,7 +81,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page
         .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
         .click();
-      await expect(page.getByText('Pagó', { exact: true })).toBeVisible();
+      await expect(page.getByText('Saldo = pagó − su parte')).toBeVisible();
       await expectNoSeriousViolations(page);
 
       await page

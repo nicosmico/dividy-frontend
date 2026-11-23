@@ -39,6 +39,13 @@ async function addExpense(page: Page, expense: NewExpense) {
   await expect(dialog).toBeHidden();
 }
 
+/** The "Saldo por miembro" list (the chart above repeats the same words). */
+function memberBalances(page: Page) {
+  return page
+    .getByRole('heading', { name: 'Saldo por miembro' })
+    .locator('xpath=ancestor::section[1]');
+}
+
 /** Icon tiles and avatar moods are decorative: find them by class / data. */
 function icon(scope: Page | Locator, name: string): Locator {
   return scope.locator(`[data-slot="entity-icon"] svg.lucide-${name}`);
@@ -85,13 +92,15 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   const balances = computeBalances(group);
   expect(balances.map((b) => b.balance)).toEqual([5166, -1833, -3333]);
   await expect(
-    page.getByText(`Le deben ${formatAmount(balances[0].balance)}`)
+    memberBalances(page).getByText(
+      `Le deben ${formatAmount(balances[0].balance)}`
+    )
   ).toBeVisible();
   await expect(
-    page.getByText(`Debe ${formatAmount(-balances[1].balance)}`)
+    memberBalances(page).getByText(`Debe ${formatAmount(-balances[1].balance)}`)
   ).toBeVisible();
   await expect(
-    page.getByText(`Debe ${formatAmount(-balances[2].balance)}`)
+    memberBalances(page).getByText(`Debe ${formatAmount(-balances[2].balance)}`)
   ).toBeVisible();
 
   const transfers = suggestTransfers(group);
@@ -109,7 +118,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await page
     .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     .click();
-  await expect(page.getByText('Pagó', { exact: true })).toBeVisible();
+  await expect(page.getByText('Saldo = pagó − su parte')).toBeVisible();
   await expect(page.getByText('Su parte $3.334')).toBeVisible();
 
   // While there is money pending, everyone with a balance is sad (decision 93).
@@ -266,5 +275,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   // Ana paid her own dinner: every balance is 0.
   await tab(page, 'Saldos').click();
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
-  await expect(page.getByText('Al día', { exact: true })).toHaveCount(2);
+  await expect(
+    memberBalances(page).getByText('Al día', { exact: true })
+  ).toHaveCount(2);
 });
