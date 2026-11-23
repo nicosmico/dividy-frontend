@@ -40,6 +40,15 @@
   --destructive: #c62f25;
   --destructive-foreground: #ffffff;
 
+  /* Chart categorical colors (docs/design-system.md): never for balances */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #6250d6;
+  --chart-other: #8d99ae;
+
   /* Controls */
   --field: #ffffff;
   --input: #7f8fa6;
@@ -84,6 +93,14 @@
   --positive: #86e3a4;
   --negative: #ff9c90;
   --negative-border: #6b3340;
+
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #9085e9;
+  --chart-other: #7d8ba3;
 
   --field: #0f2140;
   --input: #5f7dae;
@@ -133,6 +150,13 @@
   --color-negative-border: var(--negative-border);
   --color-tab-active: var(--tab-active);
   --color-tab-active-foreground: var(--tab-active-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-other: var(--chart-other);
   --color-overlay: var(--overlay);
   --color-logo-bg: var(--logo-bg);
   --color-logo-fg: var(--logo-fg);
