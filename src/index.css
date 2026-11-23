@@ -3,26 +3,105 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Design tokens: the only place where colors are defined (docs/design-system.md).
+ * Components use them through Tailwind utilities (`bg-card`, `text-positive`...),
+ * never hex values or fixed palettes. `.dark` is set on <html> by useTheme().
+ */
 :root {
+  color-scheme: light;
   --radius: 1rem;
-  --background: #f8f7f1;
-  --foreground: #18181b;
+
+  /* Surfaces and text */
+  --background: #f4f7f2;
+  --foreground: #10213f;
   --card: #ffffff;
-  --card-foreground: #18181b;
+  --card-foreground: #10213f;
   --popover: #ffffff;
-  --popover-foreground: #18181b;
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
-  --secondary: #efede3;
-  --secondary-foreground: #18181b;
-  --muted: #efede3;
-  --muted-foreground: #52525b;
-  --accent: #fde68a;
-  --accent-foreground: #18181b;
-  --destructive: #dc2626;
-  --border: #e4e1d4;
-  --input: #d6d3c4;
-  --ring: #18181b;
+  --popover-foreground: #10213f;
+  --surface-2: #eaf0e6;
+  --muted: var(--surface-2);
+  --muted-foreground: #5b6b82;
+  --secondary: var(--surface-2);
+  --secondary-foreground: #10213f;
+  --border: #dce4d6;
+  --brand: #14305f;
+
+  /* Brand */
+  --primary: #14305f;
+  --primary-foreground: #d6fec2;
+  --accent: #d6fec2;
+  --accent-foreground: #14305f;
+
+  /* Meaning */
+  --positive: #1e7b3c;
+  --negative: #b3261e;
+  --negative-border: #f0c3be;
+  --destructive: #c62f25;
+  --destructive-foreground: #ffffff;
+
+  /* Controls */
+  --field: #ffffff;
+  --input: #7f8fa6;
+  --ring: #14305f;
+  --ring-soft: rgb(20 48 95 / 0.15);
+  --tab-active: #ffffff;
+  --tab-active-foreground: #14305f;
+
+  /* Toast, overlay, logo */
+  --toast: #14305f;
+  --toast-foreground: #ecf6e6;
+  --toast-action: #d6fec2;
+  --toast-action-foreground: #14305f;
+  --overlay: rgb(11 23 48 / 0.45);
+  --logo-bg: #14305f;
+  --logo-fg: #d6fec2;
+
+  /* Elevation: soft shadows in light, none in dark (borders do the work) */
+  --elevation: 0 1px 2px rgb(20 48 95 / 0.06), 0 6px 20px rgb(20 48 95 / 0.06);
+  --elevation-pop: 0 8px 30px rgb(20 48 95 / 0.16);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0b1730;
+  --foreground: #ecf6e6;
+  --card: #12264a;
+  --card-foreground: #ecf6e6;
+  --popover: #12264a;
+  --popover-foreground: #ecf6e6;
+  --surface-2: #1a325c;
+  --muted-foreground: #a3b3cb;
+  --secondary-foreground: #ecf6e6;
+  --border: #24406e;
+  --brand: #ecf6e6;
+
+  --primary: #d6fec2;
+  --primary-foreground: #0b1730;
+  --accent: #d6fec2;
+  --accent-foreground: #0b1730;
+
+  --positive: #86e3a4;
+  --negative: #ff9c90;
+  --negative-border: #6b3340;
+
+  --field: #0f2140;
+  --input: #5f7dae;
+  --ring: #d6fec2;
+  --ring-soft: rgb(214 254 194 / 0.2);
+  --tab-active: #1f3b6b;
+  --tab-active-foreground: #ecf6e6;
+
+  --toast: #ecf6e6;
+  --toast-foreground: #0b1730;
+  --toast-action: #14305f;
+  --toast-action-foreground: #d6fec2;
+  --overlay: rgb(3 8 20 / 0.6);
+  --logo-bg: #d6fec2;
+  --logo-fg: #14305f;
+
+  --elevation: none;
+  --elevation-pop: 0 8px 30px rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
@@ -41,15 +120,32 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-soft: var(--ring-soft);
+  --color-surface-2: var(--surface-2);
+  --color-field: var(--field);
+  --color-brand: var(--brand);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-negative-border: var(--negative-border);
+  --color-tab-active: var(--tab-active);
+  --color-tab-active-foreground: var(--tab-active-foreground);
+  --color-overlay: var(--overlay);
+  --color-logo-bg: var(--logo-bg);
+  --color-logo-fg: var(--logo-fg);
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --shadow-soft:
-    0 1px 2px rgb(24 24 27 / 0.04), 0 4px 16px rgb(24 24 27 / 0.06);
+  --radius-field: 0.875rem;
+  --radius-tile: 1.125rem;
+  --radius-card: 1.375rem;
+  --radius-sheet: 1.75rem;
+  --shadow-soft: var(--elevation);
+  --shadow-pop: var(--elevation-pop);
 }
 
 /* Toasts sit at the bottom, centered. On mobile, when the fixed "Agregar gasto"
@@ -66,6 +162,18 @@
 }
 [data-sonner-toast] {
   pointer-events: auto;
+}
+/* Toast colors come from tokens (navy on light, mint cream on dark). */
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+  box-shadow: var(--elevation-pop);
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-button] {
+  min-height: 2.75rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  background: var(--toast-action);
+  color: var(--toast-action-foreground);
+  font-weight: 600;
 }
 @media (max-width: 767px) {
   :root[data-floating-action] {

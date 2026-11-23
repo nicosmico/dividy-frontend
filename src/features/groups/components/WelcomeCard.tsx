@@ -21,7 +21,7 @@ export function WelcomeCard() {
       <ol className='grid gap-3'>
         {STEPS.map((step, index) => (
           <li key={step} className='flex items-start gap-3 text-sm'>
-            <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-accent font-semibold'>
+            <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-accent font-semibold text-accent-foreground'>
               {index + 1}
             </span>
             <span className='pt-1'>{step}</span>

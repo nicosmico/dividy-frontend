@@ -295,7 +295,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 type='button'
                 variant='ghost'
                 size='sm'
-                className='-my-1 h-9'
+                className='-my-1 h-9 text-primary'
                 onClick={() =>
                   setValue(
                     'participantIds',
@@ -310,7 +310,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 type='button'
                 variant='ghost'
                 size='sm'
-                className='-my-1 h-9'
+                className='-my-1 h-9 text-primary'
                 onClick={() =>
                   setValue('participantIds', [], {
                     shouldValidate: isSubmitted,
@@ -371,7 +371,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
             </p>
           )}
           {errors.participantIds?.message && (
-            <p role='alert' className='text-sm text-destructive'>
+            <p role='alert' className='text-sm text-negative'>
               {errors.participantIds.message}
             </p>
           )}
@@ -382,7 +382,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
         </FormField>
 
         {formError && (
-          <p role='alert' className='text-sm text-destructive'>
+          <p role='alert' className='text-sm text-negative'>
             {formError}
           </p>
         )}
@@ -393,7 +393,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
               type='button'
               variant='ghost'
               disabled={busy}
-              className='order-last col-span-2 text-destructive hover:text-destructive md:order-none md:col-span-1 md:mr-auto'
+              className='order-last col-span-2 text-negative hover:text-negative md:order-none md:col-span-1 md:mr-auto'
               onClick={requestDelete}
             >
               Eliminar gasto

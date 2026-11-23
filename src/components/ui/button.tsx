@@ -5,17 +5,16 @@ import { Slot } from 'radix-ui';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90',
-        accent:
-          'bg-accent text-accent-foreground shadow-soft hover:bg-accent/80',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        accent: 'bg-accent text-accent-foreground hover:bg-accent/80',
         destructive:
-          'bg-destructive text-white shadow-soft hover:bg-destructive/90',
-        outline: 'border border-input bg-card shadow-soft hover:bg-secondary',
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline:
+          'border border-border bg-card text-foreground hover:bg-secondary',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/70',
         ghost: 'hover:bg-secondary',

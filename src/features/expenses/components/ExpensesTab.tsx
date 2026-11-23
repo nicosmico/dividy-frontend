@@ -148,7 +148,7 @@ function NeedMoreMembers({ group }: { group: Group }) {
   return (
     <p
       role='status'
-      className='rounded-xl bg-accent/60 p-3 text-sm text-accent-foreground'
+      className='rounded-xl bg-accent p-3 text-sm text-accent-foreground'
     >
       Para agregar un gasto necesitas al menos {MIN_MEMBERS} miembros (ahora hay{' '}
       {group.members.length}).{' '}
@@ -178,7 +178,7 @@ function ExpenseRow({
     <button
       type='button'
       onClick={onOpen}
-      className='flex w-full flex-col gap-1 rounded-2xl border bg-card p-3 text-left shadow-soft transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40'
+      className='flex w-full flex-col gap-1 rounded-tile border bg-card p-3 text-left shadow-soft transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40'
     >
       <span className='flex items-start justify-between gap-3'>
         <span className='min-w-0 font-medium break-words'>

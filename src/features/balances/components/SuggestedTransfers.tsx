@@ -67,7 +67,7 @@ export function SuggestedTransfers({
                   {from.name} → {to.name}
                 </p>
                 <Button
-                  variant='outline'
+                  variant='accent'
                   aria-label={`Marcar como pagado: ${from.name} le paga ${formatAmount(t.amount)} a ${to.name}`}
                   onClick={() => setPaying(t)}
                 >
@@ -143,7 +143,7 @@ function ConfirmPayment({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && (
-          <p role='alert' className='text-sm text-destructive'>
+          <p role='alert' className='text-sm text-negative'>
             {error}
           </p>
         )}

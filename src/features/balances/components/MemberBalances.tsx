@@ -24,9 +24,9 @@ export function BalanceLabel({
 }) {
   const tone =
     balance > 0
-      ? 'font-semibold text-emerald-700'
+      ? 'font-semibold text-positive'
       : balance < 0
-        ? 'font-semibold text-red-700'
+        ? 'font-semibold text-negative'
         : 'font-medium text-muted-foreground';
   return (
     <span className={cn(tone, className)}>{describeBalance(balance)}</span>
@@ -76,7 +76,7 @@ function MemberRow({
   return (
     <Card className='gap-0 p-0'>
       <Collapsible.Root>
-        <Collapsible.Trigger className='group flex w-full items-center gap-3 rounded-2xl p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'>
+        <Collapsible.Trigger className='group flex w-full items-center gap-3 rounded-tile p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'>
           <MemberAvatar
             member={member}
             decorative

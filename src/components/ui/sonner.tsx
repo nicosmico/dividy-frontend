@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '@/hooks/use-theme';
 import { toast, Toaster as Sonner, useSonner, type ToasterProps } from 'sonner';
 
 /**
@@ -42,9 +43,10 @@ function Toaster(props: ToasterProps) {
   // so while one is open they move to the top, where nothing interactive is.
   const modalOpen = useModalOpen();
   useSingleToast();
+  const { resolvedTheme } = useTheme();
   return (
     <Sonner
-      theme='light'
+      theme={resolvedTheme}
       visibleToasts={1}
       position={modalOpen ? 'top-center' : 'bottom-center'}
       // Same bottom offset on every width: the CSS variable accounts for the
@@ -54,9 +56,9 @@ function Toaster(props: ToasterProps) {
       className='toaster group'
       style={
         {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
+          '--normal-bg': 'var(--toast)',
+          '--normal-text': 'var(--toast-foreground)',
+          '--normal-border': 'var(--toast)',
           '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
