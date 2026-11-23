@@ -73,7 +73,13 @@ export function ResponsiveDialog({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    // `repositionInputs={false}`: vaul's default resizes and moves the drawer
+    // from `visualViewport` events when the iOS keyboard opens. On Safari iOS
+    // the closing resize is not reported reliably, the drawer keeps the old
+    // `bottom`/`height` and a white gap shows where the keyboard was. iOS
+    // already scrolls the focused field into view, and the sheet is capped at
+    // 90svh with its own scroll area, so the repositioning is not needed.
+    <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent
         onCloseAutoFocus={returnFocus}
         // The drawer does not move focus in by itself: put it on the drawer
@@ -91,7 +97,10 @@ export function ResponsiveDialog({
             <DrawerDescription className='sr-only'>{title}</DrawerDescription>
           )}
         </DrawerHeader>
-        <div className='overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'>
+        {/* overflow-x-hidden + overscroll-contain: safety net so no sheet can
+            scroll sideways (iOS) or chain its scroll to the page. The 3px focus
+            rings fit inside the px-4 (16px) gutter, so they are not clipped. */}
+        <div className='overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'>
           {children}
         </div>
       </DrawerContent>

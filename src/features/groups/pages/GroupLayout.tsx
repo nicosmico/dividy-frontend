@@ -32,7 +32,7 @@ export function GroupLayout() {
 
   if (isPending) {
     return (
-      <div className='grid gap-4' aria-busy='true'>
+      <div className='grid grid-cols-[minmax(0,1fr)] gap-4' aria-busy='true'>
         <Skeleton className='h-10 w-2/3' />
         <Skeleton className='h-12' />
         <Skeleton className='h-32' />
@@ -42,7 +42,7 @@ export function GroupLayout() {
   if (!group) return <GroupNotFound />;
 
   return (
-    <div className='grid gap-4'>
+    <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
       <div className='flex items-center justify-between gap-2'>
         <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
           {group.name}

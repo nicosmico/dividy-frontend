@@ -80,7 +80,11 @@ function RenameMemberForm({
   });
 
   return (
-    <form onSubmit={onSubmit} className='grid gap-4' noValidate>
+    <form
+      onSubmit={onSubmit}
+      className='grid grid-cols-[minmax(0,1fr)] gap-4'
+      noValidate
+    >
       <FormField
         label='Nombre'
         error={errors.name?.message}

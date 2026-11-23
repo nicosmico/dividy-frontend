@@ -59,7 +59,7 @@ export function ShareSummaryButton({ group }: { group: Group }) {
           title='Copia el resumen'
           description='No pudimos copiarlo automáticamente. Selecciona el texto y cópialo.'
         >
-          <div className='grid gap-3'>
+          <div className='grid grid-cols-[minmax(0,1fr)] gap-3'>
             <Textarea
               readOnly
               aria-label='Resumen del grupo'

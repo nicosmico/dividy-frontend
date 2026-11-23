@@ -32,7 +32,7 @@ export function FormField({
   const messageId = `${id}-message`;
   const describedBy = error || hint ? messageId : undefined;
   return (
-    <div className='grid gap-2'>
+    <div className='grid grid-cols-[minmax(0,1fr)] gap-2'>
       <div className='flex items-baseline justify-between gap-2'>
         <Label htmlFor={id}>{label}</Label>
         {counter && (

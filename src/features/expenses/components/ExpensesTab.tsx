@@ -29,7 +29,7 @@ export function ExpensesTab() {
   const days = groupByDate(sortExpenses(group.expenses));
 
   return (
-    <div className='grid gap-4'>
+    <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
       {count > 0 ? (
         <div className='flex items-center justify-between gap-3'>
           <div className='min-w-0'>
@@ -69,12 +69,12 @@ export function ExpensesTab() {
         <section
           key={day.date}
           aria-label={dateLabel(day.date)}
-          className='grid gap-2'
+          className='grid grid-cols-[minmax(0,1fr)] gap-2'
         >
           <h2 className='text-sm font-semibold text-muted-foreground'>
             {dateLabel(day.date)}
           </h2>
-          <ul className='grid gap-2'>
+          <ul className='grid grid-cols-[minmax(0,1fr)] gap-2'>
             {day.expenses.map((expense) => (
               <li key={expense.id}>
                 <ExpenseRow

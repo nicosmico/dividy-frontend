@@ -173,7 +173,11 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   const busy = operation.isPending;
 
   return (
-    <form onSubmit={onSubmit} noValidate className='grid gap-4'>
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className='grid grid-cols-[minmax(0,1fr)] gap-4'
+    >
       <FormField
         label='Descripción'
         error={errors.description?.message}
@@ -234,7 +238,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
         )}
       </FormField>
 
-      <fieldset className='grid gap-2'>
+      <fieldset className='grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2'>
         <div className='flex items-center justify-between gap-2'>
           <legend className='text-sm font-medium'>Dividir entre</legend>
           <div className='flex gap-1'>
@@ -272,7 +276,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           control={control}
           name='participantIds'
           render={({ field }) => (
-            <ul className='grid gap-1 rounded-xl border bg-card p-1'>
+            <ul className='grid grid-cols-[minmax(0,1fr)] gap-1 rounded-xl border bg-card p-1'>
               {group.members.map((member) => {
                 const checked = field.value.includes(member.id);
                 const share = shares.get(member.id);
@@ -296,7 +300,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                     <MemberAvatar member={member} className='size-7' />
                     <Label
                       htmlFor={id}
-                      className='min-w-0 flex-1 cursor-pointer py-2 break-words'
+                      className='min-w-0 flex-1 cursor-pointer py-2 [overflow-wrap:anywhere]'
                     >
                       {member.name}
                     </Label>

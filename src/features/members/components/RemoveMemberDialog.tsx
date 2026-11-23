@@ -124,8 +124,8 @@ function StrategyDialog({
       title={`Eliminar a ${member.name}`}
       description={`${member.name} tiene movimientos en el grupo. Elige qué hacer con ellos.`}
     >
-      <div className='grid gap-4'>
-        <ul className='grid gap-1 rounded-xl bg-secondary p-3 text-sm'>
+      <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
+        <ul className='grid grid-cols-[minmax(0,1fr)] gap-1 rounded-xl bg-secondary p-3 text-sm'>
           <li>Pagó {plural(impact.paidExpenses.length, 'gasto', 'gastos')}</li>
           <li>
             Participa en{' '}
@@ -147,7 +147,7 @@ function StrategyDialog({
           }}
           aria-label='Qué hacer con sus movimientos'
         >
-          <div className='grid gap-3 rounded-xl border p-3'>
+          <div className='grid grid-cols-[minmax(0,1fr)] gap-3 rounded-xl border p-3'>
             <div className='flex items-center gap-3'>
               <RadioGroupItem value='reassign' id='remove-reassign' />
               <Label htmlFor='remove-reassign' className='flex-1 py-2'>
@@ -155,7 +155,7 @@ function StrategyDialog({
               </Label>
             </div>
             {choice === 'reassign' && (
-              <div className='grid gap-2 pl-8'>
+              <div className='grid grid-cols-[minmax(0,1fr)] gap-2 pl-8'>
                 <p className='text-sm text-muted-foreground'>
                   Sus gastos y pagos pasan a otra persona del grupo.
                 </p>
@@ -185,7 +185,7 @@ function StrategyDialog({
             )}
           </div>
 
-          <div className='grid gap-3 rounded-xl border p-3'>
+          <div className='grid grid-cols-[minmax(0,1fr)] gap-3 rounded-xl border p-3'>
             <div className='flex items-center gap-3'>
               <RadioGroupItem value='cascade' id='remove-cascade' />
               <Label htmlFor='remove-cascade' className='flex-1 py-2'>
@@ -193,7 +193,7 @@ function StrategyDialog({
               </Label>
             </div>
             {choice === 'cascade' && (
-              <div className='grid gap-2 pl-8 text-sm'>
+              <div className='grid grid-cols-[minmax(0,1fr)] gap-2 pl-8 text-sm'>
                 {deleted.length > 0 ? (
                   <>
                     <p>
@@ -203,7 +203,7 @@ function StrategyDialog({
                     </p>
                     <ul className='list-disc pl-5 text-muted-foreground'>
                       {deleted.map((e) => (
-                        <li key={e.id}>
+                        <li key={e.id} className='break-words'>
                           {e.description} ({formatAmount(e.amount)})
                         </li>
                       ))}
@@ -244,6 +244,8 @@ function StrategyDialog({
           <Button
             type='button'
             variant='destructive'
+            // A long member name must wrap instead of widening the sheet.
+            className='h-auto min-h-11 py-2 text-wrap [overflow-wrap:anywhere] whitespace-normal'
             disabled={!canConfirm || operation.isPending}
             onClick={() => void confirm()}
           >

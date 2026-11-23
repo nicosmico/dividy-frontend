@@ -47,13 +47,16 @@ export function MembersTab() {
   }
 
   return (
-    <div className='grid gap-4'>
+    <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
       <Card className='p-5'>
         <h2 className='mb-3 font-semibold'>Agregar miembro</h2>
         <AddMemberForm group={group} />
       </Card>
 
-      <section aria-labelledby='members-heading' className='grid gap-2'>
+      <section
+        aria-labelledby='members-heading'
+        className='grid grid-cols-[minmax(0,1fr)] gap-2'
+      >
         <h2
           id='members-heading'
           ref={heading}
@@ -63,7 +66,7 @@ export function MembersTab() {
           {group.members.length}{' '}
           {group.members.length === 1 ? 'miembro' : 'miembros'}
         </h2>
-        <ul className='grid gap-2'>
+        <ul className='grid grid-cols-[minmax(0,1fr)] gap-2'>
           {group.members.map((member) => (
             <li key={member.id}>
               <Card className='flex-row items-center gap-3 p-2 pl-3'>
