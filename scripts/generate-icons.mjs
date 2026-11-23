@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 const publicDir = new URL('../public/', import.meta.url);
 const source = readFileSync(new URL('favicon.svg', publicDir), 'utf8');
 
-/** Same logo without rounded corners: launchers and iOS apply their own mask. */
-const fullBleed = source.replace(' rx="6"', '');
+/** Same logo without rounded corners (the favicon's rx="9"): launchers and iOS apply their own mask. */
+const fullBleed = source.replace(' rx="9"', '');
 
 const icons = [
   // "any" icons keep the rounded corners of the favicon.

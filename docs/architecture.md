@@ -89,7 +89,7 @@ Los saldos y transferencias **no se persisten**: siempre se derivan de gastos y 
 
 ## PWA y modo sin conexión
 
-`vite-plugin-pwa` (modo `generateSW`, `registerType: 'prompt'`) genera `manifest.webmanifest` y el service worker (Workbox) en el build. El manifest está en español (`lang: es-CL`, `display: standalone`, `theme_color #18181b`, `background_color #F8F7F1`). Los íconos (192, 512, maskable 512 y `apple-touch-icon` 180) están commiteados en `public/` y se regeneran desde `public/favicon.svg` con `node scripts/generate-icons.mjs` (usa Playwright para sacar la captura del SVG).
+`vite-plugin-pwa` (modo `generateSW`, `registerType: 'prompt'`) genera `manifest.webmanifest` y el service worker (Workbox) en el build. El manifest está en español (`lang: es-CL`, `display: standalone`, `theme_color #F4F7F2`, `background_color #F4F7F2`). Los íconos (192, 512, maskable 512 y `apple-touch-icon` 180) están commiteados en `public/` y se regeneran desde `public/favicon.svg` con `node scripts/generate-icons.mjs` (usa Playwright para sacar la captura del SVG).
 
 - **App shell sin conexión:** se precachean todos los assets del build (JS de cada ruta, CSS, íconos) y toda navegación cae en `index.html`, así que cualquier URL (`/groups/abc/expenses`) abre sin red. Los datos viven en `localStorage`, por eso lectura y escritura siguen funcionando.
 - **Actualizaciones:** `src/app/pwa.ts` registra el service worker; cuando hay una versión nueva muestra un toast "Hay una nueva versión de Dividy" con el botón **Recargar**. No se recarga solo para no perder un formulario a medio llenar. En desarrollo (`npm run dev`) no hay service worker.
