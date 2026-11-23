@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   useCurrentGroup,
   useGroupOperation,
 } from '@/features/groups/data';
+import { restoreFocusIfLost } from '@/lib/focus';
 import { AddMemberForm } from './AddMemberForm';
 import { MemberAvatar } from './MemberAvatar';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
@@ -22,6 +23,7 @@ export function MembersTab() {
   const [renaming, setRenaming] = useState<Member | null>(null);
   const [removing, setRemoving] = useState<Member | null>(null);
   const operation = useGroupOperation(group.id);
+  const heading = useRef<HTMLHeadingElement>(null);
 
   /**
    * A member without activity is removed right away, with "Deshacer". One with
@@ -36,9 +38,11 @@ export function MembersTab() {
     const result = await operation.run((g) =>
       removeMember(g, member.id, { type: 'none' })
     );
-    if (result.ok)
+    if (result.ok) {
       toastUndoable(`${member.name} fue eliminado del grupo`, result);
-    else if (!isInfrastructureError(result.error))
+      // The delete button that had focus is gone.
+      restoreFocusIfLost(heading.current);
+    } else if (!isInfrastructureError(result.error))
       toast.error(result.error.message);
   }
 
@@ -50,7 +54,12 @@ export function MembersTab() {
       </Card>
 
       <section aria-labelledby='members-heading' className='grid gap-2'>
-        <h2 id='members-heading' className='text-sm font-semibold'>
+        <h2
+          id='members-heading'
+          ref={heading}
+          tabIndex={-1}
+          className='text-sm font-semibold outline-none'
+        >
           {group.members.length}{' '}
           {group.members.length === 1 ? 'miembro' : 'miembros'}
         </h2>
@@ -93,7 +102,10 @@ export function MembersTab() {
       <RemoveMemberDialog
         group={group}
         member={removing}
-        onClose={() => setRemoving(null)}
+        onClose={() => {
+          setRemoving(null);
+          restoreFocusIfLost(heading.current);
+        }}
       />
     </div>
   );

@@ -159,7 +159,9 @@ describe('Pestaña Saldos', () => {
       groups: [group],
     });
     await user.click(
-      await screen.findByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
+      await screen.findByRole('button', {
+        name: /^Ana\s*(Le deben|Debe|Al día)/,
+      })
     );
     const row = screen
       .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 
 import {
   Dialog,
@@ -39,10 +39,25 @@ export function ResponsiveDialog({
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
+  // These dialogs are opened by state, not by a Radix trigger, so Radix does
+  // not know where to send focus when they close. Remember the opener and give
+  // focus back to it (if it still exists; otherwise the caller picks a place).
+  const opener = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open) opener.current = document.activeElement as HTMLElement | null;
+  }, [open]);
+  const returnFocus = (event: Event) => {
+    const el = opener.current;
+    if (el && el.isConnected && el !== document.body) {
+      event.preventDefault();
+      el.focus();
+    }
+  };
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent onCloseAutoFocus={returnFocus}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description ? (
@@ -59,7 +74,15 @@ export function ResponsiveDialog({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+      <DrawerContent
+        onCloseAutoFocus={returnFocus}
+        // The drawer does not move focus in by itself: put it on the drawer
+        // (not on the first field, so the on-screen keyboard stays closed).
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>
           {description ? (

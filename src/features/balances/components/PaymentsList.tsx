@@ -16,6 +16,7 @@ import {
   useGroupOperation,
 } from '@/features/groups/data';
 import { formatDate } from '@/lib/dates';
+import { restoreFocusIfLost } from '@/lib/focus';
 
 /** Newest date first; on the same date, the most recently created first. */
 function sortPayments(payments: readonly Payment[]): Payment[] {
@@ -29,6 +30,7 @@ function sortPayments(payments: readonly Payment[]): Payment[] {
 export function PaymentsList({ group }: { group: Group }) {
   const operation = useGroupOperation(group.id);
   const removing = useRef(false);
+  const heading = useRef<HTMLHeadingElement>(null);
   const nameOf = (id: string) =>
     group.members.find((m) => m.id === id)?.name ?? 'alguien';
 
@@ -38,14 +40,22 @@ export function PaymentsList({ group }: { group: Group }) {
     removing.current = true;
     const result = await operation.run((g) => removePayment(g, payment.id));
     removing.current = false;
-    if (result.ok) toastUndoable('Pago eliminado', result);
-    else if (!isInfrastructureError(result.error))
+    if (result.ok) {
+      toastUndoable('Pago eliminado', result);
+      // The delete button that had focus is gone.
+      restoreFocusIfLost(heading.current);
+    } else if (!isInfrastructureError(result.error))
       toast.error(result.error.message);
   }
 
   return (
     <section aria-labelledby='payments-heading' className='grid gap-2'>
-      <h2 id='payments-heading' className='text-sm font-semibold'>
+      <h2
+        id='payments-heading'
+        ref={heading}
+        tabIndex={-1}
+        className='text-sm font-semibold outline-none'
+      >
         Pagos registrados
       </h2>
       <ul className='grid gap-2'>

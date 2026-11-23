@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
 } from '@/domain';
 import { useCurrentGroup } from '@/features/groups/data';
 import { MemberAvatar } from '@/features/members';
+import { restoreFocusIfLost } from '@/lib/focus';
 import { plural } from '@/lib/plural';
 import { ExpenseDialog } from './ExpenseDialog';
 import { dateLabel, groupByDate, sortExpenses } from './expense-list';
@@ -22,6 +23,7 @@ const MIN_MEMBERS = 2;
 export function ExpensesTab() {
   const group = useCurrentGroup();
   const [target, setTarget] = useState<Expense | 'new' | null>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
   const canAdd = group.members.length >= MIN_MEMBERS;
   const count = group.expenses.length;
   const days = groupByDate(sortExpenses(group.expenses));
@@ -40,6 +42,7 @@ export function ExpensesTab() {
             </p>
           </div>
           <AddExpenseButton
+            ref={addButton}
             enabled={canAdd}
             floating
             onClick={() => setTarget('new')}
@@ -52,7 +55,11 @@ export function ExpensesTab() {
             Un gasto es algo que alguien pagó y que se reparte entre el grupo.
             Anótalo y Dividy calcula quién le debe a quién.
           </p>
-          <AddExpenseButton enabled={canAdd} onClick={() => setTarget('new')} />
+          <AddExpenseButton
+            ref={addButton}
+            enabled={canAdd}
+            onClick={() => setTarget('new')}
+          />
         </Card>
       )}
 
@@ -87,17 +94,23 @@ export function ExpensesTab() {
       <ExpenseDialog
         group={group}
         target={target}
-        onClose={() => setTarget(null)}
+        onClose={() => {
+          setTarget(null);
+          // A deleted expense takes its row (the dialog's trigger) with it.
+          restoreFocusIfLost(addButton.current);
+        }}
       />
     </div>
   );
 }
 
 function AddExpenseButton({
+  ref,
   enabled,
   floating = false,
   onClick,
 }: {
+  ref?: React.Ref<HTMLButtonElement>;
   enabled: boolean;
   /** Fixed to the bottom of the screen on mobile; in place from `md`. */
   floating?: boolean;
@@ -105,6 +118,7 @@ function AddExpenseButton({
 }) {
   const button = (
     <Button
+      ref={ref}
       size='lg'
       disabled={!enabled}
       onClick={onClick}
