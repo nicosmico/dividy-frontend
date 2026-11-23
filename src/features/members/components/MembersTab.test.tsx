@@ -103,7 +103,7 @@ describe('Pestaña Miembros', () => {
     expect(group?.members[0]).toEqual({ id: 'Ana', name: 'Anita' });
   });
 
-  it('elimina directo, con confirmación, a un miembro sin movimientos', async () => {
+  it('elimina directo, sin confirmar, a un miembro sin movimientos', async () => {
     const { user, repository } = renderWithProviders(undefined, {
       route: ROUTE,
       groups: [groupWithActivity()],
@@ -111,17 +111,61 @@ describe('Pestaña Miembros', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Eliminar a Dani' })
     );
-    const dialog = await screen.findByRole('alertdialog');
-    expect(within(dialog).getByText('¿Eliminar a Dani?')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Eliminar' }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-    );
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(
+      await screen.findByText('Dani fue eliminado del grupo')
+    ).toBeInTheDocument();
     expect(await screen.findByText('3 miembros')).toBeInTheDocument();
     const group = await repository.get('g1');
     expect(group?.members.map((m) => m.name)).toEqual(['Ana', 'Beto', 'Caro']);
     expect(group?.expenses).toHaveLength(3);
+  });
+
+  it('deshace la eliminación de un miembro desde el toast', async () => {
+    const { user, repository } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [groupWithActivity()],
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Eliminar a Dani' })
+    );
+    await screen.findByText('Dani fue eliminado del grupo');
+    await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+    expect(await screen.findByText('Cambio deshecho')).toBeInTheDocument();
+    expect(await screen.findByText('4 miembros')).toBeInTheDocument();
+    expect((await repository.get('g1'))?.members.map((m) => m.name)).toEqual([
+      'Ana',
+      'Beto',
+      'Caro',
+      'Dani',
+    ]);
+  });
+
+  it('no deshace si el grupo cambió desde la eliminación y lo avisa', async () => {
+    let tick = 0;
+    const { user, repository } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [groupWithActivity()],
+      now: () => new Date(Date.UTC(2026, 4, 1, 10, ++tick)).toISOString(),
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Eliminar a Dani' })
+    );
+    await screen.findByText('Dani fue eliminado del grupo');
+    // Someone else changes the group before the user presses "Deshacer".
+    const current = (await repository.get('g1'))!;
+    await repository.save({
+      ...current,
+      updatedAt: '2030-01-01T00:00:00.000Z',
+    });
+    await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+    expect(
+      await screen.findByText('No se pudo deshacer porque el grupo cambió.')
+    ).toBeInTheDocument();
+    expect((await repository.get('g1'))?.members).toHaveLength(3);
   });
 
   it('con movimientos muestra la vista previa y no permite confirmar sin elegir', async () => {
@@ -230,25 +274,22 @@ describe('Pestaña Miembros', () => {
   });
 
   it('muestra el error del dominio si la eliminación no es válida y no guarda', async () => {
-    // Beto has no activity when the dialog opens, but gets an expense meanwhile.
+    // The screen thinks Beto has no activity, but he got an expense meanwhile.
     const { user, repository } = renderWithProviders(undefined, {
       route: ROUTE,
       groups: [makeGroup({ members: ['Ana', 'Beto'] })],
     });
-    await user.click(
-      await screen.findByRole('button', { name: 'Eliminar a Beto' })
-    );
-    const dialog = await screen.findByRole('alertdialog');
+    const button = await screen.findByRole('button', {
+      name: 'Eliminar a Beto',
+    });
     await repository.save({
       ...makeGroup({
         members: ['Ana', 'Beto'],
         expenses: [{ amount: 100, payer: 'Beto', among: ['Ana', 'Beto'] }],
       }),
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Eliminar' }));
-    expect(
-      await within(dialog).findByText(/tiene gastos o pagos/)
-    ).toBeInTheDocument();
+    await user.click(button);
+    expect(await screen.findByText(/tiene gastos o pagos/)).toBeInTheDocument();
     expect((await repository.get('g1'))?.members).toHaveLength(2);
     expect(currentPath()).toBe(ROUTE);
   });

@@ -10,15 +10,26 @@ import {
   renderHookWithProviders,
   TEST_NOW,
 } from '@/test/render-with-providers';
-import { useGroupOperation, type OperationResult } from './mutations';
+import {
+  UNDO_FAILED_MESSAGE,
+  useGroupOperation,
+  type OperationResult,
+} from './mutations';
 import { useGroup } from './queries';
 
+/** A clock that moves one minute on every call, so each save gets its own `updatedAt`. */
+function ticking(): () => string {
+  let n = 0;
+  return () => new Date(Date.UTC(2026, 4, 1, 10, ++n)).toISOString();
+}
+
 async function setup(
-  repository = new InMemoryGroupRepository([makeGroup({ members: ['A'] })])
+  repository = new InMemoryGroupRepository([makeGroup({ members: ['A'] })]),
+  now?: () => string
 ) {
   const view = renderHookWithProviders(
     () => ({ operation: useGroupOperation('g1'), group: useGroup('g1') }),
-    { repository }
+    { repository, now }
   );
   await waitFor(() => expect(view.result.current.group.data).toBeTruthy());
   return {
@@ -86,6 +97,84 @@ describe('useGroupOperation', () => {
     expect(result).toMatchObject({
       ok: false,
       error: { code: 'group_not_found' },
+    });
+  });
+
+  describe('deshacer', () => {
+    async function run(operation: () => ReturnType<typeof useGroupOperation>) {
+      let result!: OperationResult;
+      await act(async () => {
+        result = await operation().run((g) => renameGroup(g, 'Otro'));
+      });
+      if (!result.ok) throw new Error('expected success');
+      return result;
+    }
+
+    it('devuelve el grupo anterior y restaura ese estado', async () => {
+      const {
+        repository,
+        result: hook,
+        operation,
+      } = await setup(undefined, ticking());
+      const before = (await repository.get('g1'))!;
+      const result = await run(operation);
+      expect(result.previous).toEqual(before);
+      expect((await repository.get('g1'))?.name).toBe('Otro');
+
+      const toastSuccess = vi.spyOn(toast, 'success');
+      let undone = false;
+      await act(async () => {
+        undone = await result.undo();
+      });
+      expect(undone).toBe(true);
+      expect(await repository.get('g1')).toEqual(before);
+      expect(toastSuccess).toHaveBeenCalledWith('Cambio deshecho');
+      await waitFor(() =>
+        expect(hook.current.group.data?.name).toBe(before.name)
+      );
+    });
+
+    it('no restaura si el grupo cambió desde entonces y avisa', async () => {
+      const { repository, operation } = await setup(undefined, ticking());
+      const first = await run(operation);
+      await act(async () => {
+        await operation().run((g) => renameGroup(g, 'Tercero'));
+      });
+      const toastError = vi.spyOn(toast, 'error');
+      let undone = true;
+      await act(async () => {
+        undone = await first.undo();
+      });
+      expect(undone).toBe(false);
+      expect((await repository.get('g1'))?.name).toBe('Tercero');
+      expect(toastError).toHaveBeenCalledWith(UNDO_FAILED_MESSAGE);
+    });
+
+    it('no restaura si el grupo se eliminó', async () => {
+      const { repository, operation } = await setup(undefined, ticking());
+      const result = await run(operation);
+      await repository.delete('g1');
+      let undone = true;
+      await act(async () => {
+        undone = await result.undo();
+      });
+      expect(undone).toBe(false);
+      expect(await repository.get('g1')).toBeNull();
+    });
+
+    it('si el guardado falla al deshacer muestra un toast de error', async () => {
+      const { repository, operation } = await setup(undefined, ticking());
+      const result = await run(operation);
+      vi.spyOn(repository, 'save').mockRejectedValue(new Error('full'));
+      const toastError = vi.spyOn(toast, 'error');
+      let undone = true;
+      await act(async () => {
+        undone = await result.undo();
+      });
+      expect(undone).toBe(false);
+      expect(toastError).toHaveBeenCalledWith(
+        expect.stringContaining('No pudimos guardar')
+      );
     });
   });
 });

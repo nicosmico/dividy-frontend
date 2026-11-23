@@ -1,20 +1,9 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
 } from '@/components/responsive-dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -36,6 +25,7 @@ import {
 } from '@/domain';
 import {
   isInfrastructureError,
+  toastUndoable,
   useGroupOperation,
 } from '@/features/groups/data';
 import { plural } from '@/lib/plural';
@@ -48,8 +38,9 @@ interface RemoveMemberDialogProps {
 }
 
 /**
- * Removing a member without activity asks for a plain confirmation; with
- * activity it shows a preview and asks to reassign or cascade-delete.
+ * Removing a member with activity: a preview and a choice between reassigning
+ * and cascade-deleting. A member without activity has no dialog at all: the
+ * tab removes them right away and offers "Deshacer" (decision 64).
  */
 export function RemoveMemberDialog({
   group,
@@ -59,9 +50,9 @@ export function RemoveMemberDialog({
   const impact = member ? getMemberRemovalImpact(group, member.id) : null;
   const resolved = impact?.ok ? impact.value : null;
 
-  if (!member || !resolved) return null;
+  if (!member || !resolved?.requiresStrategy) return null;
 
-  return resolved.requiresStrategy ? (
+  return (
     <StrategyDialog
       key={member.id}
       group={group}
@@ -69,67 +60,6 @@ export function RemoveMemberDialog({
       impact={resolved}
       onClose={onClose}
     />
-  ) : (
-    <ConfirmDialog group={group} member={member} onClose={onClose} />
-  );
-}
-
-function ConfirmDialog({
-  group,
-  member,
-  onClose,
-}: {
-  group: Group;
-  member: Member;
-  onClose: () => void;
-}) {
-  const operation = useGroupOperation(group.id);
-  const [error, setError] = useState<string>();
-
-  async function confirm() {
-    const result = await operation.run((g) =>
-      removeMember(g, member.id, { type: 'none' })
-    );
-    if (result.ok) {
-      toast.success(`${member.name} fue eliminado del grupo`);
-      onClose();
-    } else if (isInfrastructureError(result.error)) {
-      onClose();
-    } else {
-      setError(result.error.message);
-    }
-  }
-
-  return (
-    <AlertDialog open onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar a {member.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {member.name} no tiene gastos ni pagos en el grupo. Se quitará de la
-            lista de miembros.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error && (
-          <p role='alert' className='text-sm text-destructive'>
-            {error}
-          </p>
-        )}
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={operation.isPending}
-            className='bg-destructive text-white hover:bg-destructive/90'
-            onClick={(event) => {
-              event.preventDefault();
-              void confirm();
-            }}
-          >
-            Eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }
 
@@ -178,7 +108,7 @@ function StrategyDialog({
       removeMember(g, member.id, strategy)
     );
     if (result.ok) {
-      toast.success(`${member.name} fue eliminado del grupo`);
+      toastUndoable(`${member.name} fue eliminado del grupo`, result);
       onClose();
     } else if (isInfrastructureError(result.error)) {
       onClose();

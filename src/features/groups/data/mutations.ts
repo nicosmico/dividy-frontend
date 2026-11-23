@@ -20,13 +20,47 @@ export interface InfrastructureError {
 }
 
 export type OperationError = DomainError | InfrastructureError;
-export type OperationResult = Result<Group, OperationError>;
+
+/** A successful operation, with what is needed to take it back. */
+export interface OperationSuccess {
+  ok: true;
+  /** The group as saved. */
+  value: Group;
+  /** The group as it was before the operation. */
+  previous: Group;
+  /**
+   * Restores `previous`, but only if the group was not changed since this
+   * operation (same `updatedAt`). Otherwise it shows "No se pudo deshacer
+   * porque el grupo cambió." and resolves `false`. Shows its own toast.
+   */
+  undo: () => Promise<boolean>;
+}
+
+export type OperationResult =
+  OperationSuccess | { ok: false; error: OperationError };
+
+/** How long the "Deshacer" toast stays on screen. */
+export const UNDO_DURATION_MS = 6000;
+
+export const UNDO_FAILED_MESSAGE =
+  'No se pudo deshacer porque el grupo cambió.';
 
 const SAVE_FAILED: InfrastructureError = {
   code: 'save_failed',
   message:
     'No pudimos guardar los cambios. Revisa el espacio de tu dispositivo e inténtalo de nuevo.',
 };
+
+/**
+ * Success toast with a "Deshacer" button that calls `result.undo()`. Use it
+ * after removing something that has no confirmation step.
+ */
+export function toastUndoable(message: string, result: OperationSuccess) {
+  toast.success(message, {
+    duration: UNDO_DURATION_MS,
+    action: { label: 'Deshacer', onClick: () => void result.undo() },
+  });
+}
 
 export function isInfrastructureError(
   error: OperationError
@@ -85,7 +119,29 @@ export function useGroupOperation(groupId: GroupId) {
         return { ok: false, error: SAVE_FAILED };
       }
       await queryClient.invalidateQueries({ queryKey: groupKeys.all });
-      return { ok: true, value: next };
+      const undo = async (): Promise<boolean> => {
+        let latest: Group | null;
+        try {
+          latest = await repository.get(groupId);
+        } catch {
+          toast.error(SAVE_FAILED.message);
+          return false;
+        }
+        if (!latest || latest.updatedAt !== next.updatedAt) {
+          toast.error(UNDO_FAILED_MESSAGE);
+          return false;
+        }
+        try {
+          await repository.save(current);
+        } catch {
+          toast.error(SAVE_FAILED.message);
+          return false;
+        }
+        await queryClient.invalidateQueries({ queryKey: groupKeys.all });
+        toast.success('Cambio deshecho');
+        return true;
+      };
+      return { ok: true, value: next, previous: current, undo };
     },
   });
 
@@ -106,7 +162,9 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (values: CreateGroupValues): Promise<OperationResult> => {
+    mutationFn: async (
+      values: CreateGroupValues
+    ): Promise<Result<Group, OperationError>> => {
       const members: Member[] = values.memberNames.map((name) => ({
         id: newId(),
         name,

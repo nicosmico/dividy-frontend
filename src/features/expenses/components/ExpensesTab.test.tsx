@@ -373,7 +373,7 @@ describe('Pestaña Gastos', () => {
       expect(await screen.findByText('Gasto actualizado')).toBeInTheDocument();
     });
 
-    it('elimina un gasto tras confirmar', async () => {
+    it('elimina un gasto sin confirmar y ofrece deshacer', async () => {
       const { user, repository } = renderWithProviders(undefined, {
         route: ROUTE,
         groups: [oneExpense()],
@@ -382,22 +382,59 @@ describe('Pestaña Gastos', () => {
       await user.click(
         await screen.findByRole('button', { name: 'Eliminar gasto' })
       );
-      const confirm = await screen.findByRole('alertdialog');
-      expect(
-        within(confirm).getByText('¿Eliminar este gasto?')
-      ).toBeInTheDocument();
-      // Nothing is deleted until the user confirms.
-      expect((await repository.get('g1'))?.expenses).toHaveLength(1);
-      await user.click(
-        within(confirm).getByRole('button', { name: 'Eliminar' })
-      );
 
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
       await waitFor(() =>
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       );
       expect((await repository.get('g1'))?.expenses).toHaveLength(0);
       expect(await screen.findByText('Gasto eliminado')).toBeInTheDocument();
       expect(await screen.findByText('Aún no hay gastos')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Deshacer' })
+      ).toBeInTheDocument();
+    });
+
+    it('deshace la eliminación de un gasto desde el toast', async () => {
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [oneExpense()],
+      });
+      await user.click(await screen.findByRole('button', { name: /Asado/ }));
+      await user.click(
+        await screen.findByRole('button', { name: 'Eliminar gasto' })
+      );
+      await screen.findByText('Gasto eliminado');
+      await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+      expect(await screen.findByText('Cambio deshecho')).toBeInTheDocument();
+      expect(await screen.findByText('Asado')).toBeInTheDocument();
+      expect((await repository.get('g1'))?.expenses).toHaveLength(1);
+    });
+
+    it('no deshace si se agregó otro gasto desde la eliminación', async () => {
+      let tick = 0;
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [twoExpenses()],
+        now: () => new Date(Date.UTC(2026, 4, 1, 10, ++tick)).toISOString(),
+      });
+      await user.click(await screen.findByRole('button', { name: /Asado/ }));
+      await user.click(
+        await screen.findByRole('button', { name: 'Eliminar gasto' })
+      );
+      await screen.findByText('Gasto eliminado');
+      const current = (await repository.get('g1'))!;
+      await repository.save({
+        ...current,
+        updatedAt: '2030-01-01T00:00:00.000Z',
+      });
+      await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+      expect(
+        await screen.findByText('No se pudo deshacer porque el grupo cambió.')
+      ).toBeInTheDocument();
+      expect((await repository.get('g1'))?.expenses).toHaveLength(1);
     });
 
     it('al eliminar el primer gasto y abrir el siguiente, muestra los datos del siguiente (hallazgo 1)', async () => {
@@ -408,10 +445,6 @@ describe('Pestaña Gastos', () => {
       await user.click(await screen.findByRole('button', { name: /Asado/ }));
       await user.click(
         await screen.findByRole('button', { name: 'Eliminar gasto' })
-      );
-      const confirm = await screen.findByRole('alertdialog');
-      await user.click(
-        within(confirm).getByRole('button', { name: 'Eliminar' })
       );
       await waitFor(() =>
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

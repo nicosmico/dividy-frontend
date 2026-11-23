@@ -175,7 +175,7 @@ describe('Pestaña Saldos', () => {
     expect(within(row).getByText(/Recibió de Carla/)).toBeInTheDocument();
   });
 
-  it('lista los pagos y permite eliminarlos tras confirmar', async () => {
+  it('lista los pagos, permite eliminarlos sin confirmar y deshacer', async () => {
     const group = groupWithDebts();
     group.payments.push({
       id: 'p1',
@@ -200,9 +200,7 @@ describe('Pestaña Saldos', () => {
         name: 'Eliminar pago de Carla a Ana',
       })
     );
-    const confirm = await screen.findByRole('alertdialog');
-    expect((await repository.get('g1'))?.payments).toHaveLength(1);
-    await user.click(within(confirm).getByRole('button', { name: 'Eliminar' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     await waitFor(async () =>
       expect((await repository.get('g1'))?.payments).toHaveLength(0)
     );
@@ -210,6 +208,12 @@ describe('Pestaña Saldos', () => {
     expect(
       screen.queryByRole('heading', { name: 'Pagos registrados' })
     ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Pagos registrados' })
+    ).toBeInTheDocument();
+    expect((await repository.get('g1'))?.payments).toHaveLength(1);
   });
 
   it('copia el resumen al portapapeles', async () => {

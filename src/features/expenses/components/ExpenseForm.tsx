@@ -4,16 +4,6 @@ import { toast } from 'sonner';
 
 import { FormField } from '@/components/form-field';
 import { ResponsiveDialogFooter } from '@/components/responsive-dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -36,6 +26,7 @@ import {
 } from '@/domain';
 import {
   isInfrastructureError,
+  toastUndoable,
   useGroupOperation,
   useServices,
 } from '@/features/groups/data';
@@ -86,7 +77,6 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   const [newExpenseId] = useState(() => newId());
   // Closed after the first submit: a double click can never save twice (finding 2).
   const submitted = useRef(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [formError, setFormError] = useState<string>();
 
   const resolver: Resolver<ExpenseFormValues> = (values) => {
@@ -164,17 +154,19 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     })(event);
   }
 
-  async function confirmDelete() {
-    if (!expense) return;
+  /** No confirmation: the toast offers "Deshacer" (decision 64). */
+  async function deleteExpense() {
+    if (!expense || submitted.current) return;
+    submitted.current = true;
     const result = await operation.run((g) => removeExpense(g, expense.id));
     if (result.ok) {
-      toast.success('Gasto eliminado');
+      toastUndoable('Gasto eliminado', result);
       onDone();
-    } else {
-      setConfirmingDelete(false);
-      if (!isInfrastructureError(result.error))
-        setFormError(result.error.message);
+      return;
     }
+    submitted.current = false;
+    if (!isInfrastructureError(result.error))
+      setFormError(result.error.message);
   }
 
   const busy = operation.isPending;
@@ -341,7 +333,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
             variant='ghost'
             disabled={busy}
             className='order-last col-span-2 text-destructive hover:text-destructive md:order-none md:col-span-1 md:mr-auto'
-            onClick={() => setConfirmingDelete(true)}
+            onClick={() => void deleteExpense()}
           >
             Eliminar gasto
           </Button>
@@ -353,34 +345,6 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           Guardar
         </Button>
       </ResponsiveDialogFooter>
-
-      {expense && (
-        <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar este gasto?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Se eliminará &ldquo;{expense.description}&rdquo; (
-                {formatAmount(expense.amount)}) y los saldos del grupo se
-                recalcularán.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={busy}
-                className='bg-destructive text-white hover:bg-destructive/90'
-                onClick={(event) => {
-                  event.preventDefault();
-                  void confirmDelete();
-                }}
-              >
-                Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </form>
   );
 }

@@ -1,17 +1,7 @@
 import { Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -22,6 +12,7 @@ import {
 } from '@/domain';
 import {
   isInfrastructureError,
+  toastUndoable,
   useGroupOperation,
 } from '@/features/groups/data';
 import { formatDate } from '@/lib/dates';
@@ -34,11 +25,23 @@ function sortPayments(payments: readonly Payment[]): Payment[] {
   );
 }
 
-/** Registered payments, each removable after a confirmation. */
+/** Registered payments, each removable with an undo. */
 export function PaymentsList({ group }: { group: Group }) {
-  const [removing, setRemoving] = useState<Payment | null>(null);
+  const operation = useGroupOperation(group.id);
+  const removing = useRef(false);
   const nameOf = (id: string) =>
     group.members.find((m) => m.id === id)?.name ?? 'alguien';
+
+  /** No confirmation: the toast offers "Deshacer" (decision 64). */
+  async function remove(payment: Payment) {
+    if (removing.current) return;
+    removing.current = true;
+    const result = await operation.run((g) => removePayment(g, payment.id));
+    removing.current = false;
+    if (result.ok) toastUndoable('Pago eliminado', result);
+    else if (!isInfrastructureError(result.error))
+      toast.error(result.error.message);
+  }
 
   return (
     <section aria-labelledby='payments-heading' className='grid gap-2'>
@@ -64,7 +67,8 @@ export function PaymentsList({ group }: { group: Group }) {
                 variant='ghost'
                 size='icon'
                 aria-label={`Eliminar pago de ${nameOf(payment.fromId)} a ${nameOf(payment.toId)}`}
-                onClick={() => setRemoving(payment)}
+                disabled={operation.isPending}
+                onClick={() => void remove(payment)}
               >
                 <Trash2 />
               </Button>
@@ -72,68 +76,6 @@ export function PaymentsList({ group }: { group: Group }) {
           </li>
         ))}
       </ul>
-      <ConfirmRemove
-        key={removing?.id ?? 'none'}
-        group={group}
-        payment={removing}
-        onClose={() => setRemoving(null)}
-      />
     </section>
-  );
-}
-
-function ConfirmRemove({
-  group,
-  payment,
-  onClose,
-}: {
-  group: Group;
-  payment: Payment | null;
-  onClose: () => void;
-}) {
-  const operation = useGroupOperation(group.id);
-  const confirming = useRef(false);
-  if (!payment) return null;
-  const nameOf = (id: string) =>
-    group.members.find((m) => m.id === id)?.name ?? 'alguien';
-
-  async function confirm(p: Payment) {
-    if (confirming.current) return;
-    confirming.current = true;
-    const result = await operation.run((g) => removePayment(g, p.id));
-    if (result.ok) toast.success('Pago eliminado');
-    if (result.ok || isInfrastructureError(result.error)) onClose();
-    else {
-      confirming.current = false;
-      toast.error(result.error.message);
-    }
-  }
-
-  return (
-    <AlertDialog open onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar este pago?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Se eliminará el pago de {formatAmount(payment.amount)} de{' '}
-            {nameOf(payment.fromId)} a {nameOf(payment.toId)} y los saldos
-            volverán a incluir esa deuda.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={operation.isPending}
-            className='bg-destructive text-white hover:bg-destructive/90'
-            onClick={(event) => {
-              event.preventDefault();
-              void confirm(payment);
-            }}
-          >
-            Eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

@@ -1,6 +1,9 @@
 export { useGroup, useGroups } from './queries';
 export {
   isInfrastructureError,
+  toastUndoable,
+  UNDO_DURATION_MS,
+  UNDO_FAILED_MESSAGE,
   useCreateGroup,
   useDeleteGroup,
   useGroupOperation,
@@ -9,6 +12,7 @@ export {
   type InfrastructureError,
   type OperationError,
   type OperationResult,
+  type OperationSuccess,
 } from './mutations';
 export { RepositoryProvider } from './RepositoryProvider';
 export { useServices, type Services } from './services';

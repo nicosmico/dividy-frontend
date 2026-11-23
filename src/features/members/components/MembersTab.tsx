@@ -1,10 +1,16 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { Member } from '@/domain';
-import { useCurrentGroup } from '@/features/groups/data';
+import { getMemberRemovalImpact, removeMember, type Member } from '@/domain';
+import {
+  isInfrastructureError,
+  toastUndoable,
+  useCurrentGroup,
+  useGroupOperation,
+} from '@/features/groups/data';
 import { AddMemberForm } from './AddMemberForm';
 import { MemberAvatar } from './MemberAvatar';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
@@ -15,6 +21,26 @@ export function MembersTab() {
   const group = useCurrentGroup();
   const [renaming, setRenaming] = useState<Member | null>(null);
   const [removing, setRemoving] = useState<Member | null>(null);
+  const operation = useGroupOperation(group.id);
+
+  /**
+   * A member without activity is removed right away, with "Deshacer". One with
+   * activity opens the dialog where the user chooses what happens to it.
+   */
+  async function requestRemove(member: Member) {
+    const impact = getMemberRemovalImpact(group, member.id);
+    if (impact.ok && impact.value.requiresStrategy) {
+      setRemoving(member);
+      return;
+    }
+    const result = await operation.run((g) =>
+      removeMember(g, member.id, { type: 'none' })
+    );
+    if (result.ok)
+      toastUndoable(`${member.name} fue eliminado del grupo`, result);
+    else if (!isInfrastructureError(result.error))
+      toast.error(result.error.message);
+  }
 
   return (
     <div className='grid gap-4'>
@@ -48,7 +74,8 @@ export function MembersTab() {
                   variant='ghost'
                   size='icon'
                   aria-label={`Eliminar a ${member.name}`}
-                  onClick={() => setRemoving(member)}
+                  disabled={operation.isPending}
+                  onClick={() => void requestRemove(member)}
                 >
                   <Trash2 />
                 </Button>

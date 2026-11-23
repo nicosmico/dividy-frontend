@@ -166,11 +166,13 @@ test('al eliminar un gasto y abrir el otro, se muestran sus propios datos (halla
   await page.getByRole('button', { name: /Bencina/ }).click();
   const edit = page.getByRole('dialog', { name: 'Editar gasto' });
   await edit.getByRole('button', { name: 'Eliminar gasto' }).click();
-  await page
-    .getByRole('alertdialog')
-    .getByRole('button', { name: 'Eliminar', exact: true })
-    .click();
+  // No confirmation: the toast offers to undo.
   await expect(edit).toBeHidden();
+  await expect(page.getByRole('button', { name: /Bencina/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(page.getByRole('button', { name: /Bencina/ })).toBeVisible();
+  await page.getByRole('button', { name: /Bencina/ }).click();
+  await edit.getByRole('button', { name: 'Eliminar gasto' }).click();
   await expect(page.getByRole('button', { name: /Bencina/ })).toHaveCount(0);
 
   await page.getByRole('button', { name: /Asado/ }).click();

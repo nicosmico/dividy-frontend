@@ -49,10 +49,11 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
 
   // Remove a member without activity.
   await page.getByRole('button', { name: 'Eliminar a Caro' }).click();
-  await page
-    .getByRole('alertdialog')
-    .getByRole('button', { name: 'Eliminar', exact: true })
-    .click();
+  await expect(page.getByText('2 miembros')).toBeVisible();
+  // ...which can be undone from the toast, and removed again.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(page.getByText('3 miembros')).toBeVisible();
+  await page.getByRole('button', { name: 'Eliminar a Caro' }).click();
   await expect(page.getByText('2 miembros')).toBeVisible();
   await expect(page.getByText('Caro', { exact: true })).toHaveCount(0);
 
