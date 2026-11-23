@@ -19,6 +19,8 @@
   "dependencies": {
     "@hookform/resolvers": "^7.0.8",
     "@tabler/icons-react": "^3.52.0",
+    "fast-check": "^4.11.0",
+    "nanoid": "^6.0.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.92.0",
