@@ -38,7 +38,15 @@ test('instalable: el manifest declara nombre, colores, idioma e íconos', async 
 test('tras cargar una vez, la app abre y funciona sin conexión', async ({
   page,
   context,
+  browserName,
 }) => {
+  // Playwright's WebKit does not reliably serve a service worker's cache with
+  // context.setOffline(true), so this would fail for reasons unrelated to the
+  // app. Chromium covers the offline behavior.
+  test.skip(
+    browserName === 'webkit',
+    'setOffline + service worker no es confiable en WebKit'
+  );
   await seedGroups(page, sampleGroups());
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Mis grupos' })).toBeVisible();

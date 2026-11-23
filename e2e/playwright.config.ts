@@ -4,6 +4,10 @@ import { defineConfig, devices } from '@playwright/test';
 const executablePath = process.env.PW_CHROMIUM_PATH || undefined;
 const launchOptions = executablePath ? { executablePath } : {};
 
+// WebKit (mobile Safari layout) runs in CI. Locally it is skipped unless
+// PW_WEBKIT=1, because it needs `npx playwright install webkit`.
+const withWebkit = !!process.env.CI || process.env.PW_WEBKIT === '1';
+
 export default defineConfig({
   testDir: '.',
   outputDir: '../test-results',
@@ -32,6 +36,15 @@ export default defineConfig({
         launchOptions,
       },
     },
+    ...(withWebkit
+      ? [
+          {
+            name: 'mobile-webkit',
+            // iPhone 13 on real WebKit: closest to Safari iOS layout
+            use: { ...devices['iPhone 13'] },
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173 --strictPort',
