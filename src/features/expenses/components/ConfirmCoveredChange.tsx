@@ -67,7 +67,7 @@ export function ConfirmCoveredChange({
             </li>
           ))}
         </ul>
-        <AlertDialogFooter>
+        <AlertDialogFooter className='flex-col'>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
