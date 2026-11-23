@@ -31,16 +31,19 @@ src/
   app/                 main.tsx, App.tsx (BrowserRouter + repositorio real), providers.tsx
                        (QueryClient + RepositoryProvider + Toaster), router.tsx (AppRoutes),
                        AppLayout (header + columna max-w-lg), ErrorBoundary, NotFoundPage
-  components/          dividy-logo, form-field, responsive-dialog
+  components/          dividy-logo, form-field, responsive-dialog, page-fallback
     ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
     groups/            data/ (hooks y contexto), components/, pages/ (GroupsPage, NewGroupPage, GroupLayout)
     members/           MembersTab, MemberAvatar, diálogos de renombrar y eliminar miembro
-    expenses/          ExpensesTab (placeholder hasta la fase 2b)
-    balances/          BalancesTab (placeholder hasta la fase 2b)
+    expenses/          ExpensesTab (lista por fecha), ExpenseDialog + ExpenseForm (crear/editar/eliminar),
+                       AmountInput (pesos con separador de miles), expense-form.ts (validación con el
+                       dominio), expense-list.ts (orden y agrupación por fecha)
+    balances/          BalancesTab: SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
+                       PaymentsList, CopySummaryButton
   hooks/               use-media-query
-  lib/                 utils (cn), dates (todayLocal, formatDate), id, query-client
+  lib/                 utils (cn), dates (todayLocal, formatDate), plural, id, query-client
   test/                setup.ts, render-with-providers.tsx, test-providers.tsx
 ```
 
@@ -49,6 +52,8 @@ src/
 - `src/lib`: utilidades transversales (`cn`, fechas locales, ids).
 
 Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `domain`; la UI importa ambos. Una feature no importa archivos internos de otra feature: usa su `index.ts`. La excepción es la capa de datos de grupos, que es la base compartida: las demás features la importan desde `@/features/groups/data` (que no carga páginas, así no hay ciclos con `@/features/groups`, cuyas páginas usan `@/features/members`). Las rutas se ensamblan en `src/app/router.tsx`: `GroupLayout` carga el grupo y lo entrega a la pestaña activa por `Outlet context`.
+
+**Carga diferida.** `router.tsx` carga cada pantalla con `React.lazy`; `AppLayout` y `GroupLayout` envuelven su `Outlet` en `Suspense` con `PageFallback` (skeleton), así el encabezado y las pestañas no parpadean al cambiar de pantalla. En los tests, la navegación a una pantalla es asíncrona: usa `waitFor` / `findBy*`.
 
 #### Hooks de datos (`@/features/groups/data`)
 
@@ -63,7 +68,7 @@ Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `
 - `ResponsiveDialog({ open, onOpenChange, title, description?, children })` + `ResponsiveDialogFooter`: Drawer (vaul) bajo 768 px, Dialog desde 768 px. Se usa en todos los formularios.
 - `FormField({ label, error?, hint?, children: (control) => ReactNode })`: label, mensaje de error y `aria-*`; se usa con react-hook-form (`<Input {...control} {...register('x')} />`).
 - `MemberAvatar({ member, mood?: 'happy' | 'sad' })`: avatar `lorelei` generado localmente con `@dicebear/core` + `@dicebear/lorelei`, semilla = id del miembro.
-- `formatAmount` (dominio), `todayLocal()` y `formatDate(value)` (`@/lib/dates`).
+- `formatAmount` (dominio), `todayLocal()` y `formatDate(value)` (`@/lib/dates`), `plural(n, 'gasto', 'gastos')` (`@/lib/plural`).
 
 ## Flujo de una escritura
 

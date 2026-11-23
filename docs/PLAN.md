@@ -14,7 +14,7 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 | ---- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
 | 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada |
 | 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada |
-| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | En curso   |
+| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Completada |
 | 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Pendiente  |
 | 4    | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas         | —          |
 
@@ -43,7 +43,7 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ### Fase 2 · Nueva UI
 
-**Estado: en curso.** Fase 2a (base de la app, grupos y miembros): **completada**. Fase 2b (gastos, saldos, pagos y resumen): pendiente.
+**Estado: completada.** Fase 2a (base de la app, grupos y miembros): completada. Fase 2b (gastos, saldos, pagos y resumen): completada; decisiones en la ronda 7.
 
 - shadcn/ui + sonner + vaul, iconos lucide. Se eliminan los componentes propios y Zustand.
 - TanStack Query sobre el repositorio.
@@ -149,3 +149,18 @@ Decisiones tomadas en rondas. Las de las rondas 0 vienen del dueño del producto
 49. **Avatares** → `@dicebear/core` + `@dicebear/lorelei` (el estilo suelto en vez de `@dicebear/collection`: el bundle es idéntico porque el build elimina los demás estilos, pero los tests no cargan 30 estilos). Cuesta unos 52 kB gzip (bundle total 259 kB gzip; sin code splitting todavía). `mood: 'happy' | 'sad'` elige entre las bocas `happy01-18` y `sad01-09`; semilla = id del miembro, así el avatar no cambia al renombrar. Resultado en caché por semilla y ánimo.
 50. **Tests** → `renderWithProviders` / `renderHookWithProviders` en `src/test/`; Vitest con `pool: 'vmThreads'` (suite de ~7 s a ~3 s). E2E: flujo completo de grupo y miembros, 404 / grupo inexistente y migración desde `members-store` / `bills-store`, en desktop y móvil. `tsconfig.node.json` incluye la lib DOM para los `page.evaluate` de los E2E.
 51. **Pendiente para la 2b / 3** → Gastos, Saldos, pagos y resumen; usar `useGroupOperation`, `ResponsiveDialog`, `FormField`, `todayLocal`, `formatDate` y `MemberAvatar mood='sad'` para quien debe. Code splitting de rutas si el bundle sigue sobre 500 kB. Los avatares no tienen heurística de género por decisión 17.
+
+### Ronda 7 · Decisiones de la Fase 2b
+
+52. **Formulario de gasto** → `ExpenseForm` (react-hook-form) dentro de `ResponsiveDialog`, montado con `key={expense?.id ?? 'new'}` (hallazgo 1). La validación es un `resolver` propio que llama a las funciones del dominio (`validateExpenseForm` en `expense-form.ts`), así los mensajes son los del dominio y se muestran por campo. Los participantes se guardan en el orden del grupo, no en el de los clics. Nada se guarda solo: solo el botón **Guardar**.
+53. **Sin doble envío** → El id del gasto nuevo se genera una vez al montar el formulario y un `ref` cierra el envío tras el primer intento (se reabre solo si falla); además el botón se deshabilita con `isPending`. Un doble clic, aun disparado antes del siguiente render, guarda una sola vez (hallazgo 2). La confirmación de "Marcar como pagado" y la de eliminar un pago usan el mismo candado.
+54. **Monto en pesos** → `AmountInput`: texto con `inputMode="numeric"`, solo dígitos (máximo 10, sin ceros a la izquierda), muestra `10.000` mientras se escribe y restaura el cursor contando los dígitos que quedaron a su izquierda. El valor del formulario es el string de dígitos; se convierte a entero al validar. Un monto sobre $999.999.999 muestra el error del dominio.
+55. **Partes en vivo** → Se calculan con `computeShares` sobre un gasto temporal con los valores del formulario (nunca se divide fuera del dominio). Los que reciben el peso de resto se detectan comparando su parte con `floor(monto / n)`; la nota dice "Por redondeo, a Ana le toca $1 más" (o "a Ana y Beto les toca").
+56. **Lista y botón** → Gastos ordenados por fecha y, a igual fecha, por `createdAt` descendente, agrupados con "Hoy", "Ayer" o `formatDate`. Un único botón "Agregar gasto": fijo abajo en móvil (con degradado y espacio al final de la lista para no tapar nada) y en el encabezado desde `md`. Con menos de 2 miembros queda deshabilitado, con un aviso y enlace a Miembros (decisión 12). "entre N" muestra el número de participantes y "entre todos" cuando son todos los miembros.
+57. **Saldos** → Orden: estado general ("¡Están al día! 🎉" o transferencias sugeridas), saldo por miembro, pagos registrados y copiar resumen. Sin gastos ni pagos, estado vacío con enlace a Gastos. El saldo se muestra con texto y color: "Le deben $X" (verde), "Debe $X" (rojo), "Al día" (gris); el avatar es `sad` si debe. Cada miembro se expande (`Collapsible` de Radix) y muestra pagó, le corresponde, pagos enviados y recibidos, la fórmula del saldo y los gastos en que aparece con su parte, para poder verificar a mano.
+58. **Marcar como pagado** → `AlertDialog` "¿Ana le pagó $3.334 a Beto?" y, al confirmar, `addPayment` con `id: newId()`, `date: todayLocal()`, `createdAt: now()` y el mismo monto de la transferencia (decisiones 8 y 13). Los pagos registrados se pueden eliminar con confirmación.
+59. **Copiar resumen** → `navigator.clipboard.writeText(formatGroupSummary(group))`; si falla o no existe, un diálogo con un `textarea` de solo lectura con el texto seleccionable.
+60. **Pluralización** → `plural(n, 'gasto', 'gastos')` en `src/lib/plural.ts` (con test) reemplaza al `pluralize` local y corrige textos como "Tiene 1 pago enviado o recibido" y "También se borrará 1 pago".
+61. **Code splitting** → Todas las pantallas son `React.lazy`. El aviso de chunk sobre 500 kB desapareció: el mayor es el de miembros (avatares dicebear, 335 kB, 112 kB gzip) y el inicial pesa 316 kB (96 kB gzip). Los tests de navegación pasaron a esperar la carga con `waitFor`.
+62. **Tests** → Componentes: formulario (crear, errores, partes en vivo con resto, doble clic, editar, eliminar, hallazgo 1), lista, botón deshabilitado y Saldos completos. E2E (desktop y móvil): flujo completo con montos calculados por el dominio y regresiones de los hallazgos 1, 2 y 4.
+63. **Pendiente para la Fase 3** → Deshacer al eliminar (toast), Web Share API, PWA, revisión de accesibilidad con lector de pantalla (los botones "Marcar como pagado" no mencionan a quién; hoy el título del diálogo de confirmación sí), y un contador de caracteres visible de caracteres en la descripción.
