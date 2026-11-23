@@ -5,12 +5,12 @@ import {
   IconReceipt,
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import { BillCard } from 'src/features/split-bills';
-import { BillFormValues } from 'src/features/split-bills/components/BillForm';
-import useBills from 'src/features/split-bills/hooks/useBills';
-import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { Bill } from 'src/features/split-bills/types/bill';
-import { RoundedButton, RoundedLink, Status } from 'src/shared';
+import { BillCard } from '@/features/split-bills';
+import { BillFormValues } from '@/features/split-bills/components/BillForm';
+import useBills from '@/features/split-bills/hooks/useBills';
+import useMembers from '@/features/split-bills/hooks/useMembers';
+import { Bill } from '@/features/split-bills/types/bill';
+import { RoundedButton, RoundedLink, Status } from '@/shared';
 
 export function BillsPage() {
   const { bills, billsOrder, addBill, updateBill, deleteBill } = useBills();
@@ -97,14 +97,14 @@ export function BillsPage() {
         <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
             to='../members'
-            className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
+            className='w-full bg-amber-200 px-6 shadow-xs md:max-w-lg'
           >
             <IconArrowNarrowLeft></IconArrowNarrowLeft>
             Miembros
           </RoundedLink>
           <RoundedLink
             to='../simplified-debts'
-            className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
+            className='w-full bg-amber-200 px-6 shadow-xs md:max-w-lg'
           >
             Deudas
             <IconArrowNarrowRight></IconArrowNarrowRight>

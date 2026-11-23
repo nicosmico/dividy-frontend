@@ -22,7 +22,7 @@ export function Input({ label, icon, onIconClick, register, ...props }: Props) {
         {...props}
         {...register}
         className={twMerge(
-          'text-md peer block w-full rounded-xl border-gray-200 p-4 outline-zinc-800 placeholder:text-transparent autofill:pb-2 autofill:pt-6 focus:border-zinc-800 focus:pb-2 focus:pt-6 focus:ring-zinc-800 disabled:pointer-events-none disabled:opacity-50 [&:not(:placeholder-shown)]:pb-2 [&:not(:placeholder-shown)]:pt-6',
+          'text-md peer block w-full rounded-xl border-gray-200 p-4 outline-zinc-800 placeholder:text-transparent autofill:pt-6 autofill:pb-2 focus:border-zinc-800 focus:pt-6 focus:pb-2 focus:ring-zinc-800 disabled:pointer-events-none disabled:opacity-50 [&:not(:placeholder-shown)]:pt-6 [&:not(:placeholder-shown)]:pb-2',
           props.className,
           props.placeholder && 'focus:placeholder:text-gray-400',
           icon && 'pr-12'
@@ -31,12 +31,7 @@ export function Input({ label, icon, onIconClick, register, ...props }: Props) {
 
       <label
         htmlFor={id}
-        className='text-md pointer-events-none absolute start-0 top-0 h-full truncate border border-transparent p-4 transition duration-100 ease-in-out peer-focus:-translate-y-2.5 peer-focus:text-xs peer-focus:text-gray-700
-          peer-disabled:pointer-events-none
-          peer-disabled:opacity-50
-          peer-[:not(:placeholder-shown)]:-translate-y-2.5
-          peer-[:not(:placeholder-shown)]:text-xs
-          peer-[:not(:placeholder-shown)]:text-gray-700'
+        className='text-md pointer-events-none absolute start-0 top-0 h-full truncate border border-transparent p-4 transition duration-100 ease-in-out peer-focus:-translate-y-2.5 peer-focus:text-xs peer-focus:text-gray-700 peer-disabled:pointer-events-none peer-disabled:opacity-50 peer-[:not(:placeholder-shown)]:-translate-y-2.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-gray-700'
       >
         {label}
       </label>

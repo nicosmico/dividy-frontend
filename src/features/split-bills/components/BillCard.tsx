@@ -1,7 +1,7 @@
 import { IconBottle, IconChevronDown, IconX } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { Card, RoundedButton } from 'src/shared';
-import { formatToCurrency } from 'src/shared/utils/format-to';
+import { Card, RoundedButton } from '@/shared';
+import { formatToCurrency } from '@/shared/utils/format-to';
 import { Bill } from '../types/bill';
 import { Member } from '../types/member';
 import { BillForm, BillFormValues } from './BillForm';
@@ -38,7 +38,7 @@ export function BillCard({
   const paidBy = members.find((m) => m.id === bill.paidBy);
 
   return (
-    <Card className='p-4 shadow-sm'>
+    <Card className='p-4 shadow-xs'>
       <details className='group space-y-4' open={open}>
         <summary className='select-none'>
           <div className='flex items-center justify-between gap-2'>

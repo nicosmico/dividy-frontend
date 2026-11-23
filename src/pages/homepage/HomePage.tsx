@@ -1,5 +1,5 @@
 import { IconArrowNarrowRight, IconCheck } from '@tabler/icons-react';
-import { Card, Container, RoundedLink } from 'src/shared';
+import { Card, Container, RoundedLink } from '@/shared';
 
 const howItWorks = [
   {
@@ -22,21 +22,21 @@ export function HomePage() {
   return (
     <Container className='mx-auto flex flex-col items-center justify-center gap-8 py-12 text-center md:min-h-[calc(70dvh)] md:flex-row'>
       <div className='flex w-full flex-col gap-6'>
-        <h1 className='text-balance text-3xl md:text-left md:text-4xl'>
+        <h1 className='text-3xl text-balance md:text-left md:text-4xl'>
           <span className='text-4 font-bold'>Simplifica</span> la división de
           gastos grupales con <span className='font-bold'>Dividy</span>, la
           forma más fácil de calcular quién debe qué a quién 💸
         </h1>
         <RoundedLink
           to='/split-bills'
-          className='w-full bg-zinc-800 px-6 text-gray-50 shadow-sm'
+          className='w-full bg-zinc-800 px-6 text-gray-50 shadow-xs'
         >
           Dividir gastos
           <IconArrowNarrowRight className='animate-pulse'></IconArrowNarrowRight>
         </RoundedLink>
       </div>
 
-      <Card className='flex w-full flex-col gap-4 p-4 shadow-sm'>
+      <Card className='flex w-full flex-col gap-4 p-4 shadow-xs'>
         <h2 className='text-lg font-semibold md:text-xl'>¿Cómo funciona?</h2>
 
         <ul className='space-y-2 text-left'>

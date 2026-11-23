@@ -1,4 +1,4 @@
-import { Bill, NewBill } from 'src/features/split-bills/types/bill';
+import { Bill, NewBill } from '@/features/split-bills/types/bill';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 

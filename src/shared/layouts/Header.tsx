@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router';
 import { twMerge } from 'tailwind-merge';
 import DividyIcon from '../ui/DividyIcon';
 
@@ -24,7 +24,7 @@ export function Header() {
     <header className='flex w-full items-center justify-between gap-4 rounded-full bg-zinc-800 p-1 shadow-lg'>
       <Link
         to='/'
-        className='flex items-center gap-2 rounded-full py-1 pl-4 pr-4 font-semibold text-white transition hover:bg-zinc-700 hover:text-slate-50 active:scale-95'
+        className='flex items-center gap-2 rounded-full py-1 pr-4 pl-4 font-semibold text-white transition hover:bg-zinc-700 hover:text-slate-50 active:scale-95'
       >
         <DividyIcon className='rounded-lg bg-amber-200 p-1 text-zinc-800' />
         <p>Dividy</p>

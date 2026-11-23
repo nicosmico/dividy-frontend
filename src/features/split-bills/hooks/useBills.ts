@@ -1,4 +1,4 @@
-import { useBillsStore } from 'src/features/split-bills/store/useBillsStore';
+import { useBillsStore } from '@/features/split-bills/store/useBillsStore';
 
 export function useBills() {
   const bills = useBillsStore((state) => state.bills);

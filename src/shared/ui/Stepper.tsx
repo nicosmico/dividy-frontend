@@ -39,7 +39,7 @@ export function Stepper({
                 index === currentStep && 'scale-105 text-zinc-900 md:scale-125'
               )}
               onClick={() => {
-                onStepClick && onStepClick(index);
+                onStepClick?.(index);
               }}
             >
               {step.icon}
@@ -48,7 +48,7 @@ export function Stepper({
 
           <div
             className={twMerge(
-              'h-2 w-full rounded-full bg-gray-300 shadow-sm',
+              'h-2 w-full rounded-full bg-gray-300 shadow-xs',
               vertical && 'h-28 w-3'
             )}
           >

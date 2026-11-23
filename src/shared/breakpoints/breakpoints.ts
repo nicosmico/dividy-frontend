@@ -1,9 +1,9 @@
-type BreakpointsOptions = 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+export type BreakpointsOptions = 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
-type Breakpoints = {
+export type Breakpoints = {
   [key in BreakpointsOptions]: boolean;
 };
 
-type BreakpointsMediaQueries = {
+export type BreakpointsMediaQueries = {
   [key in BreakpointsOptions]: MediaQueryList;
 };

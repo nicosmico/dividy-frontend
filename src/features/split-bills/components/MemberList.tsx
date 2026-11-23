@@ -1,5 +1,5 @@
 import { IconUsersGroup, IconX } from '@tabler/icons-react';
-import { Card, IconButton, Status } from 'src/shared';
+import { Card, IconButton, Status } from '@/shared';
 import { Member } from '../types/member';
 
 interface Props {
@@ -24,12 +24,12 @@ export function MemberList({ members, onEdit, onDelete }: Props) {
       {members.map((member) => (
         <li key={member.id}>
           <Card
-            className='flex items-center justify-between shadow-sm'
+            className='flex items-center justify-between shadow-xs'
             onClick={() => onEdit(member)}
           >
             <div className='flex w-full items-center gap-4'>
               <img
-                className='max-w-[50px] rounded-full bg-amber-200 p-0.5 shadow-sm'
+                className='max-w-[50px] rounded-full bg-amber-200 p-0.5 shadow-xs'
                 src={member.picture.happy}
                 alt={member.name}
               />

@@ -4,15 +4,15 @@ import {
   IconReceipt,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { TransactionCard } from 'src/features/split-bills/components/TransactionCard';
-import useBills from 'src/features/split-bills/hooks/useBills';
-import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { formatSplitBillSummary } from 'src/features/split-bills/types/summary';
+import { TransactionCard } from '@/features/split-bills/components/TransactionCard';
+import useBills from '@/features/split-bills/hooks/useBills';
+import useMembers from '@/features/split-bills/hooks/useMembers';
+import { formatSplitBillSummary } from '@/features/split-bills/types/summary';
 import {
   simplifyDebts,
   Transaction,
-} from 'src/features/split-bills/types/transaction';
-import { RoundedButton, RoundedLink, Status, useSnackBar } from 'src/shared';
+} from '@/features/split-bills/types/transaction';
+import { RoundedButton, RoundedLink, Status, useSnackBar } from '@/shared';
 
 export function SimplifiedDebts() {
   const { members } = useMembers();
@@ -82,13 +82,13 @@ export function SimplifiedDebts() {
         <div className='bottom-2 grid grid-cols-2 gap-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3 md:content-start'>
           <RoundedLink
             to='../bills'
-            className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
+            className='w-full bg-amber-200 px-6 shadow-xs md:max-w-lg'
           >
             <IconArrowNarrowLeft></IconArrowNarrowLeft>
             Gastos
           </RoundedLink>
           <RoundedButton
-            className='w-full bg-zinc-800 px-6 text-gray-50 shadow-sm md:max-w-lg'
+            className='w-full bg-zinc-800 px-6 text-gray-50 shadow-xs md:max-w-lg'
             onClick={copyToClipboard}
           >
             <IconCopy size={20}></IconCopy>

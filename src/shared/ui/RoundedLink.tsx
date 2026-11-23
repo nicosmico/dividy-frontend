@@ -1,4 +1,4 @@
-import { Link, LinkProps } from 'react-router-dom';
+import { Link, LinkProps } from 'react-router';
 import { twMerge } from 'tailwind-merge';
 
 interface Props extends LinkProps {

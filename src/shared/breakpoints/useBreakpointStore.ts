@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Breakpoints, BreakpointsMediaQueries } from './breakpoints';
 
 const mediaQueries: BreakpointsMediaQueries = {
   sm: window.matchMedia('(min-width: 640px)'),

@@ -1,16 +1,11 @@
-import { createContext, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { SnackBarContext } from './SnackBarContext';
 import SnackBar from './SnackBar';
 
 interface SnackBarMessage {
   id: string;
   message: string;
 }
-
-interface SnackBarContextType {
-  showMessage: (message: string) => void;
-}
-
-export const SnackBarContext = createContext<SnackBarContextType | null>(null);
 
 export function SnackBarProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<SnackBarMessage[]>([]);

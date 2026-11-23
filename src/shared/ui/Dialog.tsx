@@ -8,18 +8,26 @@ interface Props extends React.HTMLAttributes<HTMLDialogElement> {
 export function Dialog({ open, onClose, className, children }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const [_open, _setOpen] = useState(false); // To save dialog state
   const [closing, setClosing] = useState(false); // To add animations
+  const [prevOpen, setPrevOpen] = useState(false);
+
+  // Sync the closing animation with the `open` prop while rendering
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  if (!!open !== prevOpen) {
+    setPrevOpen(!!open);
+    setClosing(!open);
+  }
 
   useEffect(() => {
+    const dialog = dialogRef.current;
     const handleOutsideClick = (e: MouseEvent) => {
-      e.target === dialogRef.current && startCloseDialog();
+      if (e.target === dialog) setClosing(true);
     };
-    dialogRef.current?.addEventListener('click', handleOutsideClick);
+    dialog?.addEventListener('click', handleOutsideClick);
 
     return () => {
-      dialogRef.current?.removeEventListener('click', handleOutsideClick);
-      dialogRef.current?.close();
+      dialog?.removeEventListener('click', handleOutsideClick);
+      dialog?.close();
       document.body.style.overflow = '';
     };
   }, []);
@@ -28,13 +36,6 @@ export function Dialog({ open, onClose, className, children }: Props) {
     // Open dialog
     if (open) {
       dialogRef.current?.showModal();
-      _setOpen(true);
-      setClosing(false);
-    }
-
-    // Close dialog if it's alerady opened
-    if (!open && _open) {
-      startCloseDialog();
     }
 
     // Block document scroll when open dialog
@@ -47,21 +48,18 @@ export function Dialog({ open, onClose, className, children }: Props) {
     onClose?.();
   };
 
-  const startCloseDialog = () => {
-    setClosing(true);
-    _setOpen(false);
-  };
-
   return (
     <>
       <dialog
         ref={dialogRef}
         className={twMerge(
-          'inset-auto bottom-0 left-0 right-0 m-0 max-h-[90%] w-full max-w-full rounded-t-xl bg-white backdrop:bg-black/25 md:top-0 md:m-auto md:max-w-xl md:rounded-xl',
+          'inset-auto right-0 bottom-0 left-0 m-0 max-h-[90%] w-full max-w-full rounded-t-xl bg-white backdrop:bg-black/25 md:top-0 md:m-auto md:max-w-xl md:rounded-xl',
           'open:animate-fade-in-slide-up open:backdrop:animate-fade-in',
           closing && 'pointer-events-none open:animate-fade-out-slide-down'
         )}
-        onAnimationEnd={() => closing && handleCloseAnimation()}
+        onAnimationEnd={() => {
+          if (closing) handleCloseAnimation();
+        }}
       >
         <div className={twMerge('px-4 py-10', className)}>{children}</div>
       </dialog>

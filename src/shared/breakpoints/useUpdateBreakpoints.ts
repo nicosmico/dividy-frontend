@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useBreakpointStore } from 'src/shared/breakpoints/useBreakpointStore';
+import { useBreakpointStore } from '@/shared/breakpoints/useBreakpointStore';
 
 export function useUpdateBreakpoints() {
   const breakpoints = useBreakpointStore((state) => state.breakpoints);
@@ -20,7 +20,7 @@ export function useUpdateBreakpoints() {
         query.removeEventListener('change', handleResize);
       });
     };
-  }, []);
+  }, [mediaQueries, updateBreakpoints]);
 
   return breakpoints;
 }

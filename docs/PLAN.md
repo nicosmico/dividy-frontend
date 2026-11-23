@@ -10,15 +10,17 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ## Fases
 
-| Fase | Objetivo | Estado |
-|---|---|---|
-| 0 | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI | Pendiente |
-| 1 | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Pendiente |
-| 2 | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E | Pendiente |
-| 3 | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA | Pendiente |
-| 4 | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas | — |
+| Fase | Objetivo                                                                                                         | Estado     |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
+| 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada |
+| 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Pendiente  |
+| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Pendiente  |
+| 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Pendiente  |
+| 4    | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas         | —          |
 
 ### Fase 0 · Fundaciones
+
+**Estado: completada.** Versiones principales: React 19.3, React Router 7.18 (modo declarativo, import desde `react-router`), Vite 8, Vitest 5, Tailwind 4.3 (`@tailwindcss/vite`, tema en CSS), TypeScript 6.0, Zod 4.6, ESLint 9.39 + typescript-eslint 8.73, Zustand 5, Playwright 1.65, alias `@/*`. Desviaciones: se usó TypeScript 6.0 (la última soportada por typescript-eslint, rango `<6.1`) en vez de 5.9; React Router 8 ya existe, pero se mantuvo la 7 como indica la decisión 24; ESLint 10 ya existe, se mantuvo la 9. El E2E levanta `vite preview` sobre un build.
 
 - Actualizar todas las dependencias a sus versiones mayores actuales: React 19, React Router 7, Vite, Tailwind 4, TypeScript 5.9, Zod 4, @hookform/resolvers, ESLint 9 (flat config) + typescript-eslint 8, Prettier.
 - `npm run build`, `lint`, `format` y `typecheck` en verde.

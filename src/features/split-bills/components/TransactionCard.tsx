@@ -1,7 +1,7 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { useMemo } from 'react';
-import { Card } from 'src/shared';
-import { formatToCurrency } from 'src/shared/utils/format-to';
+import { Card } from '@/shared';
+import { formatToCurrency } from '@/shared/utils/format-to';
 import { Member, MemberId } from '../types/member';
 import { Transaction } from '../types/transaction';
 
@@ -16,7 +16,7 @@ export function TransactionCard({ member, transactions, members }: Props) {
   }, [member.id, transactions]);
 
   return (
-    <Card className='space-y-4 p-4 shadow-sm'>
+    <Card className='space-y-4 p-4 shadow-xs'>
       {debts.map(({ to, amount }) => (
         <div key={to} className='min-w-0 flex-col items-center gap-2'>
           <div className='flex items-center justify-center gap-0.5'>

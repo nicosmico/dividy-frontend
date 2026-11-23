@@ -4,16 +4,17 @@ import {
   FieldError,
   FieldErrors,
   useForm,
+  useWatch,
 } from 'react-hook-form';
-import { formatToCurrency, Input, InputError, Select } from 'src/shared';
-import { debounce } from 'src/shared/utils/debounce';
+import { formatToCurrency, Input, InputError, Select } from '@/shared';
+import { debounce } from '@/shared/utils/debounce';
 import { z } from 'zod';
 import { Member } from '../types/member';
 
 const BILL_FORM_SCHEMA = z.object({
   name: z.string().min(1, 'Debes ingresar un nombre'),
   total: z
-    .number({ invalid_type_error: 'Debe ser mayor que 0' })
+    .number({ error: 'Debe ser mayor que 0' })
     .positive('Debe ser mayor que 0'),
   paidBy: z.string().min(1, 'Ingresa quién hizo esta compra'),
   members: z.array(z.string()).min(1, 'Debes seleccionar al menos un miembro'),
@@ -36,7 +37,7 @@ export function BillForm({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
+    control,
   } = useForm<BillFormValues>({
     resolver: zodResolver(BILL_FORM_SCHEMA),
     defaultValues,
@@ -47,8 +48,9 @@ export function BillForm({
     handleSubmit(onValid, onInvalid)();
   }, 100);
 
-  const selectedMembers = watch('members');
-  const totalByMember = watch('total') / selectedMembers.length;
+  const selectedMembers = useWatch({ control, name: 'members' });
+  const totalByMember =
+    useWatch({ control, name: 'total' }) / selectedMembers.length;
 
   return (
     <>
@@ -95,7 +97,7 @@ export function BillForm({
           <div className='flex flex-wrap justify-center gap-1'>
             {members.map((member) => (
               <label
-                className='flex w-full select-none items-center justify-between gap-1 rounded-full border-2 border-neutral-100  px-3 py-3 hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200 md:px-2 md:py-1'
+                className='flex w-full items-center justify-between gap-1 rounded-full border-2 border-neutral-100 px-3 py-3 select-none hover:cursor-pointer has-[:checked]:border-amber-200 has-[:checked]:bg-amber-200 md:px-2 md:py-1'
                 key={member.id}
               >
                 <span>

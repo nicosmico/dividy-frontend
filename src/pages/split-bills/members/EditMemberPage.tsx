@@ -1,25 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { MemberForm } from 'src/features/split-bills';
-import { TMemberForm } from 'src/features/split-bills/components/MemberForm';
-import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { SubmitButton } from 'src/features/split-bills/types/forms';
-import { Member } from 'src/features/split-bills/types/member';
-import { Dialog, useSnackBar } from 'src/shared';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import { MemberForm } from '@/features/split-bills';
+import { TMemberForm } from '@/features/split-bills/components/MemberForm';
+import useMembers from '@/features/split-bills/hooks/useMembers';
+import { SubmitButton } from '@/features/split-bills/types/forms';
+import { Member } from '@/features/split-bills/types/member';
+import { Dialog, useSnackBar } from '@/shared';
 
 export function EditMemberPage() {
   const { memberId } = useParams();
   const { members, updateMember } = useMembers();
-  const [member, setMember] = useState<Member | undefined>();
   const [open, setOpen] = useState(true);
   const { showMessage } = useSnackBar();
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!memberId) return;
-    setMember(members[memberId]);
-  }, [setMember, members, memberId]);
+  const member: Member | undefined = memberId ? members[memberId] : undefined;
 
   const handleClose = () => {
     navigate('..');
@@ -36,7 +32,7 @@ export function EditMemberPage() {
       <div>
         {member && (
           <img
-            className='mx-auto max-w-[50px] rounded-full bg-amber-200 p-0.5 shadow-sm'
+            className='mx-auto max-w-[50px] rounded-full bg-amber-200 p-0.5 shadow-xs'
             src={member.picture.happy}
             alt={member.name}
           />

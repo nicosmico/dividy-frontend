@@ -19,16 +19,20 @@ npm install
 npm run dev        # servidor de desarrollo en http://localhost:5173
 ```
 
-| Script | Qué hace |
-|---|---|
-| `npm run dev` | Servidor de desarrollo |
-| `npm run build` | Typecheck + build de producción en `dist/` |
-| `npm run preview` | Sirve el build |
-| `npm run typecheck` | Solo TypeScript |
-| `npm test` | Tests unitarios y de componentes (Vitest) |
-| `npm run test:e2e` | Tests end-to-end (Playwright) |
-| `npm run lint` | ESLint |
-| `npm run format` / `format:fix` | Prettier |
+| Script                          | Qué hace                                   |
+| ------------------------------- | ------------------------------------------ |
+| `npm run dev`                   | Servidor de desarrollo                     |
+| `npm run build`                 | Typecheck + build de producción en `dist/` |
+| `npm run preview`               | Sirve el build                             |
+| `npm run typecheck`             | Solo TypeScript                            |
+| `npm test`                      | Tests unitarios y de componentes (Vitest)  |
+| `npm run test:watch`            | Vitest en modo watch                       |
+| `npm run test:coverage`         | Tests con reporte de cobertura             |
+| `npm run test:e2e`              | Tests end-to-end (Playwright)              |
+| `npm run lint`                  | ESLint                                     |
+| `npm run format` / `format:fix` | Prettier                                   |
+
+Para los E2E, la primera vez ejecuta `npx playwright install chromium`. Si ya tienes un Chromium instalado, apunta a él con `PW_CHROMIUM_PATH=/ruta/a/chrome`.
 
 ## Documentación
 

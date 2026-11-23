@@ -8,7 +8,7 @@ export function InputError({ error, ...props }: Props) {
   if (!error) return;
 
   return (
-    <div className='ml-1 mt-1 flex items-center gap-1 text-red-500'>
+    <div className='mt-1 ml-1 flex items-center gap-1 text-red-500'>
       <IconAlertTriangle size={12}></IconAlertTriangle>
       <span className='text-xs' {...props}>
         {(error.message as string) ?? error.root?.message}

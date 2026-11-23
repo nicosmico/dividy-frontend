@@ -9,7 +9,7 @@ interface Props {
 export function SnackBar({ message, onClose }: Props) {
   return (
     <Card className='flex items-center justify-between gap-2.5 bg-zinc-800 p-4 text-gray-50 shadow-lg'>
-      <div className='text-balance text-sm'>{message}</div>
+      <div className='text-sm text-balance'>{message}</div>
       <RoundedButton
         className='bg-gray-50 px-3 py-1 text-sm text-zinc-800'
         onClick={onClose}

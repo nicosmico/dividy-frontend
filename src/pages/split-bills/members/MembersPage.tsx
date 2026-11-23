@@ -1,15 +1,15 @@
 import { IconArrowNarrowRight } from '@tabler/icons-react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { MemberList } from 'src/features/split-bills';
+import { Outlet, useNavigate } from 'react-router';
+import { MemberList } from '@/features/split-bills';
 import {
   MemberForm,
   TMemberForm,
-} from 'src/features/split-bills/components/MemberForm';
-import useBills from 'src/features/split-bills/hooks/useBills';
-import useMembers from 'src/features/split-bills/hooks/useMembers';
-import { Avatar } from 'src/features/split-bills/services/avatar';
-import { RoundedLink } from 'src/shared';
-import { useDialogMessage } from 'src/shared/ui/dialog-message/useDialogMessage';
+} from '@/features/split-bills/components/MemberForm';
+import useBills from '@/features/split-bills/hooks/useBills';
+import useMembers from '@/features/split-bills/hooks/useMembers';
+import { Avatar } from '@/features/split-bills/services/avatar';
+import { RoundedLink } from '@/shared';
+import { useDialogMessage } from '@/shared/ui/dialog-message/useDialogMessage';
 
 export function MembersPage() {
   const { members, membersOrder, addMember, deleteMember } = useMembers();
@@ -30,11 +30,19 @@ export function MembersPage() {
   const handleDeleteMember = (id: string) => {
     console.log('Delete member', id);
     const ownBills = Object.values(bills).filter((bill) => bill.paidBy === id);
-    const debtorBills = Object.values(bills).filter((bill) => bill.members.includes(id));
+    const debtorBills = Object.values(bills).filter((bill) =>
+      bill.members.includes(id)
+    );
     const member = members[id];
 
-    const debtorBillsName = debtorBills.map((bill) => `"${bill.name}"`).join(', ').replace(/, ([^,]*)$/, ' y $1');
-    const ownBillsNames = ownBills.map((bill) => `"${bill.name}"`).join(', ').replace(/, ([^,]*)$/, ' y $1');
+    const debtorBillsName = debtorBills
+      .map((bill) => `"${bill.name}"`)
+      .join(', ')
+      .replace(/, ([^,]*)$/, ' y $1');
+    const ownBillsNames = ownBills
+      .map((bill) => `"${bill.name}"`)
+      .join(', ')
+      .replace(/, ([^,]*)$/, ' y $1');
 
     // Remove member from bills where are debtor and update the bills
     const updateDebtorBills = () => {
@@ -45,7 +53,7 @@ export function MembersPage() {
         };
         updateBill(bill.id, updatedBill);
       });
-    }
+    };
 
     if (ownBills.length) {
       showDialog({
@@ -54,7 +62,7 @@ export function MembersPage() {
         buttons: [
           {
             label: 'Cancelar',
-            onClick: () => { },
+            onClick: () => {},
           },
           {
             label: 'Eliminar',
@@ -65,7 +73,7 @@ export function MembersPage() {
                 deleteBill(bill.id);
               });
               updateDebtorBills();
-            }
+            },
           },
         ],
       });
@@ -76,7 +84,7 @@ export function MembersPage() {
         buttons: [
           {
             label: 'Cancelar',
-            onClick: () => { },
+            onClick: () => {},
           },
           {
             label: 'Eliminar',
@@ -84,12 +92,12 @@ export function MembersPage() {
             onClick: () => {
               deleteMember(id);
               updateDebtorBills();
-            }
+            },
           },
         ],
       });
     }
-  }
+  };
 
   return (
     <>
@@ -116,7 +124,7 @@ export function MembersPage() {
           <RoundedLink
             to='../bills'
             disabled={membersOrder.length < 2}
-            className='w-full bg-amber-200 px-6 shadow-sm md:max-w-lg'
+            className='w-full bg-amber-200 px-6 shadow-xs md:max-w-lg'
           >
             Gastos
             <IconArrowNarrowRight></IconArrowNarrowRight>

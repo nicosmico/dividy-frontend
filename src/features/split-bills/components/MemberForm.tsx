@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { IconAt, IconAtOff, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
-import { IconButton, Input, InputError, RoundedButton } from 'src/shared';
+import { IconButton, Input, InputError, RoundedButton } from '@/shared';
 import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
 import { SubmitButton } from '../types/forms';
@@ -22,14 +22,15 @@ const formSchema = z.object({
     .or(z.literal(''))
     .transform((value) => (!value ? undefined : value)),
 });
-export type TMemberForm = z.infer<typeof formSchema>;
+export type TMemberForm = z.output<typeof formSchema>;
+type TMemberFormInput = z.input<typeof formSchema>;
 
 interface Props {
   onValid: (member: TMemberForm) => void;
   resetOnSubmit?: boolean;
   inputsClassName?: string;
   showDetail?: boolean;
-  defaultValues?: TMemberForm;
+  defaultValues?: TMemberFormInput;
   submitButton?: SubmitButton;
   onCancel?: () => void;
 }
@@ -49,17 +50,17 @@ export function MemberForm({
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<TMemberForm>({
+  } = useForm<TMemberFormInput, unknown, TMemberForm>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
 
   const handleValid = (memberValues: TMemberForm) => {
     onValid(memberValues);
-    resetOnSubmit && reset();
+    if (resetOnSubmit) reset();
   };
 
-  const handleInvalid = ({ email, phone }: FieldErrors<TMemberForm>) => {
+  const handleInvalid = ({ email, phone }: FieldErrors<TMemberFormInput>) => {
     if (email || phone) {
       setShowDetail(true);
     }

@@ -1,7 +1,7 @@
-import { Bill } from 'src/features/split-bills/types/bill';
-import { Member } from 'src/features/split-bills/types/member';
-import { Transaction } from 'src/features/split-bills/types/transaction';
-import { formatToCurrency } from 'src/shared/utils/format-to';
+import { Bill } from '@/features/split-bills/types/bill';
+import { Member } from '@/features/split-bills/types/member';
+import { Transaction } from '@/features/split-bills/types/transaction';
+import { formatToCurrency } from '@/shared/utils/format-to';
 
 export function formatSplitBillSummary(
   bills: Record<string, Bill>,

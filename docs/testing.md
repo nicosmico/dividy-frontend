@@ -2,13 +2,13 @@
 
 En una app de plata, los tests son la evidencia de que los números son correctos. La mayor parte del esfuerzo va donde vive el dinero: el dominio.
 
-| Capa | Herramienta | Qué se prueba | Dónde |
-|---|---|---|---|
-| Dominio | Vitest | Casos concretos en tablas: divisiones, restos, saldos, transferencias, operaciones del grupo, errores de validación | `src/domain/**/*.test.ts` |
-| Dominio | Vitest + fast-check | Propiedades que deben cumplirse para **cualquier** grupo generado al azar (ver abajo) | `src/domain/**/*.property.test.ts` |
-| Persistencia | Vitest | Suite de contrato del `GroupRepository`, ejecutada contra cada implementación; migraciones del formato guardado | `src/data/**/*.test.ts` |
-| Componentes | Vitest + Testing Library (jsdom) | Formularios y componentes con lógica: validaciones visibles, lo que se envía al guardar, estados vacíos | junto al componente |
-| End-to-end | Playwright (desktop y móvil) | Flujos completos en un navegador real y regresiones de bugs conocidos | `e2e/` |
+| Capa         | Herramienta                      | Qué se prueba                                                                                                       | Dónde                              |
+| ------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Dominio      | Vitest                           | Casos concretos en tablas: divisiones, restos, saldos, transferencias, operaciones del grupo, errores de validación | `src/domain/**/*.test.ts`          |
+| Dominio      | Vitest + fast-check              | Propiedades que deben cumplirse para **cualquier** grupo generado al azar (ver abajo)                               | `src/domain/**/*.property.test.ts` |
+| Persistencia | Vitest                           | Suite de contrato del `GroupRepository`, ejecutada contra cada implementación; migraciones del formato guardado     | `src/data/**/*.test.ts`            |
+| Componentes  | Vitest + Testing Library (jsdom) | Formularios y componentes con lógica: validaciones visibles, lo que se envía al guardar, estados vacíos             | junto al componente                |
+| End-to-end   | Playwright (desktop y móvil)     | Flujos completos en un navegador real y regresiones de bugs conocidos                                               | `e2e/`                             |
 
 ## Propiedades del dominio
 

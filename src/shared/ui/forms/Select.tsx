@@ -26,7 +26,7 @@ export function Select({
         {...props}
         {...register}
         className={twMerge(
-          'peer block w-full appearance-none rounded-xl border-transparent p-4 outline-zinc-800 focus:border-zinc-800 focus:ring-zinc-800 disabled:pointer-events-none disabled:opacity-50 has-[option:checked]:pb-2 has-[option:checked]:pt-6',
+          'peer block w-full appearance-none rounded-xl border-transparent p-4 outline-zinc-800 focus:border-zinc-800 focus:ring-zinc-800 disabled:pointer-events-none disabled:opacity-50 has-[option:checked]:pt-6 has-[option:checked]:pb-2',
           'appearance-none bg-right bg-no-repeat',
           arrowIcon,
           className
