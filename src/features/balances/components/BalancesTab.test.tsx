@@ -159,10 +159,10 @@ describe('Pestaña Saldos', () => {
       groups: [group],
     });
     await user.click(
-      await screen.findByRole('button', { name: 'Ver detalle de Ana' })
+      await screen.findByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     );
     const row = screen
-      .getByRole('button', { name: 'Ver detalle de Ana' })
+      .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
     expect(within(row).getByText('Pagó en gastos')).toBeInTheDocument();
     expect(within(row).getByText('$10.000')).toBeInTheDocument();

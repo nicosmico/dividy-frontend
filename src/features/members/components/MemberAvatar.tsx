@@ -11,6 +11,8 @@ interface MemberAvatarProps {
   member: { id: string; name: string };
   /** Happy mouth by default; `sad` for members who owe money. */
   mood?: AvatarMood;
+  /** The name is already next to the avatar: hide it from assistive tech. */
+  decorative?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,7 @@ const BASE = 'size-10 shrink-0 rounded-full bg-secondary';
 export const MemberAvatar = memo(function MemberAvatar({
   member,
   mood = 'happy',
+  decorative = false,
   className,
 }: MemberAvatarProps) {
   const key = `${mood}:${member.id}`;
@@ -48,8 +51,9 @@ export const MemberAvatar = memo(function MemberAvatar({
   if (!uri) {
     return (
       <span
-        role='img'
-        aria-label={member.name}
+        {...(decorative
+          ? { 'aria-hidden': true }
+          : { role: 'img', 'aria-label': member.name })}
         className={cn(
           BASE,
           'flex items-center justify-center text-sm font-semibold text-muted-foreground uppercase',
@@ -64,7 +68,7 @@ export const MemberAvatar = memo(function MemberAvatar({
   return (
     <img
       src={uri}
-      alt={member.name}
+      alt={decorative ? '' : member.name}
       width={40}
       height={40}
       className={cn(BASE, 'object-cover', className)}

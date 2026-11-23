@@ -85,12 +85,10 @@ function MemberRow({
   return (
     <Card className='gap-0 p-0'>
       <Collapsible.Root>
-        <Collapsible.Trigger
-          className='group flex w-full items-center gap-3 rounded-2xl p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'
-          aria-label={`Ver detalle de ${member.name}`}
-        >
+        <Collapsible.Trigger className='group flex w-full items-center gap-3 rounded-2xl p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'>
           <MemberAvatar
             member={member}
+            decorative
             mood={balance.balance < 0 ? 'sad' : 'happy'}
           />
           <span className='min-w-0 flex-1'>

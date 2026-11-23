@@ -97,7 +97,9 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   }
 
   // The breakdown lets anyone check Ana's number by hand.
-  await page.getByRole('button', { name: 'Ver detalle de Ana' }).click();
+  await page
+    .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
+    .click();
   await expect(page.getByText('Pagó en gastos')).toBeVisible();
   await expect(page.getByText('Le tocó $3.334')).toBeVisible();
 
