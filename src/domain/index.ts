@@ -32,6 +32,7 @@ export {
   addPayment,
   createGroup,
   getMemberRemovalImpact,
+  getTotalSpent,
   removeExpense,
   removeMember,
   removePayment,

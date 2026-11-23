@@ -5,6 +5,7 @@ import {
   addPayment,
   createGroup,
   getMemberRemovalImpact,
+  getTotalSpent,
   removeExpense,
   removeMember,
   removePayment,
@@ -404,5 +405,23 @@ describe('getMemberRemovalImpact / removeMember', () => {
         );
       }
     });
+  });
+});
+
+describe('getTotalSpent', () => {
+  it('suma los gastos y ignora los pagos', () => {
+    const group = makeGroup({
+      members: ['A', 'B'],
+      expenses: [
+        { amount: 1000, payer: 'A', among: ['A', 'B'] },
+        { amount: 2500, payer: 'B', among: ['A'] },
+      ],
+      payments: [{ from: 'A', to: 'B', amount: 300 }],
+    });
+    expect(getTotalSpent(group)).toBe(3500);
+  });
+
+  it('es 0 sin gastos', () => {
+    expect(getTotalSpent(makeGroup({ members: ['A'] }))).toBe(0);
   });
 });

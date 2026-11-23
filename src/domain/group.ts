@@ -320,3 +320,8 @@ export function removePayment(
     payments: group.payments.filter((p) => p.id !== paymentId),
   });
 }
+
+/** Sum of every expense amount in the group (payments are not expenses). */
+export function getTotalSpent(group: Pick<Group, 'expenses'>): number {
+  return group.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+}
