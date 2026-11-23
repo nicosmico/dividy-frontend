@@ -23,6 +23,16 @@ export default defineConfig([
     },
   },
   {
+    // shadcn convention: variant helpers live next to their component.
+    files: ['src/components/ui/{button,badge}.tsx'],
+    rules: {
+      'react-refresh/only-export-components': [
+        'error',
+        { allowExportNames: ['buttonVariants', 'badgeVariants'] },
+      ],
+    },
+  },
+  {
     files: ['*.config.{ts,js}', 'e2e/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
