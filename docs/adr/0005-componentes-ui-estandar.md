@@ -1,0 +1,3 @@
+# Usamos shadcn/ui (Radix) en vez de componentes de UI propios
+
+La primera versión tenía Dialog, SnackBar, Select, Stepper, inputs con label flotante, un store de breakpoints y un `debounce` hechos a mano, con bugs de accesibilidad y de estado. Decidimos usar shadcn/ui sobre Radix (diálogos, drawer con vaul, toasts con sonner, formularios), Tailwind para lo responsivo (sin JS de breakpoints) y escribir componentes propios solo cuando expresan algo del dominio (por ejemplo, la tarjeta de un gasto). El código de shadcn vive copiado en `src/components/ui` y se puede modificar, pero no se reinventa.

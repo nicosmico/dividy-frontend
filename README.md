@@ -1,30 +1,43 @@
-# React + TypeScript + Vite
+# Dividy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Divide los gastos de un grupo y descubre quién le debe cuánto a quién, con números que cuadran al peso.
 
-Currently, two official plugins are available:
+> **Estado:** en reconstrucción. Es un MVP: solo CLP y datos guardados en tu navegador. Ver el [plan](docs/PLAN.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Cómo funciona
 
-## Expanding the ESLint configuration
+1. Creas un **grupo** (un viaje, un asado, la casa) con sus miembros.
+2. Registras **gastos**: quién pagó, cuánto y entre quiénes se divide.
+3. Dividy calcula el **saldo** de cada persona, propone las **transferencias** mínimas para quedar a mano, y te deja marcarlas como pagadas o copiar un resumen para el chat.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Desarrollo
 
-- Configure the top-level `parserOptions` property like this:
+Requisitos: Node.js 22 o superior.
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-};
+```bash
+npm install
+npm run dev        # servidor de desarrollo en http://localhost:5173
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+| Script | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Typecheck + build de producción en `dist/` |
+| `npm run preview` | Sirve el build |
+| `npm run typecheck` | Solo TypeScript |
+| `npm test` | Tests unitarios y de componentes (Vitest) |
+| `npm run test:e2e` | Tests end-to-end (Playwright) |
+| `npm run lint` | ESLint |
+| `npm run format` / `format:fix` | Prettier |
+
+## Documentación
+
+- [`CONTEXT.md`](CONTEXT.md): vocabulario del dominio (grupo, gasto, saldo, pago…). Úsalo para nombrar cosas.
+- [`docs/architecture.md`](docs/architecture.md): capas, carpetas y flujo de datos.
+- [`docs/testing.md`](docs/testing.md): estrategia de tests.
+- [`docs/adr/`](docs/adr): decisiones de arquitectura y su porqué.
+- [`docs/PLAN.md`](docs/PLAN.md): fases de la reconstrucción y registro de decisiones.
+
+## Stack
+
+React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, React Router, React Hook Form + Zod, Vitest, Playwright. Se despliega en Netlify.
