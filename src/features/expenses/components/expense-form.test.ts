@@ -64,9 +64,9 @@ describe('validateExpenseForm', () => {
     });
     expect(result).toEqual({
       errors: {
-        description: 'La descripción no puede estar vacío.',
-        amount: expect.stringContaining('El monto debe ser un número entero'),
-        date: 'La fecha no es válida.',
+        description: 'Escribe una descripción del gasto.',
+        amount: expect.stringContaining('Ingresa un monto en pesos enteros'),
+        date: 'Elige una fecha válida.',
       },
     });
   });
@@ -83,7 +83,7 @@ describe('validateExpenseForm', () => {
 
   it('rechaza un pagador que no es del grupo', () => {
     expect(validateExpenseForm(group, { ...valid, payerId: 'Zoe' })).toEqual({
-      errors: { payerId: 'Quien pagó no es parte del grupo.' },
+      errors: { payerId: 'Elige quién pagó entre los miembros del grupo.' },
     });
   });
 

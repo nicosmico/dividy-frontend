@@ -262,10 +262,10 @@ describe('Pestaña Gastos', () => {
       const dialog = await openNewForm(user);
       await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
       expect(
-        await within(dialog).findByText('La descripción no puede estar vacío.')
+        await within(dialog).findByText('Escribe una descripción del gasto.')
       ).toBeInTheDocument();
       expect(
-        within(dialog).getByText(/El monto debe ser un número entero de pesos/)
+        within(dialog).getByText(/Ingresa un monto en pesos enteros/)
       ).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Descripción')).toHaveAttribute(
         'aria-invalid',

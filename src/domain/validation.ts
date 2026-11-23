@@ -18,28 +18,32 @@ export type ExpenseFields = Omit<Expense, 'id' | 'createdAt'>;
 /** Fields the user provides for a payment (the rest is generated). */
 export type PaymentFields = Omit<Payment, 'id' | 'createdAt'>;
 
+interface TextMessages {
+  /** What to do when it is empty, e.g. "Escribe un nombre para el grupo." */
+  empty: string;
+  /** What to do when it is too long (receives the limit). */
+  tooLong: (max: number) => string;
+}
+
 function validateText(
   value: string,
   max: number,
   code: 'invalid_group_name' | 'invalid_member_name' | 'invalid_description',
-  label: string
+  messages: TextMessages
 ): Result<string> {
   const trimmed = typeof value === 'string' ? value.trim() : '';
-  if (trimmed.length === 0) return fail(code, `${label} no puede estar vacío.`);
-  if (trimmed.length > max) {
-    return fail(code, `${label} no puede tener más de ${max} caracteres.`);
-  }
+  if (trimmed.length === 0) return fail(code, messages.empty);
+  if (trimmed.length > max) return fail(code, messages.tooLong(max));
   return ok(trimmed);
 }
 
 /** Returns the trimmed name. */
 export function validateGroupName(name: string): Result<string> {
-  return validateText(
-    name,
-    MAX_GROUP_NAME_LENGTH,
-    'invalid_group_name',
-    'El nombre del grupo'
-  );
+  return validateText(name, MAX_GROUP_NAME_LENGTH, 'invalid_group_name', {
+    empty: 'Escribe un nombre para el grupo.',
+    tooLong: (max) =>
+      `El nombre del grupo puede tener hasta ${max} caracteres.`,
+  });
 }
 
 function normalizeName(name: string): string {
@@ -59,7 +63,10 @@ export function validateMemberName(
     name,
     MAX_MEMBER_NAME_LENGTH,
     'invalid_member_name',
-    'El nombre'
+    {
+      empty: 'Escribe un nombre para el miembro.',
+      tooLong: (max) => `El nombre puede tener hasta ${max} caracteres.`,
+    }
   );
   if (!valid.ok) return valid;
   const key = normalizeName(valid.value);
@@ -69,7 +76,7 @@ export function validateMemberName(
   if (clash) {
     return fail(
       'duplicate_member_name',
-      `Ya hay alguien llamado "${valid.value}" en el grupo.`
+      `Ya hay alguien llamado "${valid.value}" en el grupo. Usa otro nombre.`
     );
   }
   return valid;
@@ -81,7 +88,10 @@ export function validateDescription(description: string): Result<string> {
     description,
     MAX_DESCRIPTION_LENGTH,
     'invalid_description',
-    'La descripción'
+    {
+      empty: 'Escribe una descripción del gasto.',
+      tooLong: (max) => `La descripción puede tener hasta ${max} caracteres.`,
+    }
   );
 }
 
@@ -89,7 +99,7 @@ export function validateAmount(amount: unknown): Result<Amount> {
   if (!isValidAmount(amount)) {
     return fail(
       'invalid_amount',
-      `El monto debe ser un número entero de pesos entre 1 y ${MAX_AMOUNT.toLocaleString('es-CL')}.`
+      `Ingresa un monto en pesos enteros, entre $1 y $${MAX_AMOUNT.toLocaleString('es-CL')}.`
     );
   }
   return ok(amount);
@@ -109,7 +119,7 @@ export function validateDate(date: string): Result<string> {
       return ok(date);
     }
   }
-  return fail('invalid_date', 'La fecha no es válida.');
+  return fail('invalid_date', 'Elige una fecha válida.');
 }
 
 /** Validates an expense against the group and returns it normalized (trimmed). */
@@ -126,7 +136,10 @@ export function validateExpenseFields(
 
   const memberIds = new Set(group.members.map((m) => m.id));
   if (!memberIds.has(fields.payerId)) {
-    return fail('payer_not_found', 'Quien pagó no es parte del grupo.');
+    return fail(
+      'payer_not_found',
+      'Elige quién pagó entre los miembros del grupo.'
+    );
   }
   const { participantIds } = fields.split;
   if (participantIds.length === 0) {
@@ -144,7 +157,7 @@ export function validateExpenseFields(
   if (!participantIds.every((id) => memberIds.has(id))) {
     return fail(
       'participant_not_found',
-      'Alguien de la división no es parte del grupo.'
+      'Quita de la división a quien ya no está en el grupo.'
     );
   }
   return ok({

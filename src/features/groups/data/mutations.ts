@@ -104,7 +104,7 @@ export function useGroupOperation(groupId: GroupId) {
       if (!current) {
         const error: InfrastructureError = {
           code: 'group_not_found',
-          message: 'Este grupo ya no existe.',
+          message: 'Este grupo ya no existe. Vuelve a Mis grupos.',
         };
         toast.error(error.message);
         return { ok: false, error };

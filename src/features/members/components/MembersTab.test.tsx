@@ -57,7 +57,9 @@ describe('Pestaña Miembros', () => {
     await user.type(input, 'beto');
     await user.click(screen.getByRole('button', { name: /Agregar/ }));
     expect(
-      await screen.findByText('Ya hay alguien llamado "beto" en el grupo.')
+      await screen.findByText(
+        'Ya hay alguien llamado "beto" en el grupo. Usa otro nombre.'
+      )
     ).toBeInTheDocument();
 
     await user.clear(input);
@@ -88,7 +90,7 @@ describe('Pestaña Miembros', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
     expect(
       await within(dialog).findByText(
-        'Ya hay alguien llamado "Beto" en el grupo.'
+        'Ya hay alguien llamado "Beto" en el grupo. Usa otro nombre.'
       )
     ).toBeInTheDocument();
 

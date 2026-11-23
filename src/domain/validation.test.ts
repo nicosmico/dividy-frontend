@@ -31,7 +31,7 @@ describe('validateGroupName', () => {
   it('devuelve el nombre sin espacios extremos y mensajes en español', () => {
     expect(validateGroupName('  Asado ')).toEqual({ ok: true, value: 'Asado' });
     const r = validateGroupName('');
-    expect(!r.ok && r.error.message).toMatch(/no puede estar vacío/);
+    expect(!r.ok && r.error.message).toMatch(/Escribe un nombre para el grupo/);
   });
 });
 

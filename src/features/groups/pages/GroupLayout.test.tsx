@@ -57,9 +57,7 @@ describe('Página del grupo', () => {
     await user.clear(input);
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
     expect(
-      await within(dialog).findByText(
-        'El nombre del grupo no puede estar vacío.'
-      )
+      await within(dialog).findByText('Escribe un nombre para el grupo.')
     ).toBeInTheDocument();
 
     await user.type(input, 'Cumpleaños');

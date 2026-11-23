@@ -27,7 +27,7 @@ describe('Crear grupo', () => {
     const { user } = await setup();
     await user.click(screen.getByRole('button', { name: 'Crear grupo' }));
     expect(
-      await screen.findByText('El nombre del grupo no puede estar vacío.')
+      await screen.findByText('Escribe un nombre para el grupo.')
     ).toBeInTheDocument();
   });
 
@@ -64,13 +64,15 @@ describe('Crear grupo', () => {
     await user.type(input, 'Ana{Enter}');
     await user.type(input, ' ana {Enter}');
     expect(
-      await screen.findByText('Ya hay alguien llamado "ana" en el grupo.')
+      await screen.findByText(
+        'Ya hay alguien llamado "ana" en el grupo. Usa otro nombre.'
+      )
     ).toBeInTheDocument();
 
     await user.clear(input);
     await user.type(input, '   {Enter}');
     expect(
-      await screen.findByText('El nombre no puede estar vacío.')
+      await screen.findByText('Escribe un nombre para el miembro.')
     ).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });

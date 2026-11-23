@@ -57,7 +57,7 @@ export function ErrorScreen({ onReset }: { onReset?: () => void }) {
       <h1 className='text-2xl font-bold'>Algo salió mal</h1>
       <p className='text-muted-foreground'>
         Ocurrió un error inesperado. Tus datos siguen guardados en este
-        dispositivo.
+        dispositivo. Vuelve al inicio e inténtalo de nuevo.
       </p>
       <Button asChild size='lg'>
         <Link to='/' onClick={onReset}>
