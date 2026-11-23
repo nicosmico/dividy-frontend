@@ -6,7 +6,7 @@ import {
   LEGACY_MEMBERS_KEY,
   migrateLegacyData,
 } from './legacy-migration';
-import { emptyDocument, parseDocument } from './migrations';
+import { emptyDocument, parseDocument, type RejectedGroup } from './migrations';
 import type { StoredDocument } from './schema';
 
 export const STORAGE_KEY = 'dividy';
@@ -21,8 +21,11 @@ export interface LocalStorageGroupRepositoryOptions {
 
 /**
  * Stores `{ version, groups }` under one key. Corrupt content is never
- * deleted: its raw text is copied to `dividy.corrupted.<ISO>` and the
- * repository starts from an empty document. Data in the old format
+ * deleted: when the whole document is unusable (invalid JSON, unknown
+ * version) its raw text is copied to `dividy.corrupted.<ISO>` and the
+ * repository starts empty; when only some groups break invariants, those are
+ * copied (with the reason) to `dividy.corrupted.<ISO>` and skipped while the
+ * valid groups load. Data in the old format
  * (`members-store` / `bills-store`) is migrated lazily on first use.
  */
 export class LocalStorageGroupRepository implements GroupRepository {
@@ -30,7 +33,7 @@ export class LocalStorageGroupRepository implements GroupRepository {
   private readonly newId: () => string;
   private readonly now: () => string;
   private ready: Promise<void> | null = null;
-  private lastBackedUp: string | null = null;
+  private readonly backedUp = new Set<string>();
 
   constructor(options: LocalStorageGroupRepositoryOptions = {}) {
     this.storage = options.storage ?? window.localStorage;
@@ -97,16 +100,38 @@ export class LocalStorageGroupRepository implements GroupRepository {
     const text = this.storage.getItem(STORAGE_KEY);
     if (text === null) return emptyDocument();
     const parsed = parseDocument(text);
-    if (parsed.ok) return parsed.document;
-    if (this.lastBackedUp !== text) {
-      try {
-        this.storage.setItem(`${CORRUPTED_KEY_PREFIX}${this.now()}`, text);
-      } catch {
-        // storage full: nothing else to do, the original text stays untouched
-      }
-      this.lastBackedUp = text;
+    if (parsed.ok) {
+      this.backUpRejectedGroups(parsed.rejected);
+      return parsed.document;
     }
+    this.backUp(text, text);
     return emptyDocument();
+  }
+
+  /** One backup entry per invalid group: `{ reason, group }` as JSON. */
+  private backUpRejectedGroups(rejected: RejectedGroup[]): void {
+    rejected.forEach((entry, index) => {
+      const text = JSON.stringify({ reason: entry.reason, group: entry.raw });
+      this.backUp(text, text, index);
+    });
+  }
+
+  /**
+   * Copies `text` to `dividy.corrupted.<ISO>` (suffixed with `#n` for the
+   * n-th entry of the same read) once per distinct content.
+   */
+  private backUp(dedupeKey: string, text: string, index = 0): void {
+    if (this.backedUp.has(dedupeKey)) return;
+    this.backedUp.add(dedupeKey);
+    const suffix = index === 0 ? '' : `#${index}`;
+    try {
+      this.storage.setItem(
+        `${CORRUPTED_KEY_PREFIX}${this.now()}${suffix}`,
+        text
+      );
+    } catch {
+      // storage full: nothing else to do, the original text stays untouched
+    }
   }
 
   private write(doc: StoredDocument): void {

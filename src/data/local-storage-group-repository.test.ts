@@ -70,20 +70,6 @@ describe('LocalStorageGroupRepository', () => {
       ['versión inválida', JSON.stringify({ version: 'x', groups: [] })],
       ['no es un objeto', '42'],
       ['forma inválida', JSON.stringify({ version: 1, groups: 'nope' })],
-      [
-        'grupo con invariantes rotas',
-        JSON.stringify({
-          version: 1,
-          groups: [
-            {
-              ...makeGroup({
-                members: ['A'],
-                expenses: [{ amount: 5, payer: 'Z', among: ['A'] }],
-              }),
-            },
-          ],
-        }),
-      ],
     ];
 
     it.each(corruptCases)(
@@ -98,6 +84,70 @@ describe('LocalStorageGroupRepository', () => {
         expect(window.localStorage.getItem(STORAGE_KEY)).toBe(raw);
       }
     );
+
+    describe('grupos inválidos dentro de un documento válido', () => {
+      const good = makeGroup({ members: ['A', 'B'] });
+      const brokenInvariants = {
+        ...makeGroup({
+          members: ['A'],
+          expenses: [{ amount: 5, payer: 'Z', among: ['A'] }],
+        }),
+        id: 'bad1',
+      };
+      const brokenShape = { id: 'bad2', name: 42 };
+
+      it('carga los grupos válidos y respalda cada inválido con su motivo', async () => {
+        const raw = JSON.stringify({
+          version: 1,
+          groups: [brokenInvariants, good, brokenShape],
+        });
+        window.localStorage.setItem(STORAGE_KEY, raw);
+        const repo = makeRepo();
+
+        expect(await repo.list()).toEqual([good]);
+        expect(await repo.get('bad1')).toBeNull();
+
+        const first = JSON.parse(
+          window.localStorage.getItem(`${CORRUPTED_KEY_PREFIX}${NOW}`)!
+        );
+        const second = JSON.parse(
+          window.localStorage.getItem(`${CORRUPTED_KEY_PREFIX}${NOW}#1`)!
+        );
+        expect(first.group).toEqual(brokenInvariants);
+        expect(first.reason).toEqual(expect.any(String));
+        expect(second.group).toEqual(brokenShape);
+        expect(window.localStorage.getItem(STORAGE_KEY)).toBe(raw);
+      });
+
+      it('no repite el respaldo en cada lectura', async () => {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ version: 1, groups: [brokenInvariants, good] })
+        );
+        const repo = makeRepo();
+        await repo.list();
+        await repo.list();
+        const backups = Object.keys(window.localStorage).filter((k) =>
+          k.startsWith(CORRUPTED_KEY_PREFIX)
+        );
+        expect(backups).toHaveLength(1);
+      });
+
+      it('al guardar, el documento queda sólo con grupos válidos y el respaldo permanece', async () => {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ version: 1, groups: [brokenInvariants, good] })
+        );
+        const repo = makeRepo();
+        await repo.save({ ...good, name: 'Otro' });
+        expect(
+          JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).groups
+        ).toEqual([{ ...good, name: 'Otro' }]);
+        expect(
+          window.localStorage.getItem(`${CORRUPTED_KEY_PREFIX}${NOW}`)
+        ).not.toBeNull();
+      });
+    });
 
     it('no repite el respaldo en cada lectura', async () => {
       window.localStorage.setItem(STORAGE_KEY, '{bad');

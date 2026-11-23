@@ -1,6 +1,8 @@
+import type { Group } from '@/domain';
 import {
   CURRENT_VERSION,
-  documentSchemaV1,
+  documentEnvelopeV1,
+  groupSchema,
   type StoredDocument,
 } from './schema';
 
@@ -31,10 +33,23 @@ export function emptyDocument(): StoredDocument {
   return { version: CURRENT_VERSION, groups: [] };
 }
 
-export type ParseResult =
-  { ok: true; document: StoredDocument } | { ok: false; reason: string };
+/** A group of the stored document that failed validation. */
+export interface RejectedGroup {
+  /** The group exactly as it was stored. */
+  raw: unknown;
+  reason: string;
+}
 
-/** Parses stored text, applies pending migrations and validates the result. */
+export type ParseResult =
+  | { ok: true; document: StoredDocument; rejected: RejectedGroup[] }
+  | { ok: false; reason: string };
+
+/**
+ * Parses stored text, applies pending migrations and validates the result.
+ * Invalid JSON, a missing/unknown version or a wrong envelope make the whole
+ * document unusable (`ok: false`). Otherwise every group is validated on its
+ * own: valid ones are returned, invalid ones are reported in `rejected`.
+ */
 export function parseDocument(text: string): ParseResult {
   let raw: unknown;
   try {
@@ -59,12 +74,28 @@ export function parseDocument(text: string): ParseResult {
   const migrated = runMigrations(raw, version, CURRENT_VERSION);
   if (!migrated.ok) return migrated;
   raw = migrated.value;
-  const parsed = documentSchemaV1.safeParse(raw);
-  if (!parsed.success) {
+  const envelope = documentEnvelopeV1.safeParse(raw);
+  if (!envelope.success) {
     return {
       ok: false,
-      reason: parsed.error.issues[0]?.message ?? 'invalid shape',
+      reason: envelope.error.issues[0]?.message ?? 'invalid shape',
     };
   }
-  return { ok: true, document: parsed.data as StoredDocument };
+  const groups: Group[] = [];
+  const rejected: RejectedGroup[] = [];
+  for (const candidate of envelope.data.groups) {
+    const parsed = groupSchema.safeParse(candidate);
+    if (parsed.success) groups.push(parsed.data as Group);
+    else {
+      rejected.push({
+        raw: candidate,
+        reason: parsed.error.issues[0]?.message ?? 'invalid shape',
+      });
+    }
+  }
+  return {
+    ok: true,
+    document: { version: CURRENT_VERSION, groups },
+    rejected,
+  };
 }

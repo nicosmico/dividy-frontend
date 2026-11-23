@@ -46,9 +46,10 @@ export const groupSchema = z
     }
   });
 
-export const documentSchemaV1 = z.object({
+/** Envelope only: each group is validated on its own (see `parseDocument`). */
+export const documentEnvelopeV1 = z.object({
   version: z.literal(1),
-  groups: z.array(groupSchema),
+  groups: z.array(z.unknown()),
 });
 
 export const CURRENT_VERSION = 1;

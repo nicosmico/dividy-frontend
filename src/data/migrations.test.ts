@@ -13,6 +13,7 @@ describe('parseDocument', () => {
     expect(parseDocument(JSON.stringify(doc))).toEqual({
       ok: true,
       document: doc,
+      rejected: [],
     });
   });
 
@@ -20,7 +21,32 @@ describe('parseDocument', () => {
     expect(parseDocument(JSON.stringify(emptyDocument()))).toEqual({
       ok: true,
       document: emptyDocument(),
+      rejected: [],
     });
+  });
+
+  it('valida por grupo: devuelve los válidos y reporta los inválidos', () => {
+    const good = makeGroup({ members: ['A'] });
+    const bad = {
+      ...good,
+      id: 'bad',
+      members: [],
+      expenses: [{ ...good, id: 'x' }],
+    };
+    const result = parseDocument(
+      JSON.stringify({ version: 1, groups: [bad, good, 7] })
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.document.groups).toEqual([good]);
+    expect(result.rejected).toHaveLength(2);
+    expect(result.rejected[0].raw).toEqual(bad);
+    expect(result.rejected[1].raw).toBe(7);
+    expect(result.rejected[0].reason).toEqual(expect.any(String));
+  });
+
+  it('un documento con grupos que no son lista es corrupto', () => {
+    expect(parseDocument('{"version":1,"groups":"x"}').ok).toBe(false);
   });
 
   it.each([
