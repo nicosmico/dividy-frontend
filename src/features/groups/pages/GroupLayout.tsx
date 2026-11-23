@@ -1,7 +1,8 @@
 import { EllipsisVertical, Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Outlet, useParams } from 'react-router';
 
+import { PageFallback } from '@/components/page-fallback';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -93,7 +94,9 @@ export function GroupLayout() {
         ))}
       </nav>
 
-      <Outlet context={group} />
+      <Suspense fallback={<PageFallback />}>
+        <Outlet context={group} />
+      </Suspense>
 
       <RenameGroupDialog
         group={group}

@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { Link, Outlet } from 'react-router';
 
 import { DividyLogo } from '@/components/dividy-logo';
+import { PageFallback } from '@/components/page-fallback';
 
 export function AppHeader() {
   return (
@@ -22,7 +24,9 @@ export function AppLayout() {
     <>
       <AppHeader />
       <main className='mx-auto w-full max-w-lg px-4 pb-16'>
-        <Outlet />
+        <Suspense fallback={<PageFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </>
   );

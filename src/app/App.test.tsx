@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { InMemoryGroupRepository } from '@/data';
@@ -13,7 +13,7 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Página no encontrada' })
     ).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Ir al inicio' }));
-    expect(currentPath()).toBe('/');
+    await waitFor(() => expect(currentPath()).toBe('/'));
   });
 
   it('el error boundary muestra una pantalla amable y permite volver al inicio', async () => {
@@ -36,6 +36,6 @@ describe('App', () => {
   it('el logo del encabezado lleva al inicio', async () => {
     const { user } = renderWithProviders(undefined, { route: '/groups/new' });
     await user.click(screen.getByRole('link', { name: 'Dividy' }));
-    expect(currentPath()).toBe('/');
+    await waitFor(() => expect(currentPath()).toBe('/'));
   });
 });

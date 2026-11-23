@@ -1,12 +1,29 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 
-import { BalancesTab } from '@/features/balances';
-import { ExpensesTab } from '@/features/expenses';
-import { GroupLayout, GroupsPage, NewGroupPage } from '@/features/groups';
-import { MembersTab } from '@/features/members';
 import { AppLayout } from './AppLayout';
 import { ErrorBoundary } from './ErrorBoundary';
 import { NotFoundPage } from './NotFoundPage';
+
+// Each screen is its own chunk (AppLayout and GroupLayout hold the Suspense) so the first load only downloads what it shows.
+const GroupsPage = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.GroupsPage }))
+);
+const NewGroupPage = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.NewGroupPage }))
+);
+const GroupLayout = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.GroupLayout }))
+);
+const ExpensesTab = lazy(() =>
+  import('@/features/expenses').then((m) => ({ default: m.ExpensesTab }))
+);
+const BalancesTab = lazy(() =>
+  import('@/features/balances').then((m) => ({ default: m.BalancesTab }))
+);
+const MembersTab = lazy(() =>
+  import('@/features/members').then((m) => ({ default: m.MembersTab }))
+);
 
 /** Declarative route table. Tests render it inside a `MemoryRouter`. */
 export function AppRoutes() {

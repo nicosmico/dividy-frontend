@@ -19,9 +19,9 @@ describe('Página del grupo', () => {
 
     const nav = screen.getByRole('navigation', { name: 'Secciones del grupo' });
     await user.click(within(nav).getByRole('link', { name: 'Saldos' }));
-    expect(currentPath()).toBe('/groups/g1/balances');
+    await waitFor(() => expect(currentPath()).toBe('/groups/g1/balances'));
     await user.click(within(nav).getByRole('link', { name: 'Miembros' }));
-    expect(currentPath()).toBe('/groups/g1/members');
+    await waitFor(() => expect(currentPath()).toBe('/groups/g1/members'));
     expect(within(nav).getByRole('link', { name: 'Miembros' })).toHaveAttribute(
       'aria-current',
       'page'
@@ -36,7 +36,7 @@ describe('Página del grupo', () => {
       await screen.findByRole('heading', { name: 'Grupo no encontrado' })
     ).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Ir a mis grupos' }));
-    expect(currentPath()).toBe('/');
+    await waitFor(() => expect(currentPath()).toBe('/'));
   });
 
   it('renombra el grupo desde el menú', async () => {
