@@ -100,8 +100,8 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await page
     .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     .click();
-  await expect(page.getByText('Pagó en gastos')).toBeVisible();
-  await expect(page.getByText('Le tocó $3.334')).toBeVisible();
+  await expect(page.getByText('Pagó')).toBeVisible();
+  await expect(page.getByText('Su parte $3.334')).toBeVisible();
 
   // Mark every suggested transfer as paid.
   for (let remaining = transfers.length; remaining > 0; remaining--) {

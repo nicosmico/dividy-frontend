@@ -144,7 +144,7 @@ describe('Pestaña Saldos', () => {
     expect((await repository.get('g1'))?.payments).toHaveLength(0);
   });
 
-  it('el desglose permite verificar el saldo: pagó, le corresponde y pagos', async () => {
+  it('el desglose permite verificar el saldo: pagó, su parte y pagos', async () => {
     const group = groupWithDebts();
     group.payments.push({
       id: 'p1',
@@ -166,9 +166,9 @@ describe('Pestaña Saldos', () => {
     const row = screen
       .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
-    expect(within(row).getByText('Pagó en gastos')).toBeInTheDocument();
+    expect(within(row).getByText('Pagó')).toBeInTheDocument();
     expect(within(row).getByText('$10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Le corresponde')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte')).toBeInTheDocument();
     // 3.334 (supermercado) + 1.500 (taxi)
     expect(within(row).getByText('$4.834')).toBeInTheDocument();
     expect(within(row).getByText('Pagos que recibió')).toBeInTheDocument();
@@ -178,9 +178,9 @@ describe('Pestaña Saldos', () => {
     expect(within(row).getByText('$4.166')).toBeInTheDocument();
     expect(within(row).getByText('Supermercado')).toBeInTheDocument();
     expect(within(row).getByText('Pagó $10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Le tocó $3.334')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte $3.334')).toBeInTheDocument();
     expect(within(row).getByText('Taxi')).toBeInTheDocument();
-    expect(within(row).getByText('Le tocó $1.500')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte $1.500')).toBeInTheDocument();
     expect(within(row).getByText(/Recibió de Carla/)).toBeInTheDocument();
   });
 

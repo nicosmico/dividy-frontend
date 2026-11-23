@@ -25,7 +25,7 @@ import {
   useGroupOperation,
   useServices,
 } from '@/features/groups/data';
-import { MemberAvatar } from '@/features/members';
+import { MemberAvatar, useMemberMoods } from '@/features/members';
 import { todayLocal } from '@/lib/dates';
 
 /** What to do to settle up, with "Marcar como pagado" on each transfer. */
@@ -37,6 +37,7 @@ export function SuggestedTransfers({
   transfers: SuggestedTransfer[];
 }) {
   const [paying, setPaying] = useState<SuggestedTransfer | null>(null);
+  const moods = useMemberMoods(group);
   const nameOf = (id: string) => group.members.find((m) => m.id === id);
 
   return (
@@ -53,12 +54,12 @@ export function SuggestedTransfers({
             <li key={`${t.fromId}-${t.toId}`}>
               <Card className='gap-3'>
                 <div className='flex items-center gap-2'>
-                  <MemberAvatar member={from} mood='sad' />
+                  <MemberAvatar member={from} mood={moods.get(from.id)} />
                   <ArrowRight
                     aria-hidden='true'
                     className='size-4 shrink-0 text-muted-foreground'
                   />
-                  <MemberAvatar member={to} mood='happy' />
+                  <MemberAvatar member={to} mood={moods.get(to.id)} />
                   <p className='min-w-0 flex-1 text-right text-xl font-bold tabular-nums'>
                     {formatAmount(t.amount)}
                   </p>
