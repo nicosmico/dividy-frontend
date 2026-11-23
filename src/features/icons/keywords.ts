@@ -1,0 +1,556 @@
+/**
+ * Dictionary behind the automatic icons (Round 12, decision 89). Pure data:
+ * no React here, so the lookup can be tested and reused anywhere.
+ *
+ * How to add words: put them (lowercase or not, with or without accents) in
+ * the `words` of the entry whose icon fits. Singular forms are enough: the
+ * lookup also tries the word without a trailing `s` / `es` (and `ces` → `z`).
+ * Multi-word phrases ("santa isabel") are fine; connector words (`de`, `la`,
+ * `al`…) are ignored, so "arriendo de auto" is stored as "arriendo auto".
+ *
+ * Ambiguity rules:
+ * - Each word maps to ONE icon per kind (a test enforces it).
+ * - A longer phrase beats a single word that starts at the same position, so
+ *   "arriendo auto" is a car even though "arriendo" alone is a house.
+ * - "arriendo" alone means the monthly rent of a home (house), not a stay;
+ *   renting a cabin or flat is spelled out with a phrase (lodging).
+ * - "pasaje" alone is a bus ticket; "pasaje avión" is a plane.
+ * - "gas" is a household bill (flame); fuel for the car is "bencina".
+ */
+
+/** Where the text comes from: a group name or an expense description. */
+export type IconKind = 'group' | 'expense';
+
+export const DEFAULT_ICON: Record<IconKind, IconKey> = {
+  group: 'users',
+  expense: 'receipt',
+};
+
+export const ICON_KEYS = [
+  'receipt',
+  'users',
+  'utensils',
+  'beef',
+  'pizza',
+  'sandwich',
+  'fish',
+  'ice-cream',
+  'coffee',
+  'beer',
+  'wine',
+  'cocktail',
+  'soda',
+  'shopping-cart',
+  'taxi',
+  'bus',
+  'train',
+  'car',
+  'fuel',
+  'plane',
+  'bed',
+  'tent',
+  'house',
+  'electricity',
+  'water',
+  'gas',
+  'wifi',
+  'phone',
+  'tv',
+  'ticket',
+  'film',
+  'music',
+  'party',
+  'cake',
+  'gift',
+  'pill',
+  'doctor',
+  'paw',
+  'dumbbell',
+  'sports',
+  'palm-tree',
+  'mountain',
+  'shirt',
+  'scissors',
+  'wrench',
+  'graduation',
+  'baby',
+  'book',
+  'briefcase',
+  'banknote',
+] as const;
+
+export type IconKey = (typeof ICON_KEYS)[number];
+
+export interface KeywordEntry {
+  icon: IconKey;
+  words: readonly string[];
+  /** Restricts the entry to groups or expenses (default: both). */
+  only?: IconKind;
+}
+
+export const KEYWORDS: readonly KeywordEntry[] = [
+  // Comida
+  {
+    icon: 'beef',
+    words: [
+      'asado',
+      'carne',
+      'parrilla',
+      'parrillada',
+      'costillar',
+      'lomo',
+      'bife',
+      'chuleta',
+      'pollo',
+      'cordero',
+    ],
+  },
+  {
+    icon: 'sandwich',
+    words: [
+      'completo',
+      'sandwich',
+      'sanguche',
+      'hamburguesa',
+      'burger',
+      'choripán',
+      'hotdog',
+      'hot dog',
+      'churrasco',
+      'barros luco',
+      'chacarero',
+      'lomito',
+      'tostada',
+    ],
+  },
+  { icon: 'pizza', words: ['pizza', 'pizzeria'] },
+  { icon: 'fish', words: ['sushi', 'pescado', 'marisco', 'ceviche', 'salmon'] },
+  { icon: 'ice-cream', words: ['helado', 'postre', 'dulce', 'chocolate'] },
+  {
+    icon: 'coffee',
+    words: ['café', 'desayuno', 'once', 'te', 'cafeteria', 'brunch', 'pan'],
+  },
+  {
+    icon: 'utensils',
+    words: [
+      'almuerzo',
+      'cena',
+      'comida',
+      'comer',
+      'restaurant',
+      'restoran',
+      'restaurante',
+      'empanada',
+      'ensalada',
+      'menu',
+      'colacion',
+      'picoteo',
+      'pastel de choclo',
+      'cazuela',
+      'fuente de soda',
+      'fonda',
+      'ramen',
+      'taco',
+      'delivery',
+      'pedidosya',
+      'rappi',
+      'uber eats',
+    ],
+  },
+  { icon: 'beer', words: ['chela', 'cerveza', 'cerveceria', 'schop', 'chop'] },
+  { icon: 'wine', words: ['vino', 'espumante', 'champaña', 'vinito'] },
+  {
+    icon: 'cocktail',
+    words: [
+      'copete',
+      'pisco',
+      'piscola',
+      'trago',
+      'ron',
+      'whisky',
+      'vodka',
+      'fernet',
+      'terremoto',
+      'mojito',
+      'pisco sour',
+      'cocktail',
+      'coctel',
+      'bar',
+      'pub',
+      'happy hour',
+    ],
+  },
+  {
+    icon: 'soda',
+    words: ['bebida', 'jugo', 'gaseosa', 'bebestible', 'agua mineral'],
+  },
+
+  // Supermercado y compras
+  {
+    icon: 'shopping-cart',
+    words: [
+      'super',
+      'supermercado',
+      'líder',
+      'jumbo',
+      'unimarc',
+      'tottus',
+      'santa isabel',
+      'acuenta',
+      'mayorista',
+      'feria',
+      'almacen',
+      'minimarket',
+      'mercado',
+      'compra',
+      'abarrotes',
+      'verduleria',
+      'carniceria',
+      'panaderia',
+      'provision',
+    ],
+  },
+
+  // Transporte
+  {
+    icon: 'taxi',
+    words: ['uber', 'cabify', 'didi', 'taxi', 'indrive', 'colectivo'],
+  },
+  {
+    icon: 'bus',
+    words: [
+      'micro',
+      'metro',
+      'bus',
+      'buses',
+      'pasaje',
+      'pullman',
+      'terminal',
+      'transantiago',
+      'bip',
+      'transporte',
+      'traslado',
+    ],
+  },
+  { icon: 'train', words: ['tren', 'ferrocarril'] },
+  {
+    icon: 'fuel',
+    words: ['bencina', 'combustible', 'diesel', 'copec', 'shell', 'estanque'],
+  },
+  {
+    icon: 'car',
+    words: [
+      'auto',
+      'camioneta',
+      'peaje',
+      'tag',
+      'autopista',
+      'estacionamiento',
+      'parking',
+      'lavado',
+      'arriendo auto',
+      'arriendo camioneta',
+      'rent a car',
+      'mecanico',
+      'revision tecnica',
+    ],
+  },
+  {
+    icon: 'plane',
+    words: [
+      'vuelo',
+      'avión',
+      'aeropuerto',
+      'pasaje avión',
+      'pasaje aereo',
+      'latam',
+      'jetsmart',
+      'equipaje',
+      'viaje',
+    ],
+  },
+
+  // Alojamiento
+  {
+    icon: 'bed',
+    words: [
+      'cabaña',
+      'hotel',
+      'hostal',
+      'hostel',
+      'airbnb',
+      'alojamiento',
+      'hospedaje',
+      'residencial',
+      'departamento',
+      'depto',
+      'noche',
+      'arriendo cabaña',
+      'arriendo depto',
+      'arriendo departamento',
+      'arriendo hotel',
+    ],
+  },
+  { icon: 'tent', words: ['camping', 'carpa', 'glamping', 'refugio'] },
+
+  // Casa y cuentas
+  {
+    icon: 'house',
+    words: [
+      'arriendo',
+      'dividendo',
+      'gastos comunes',
+      'gasto comun',
+      'casa',
+      'hogar',
+      'mudanza',
+      'contribuciones',
+      'aseo',
+      'limpieza',
+      'muebles',
+    ],
+  },
+  { icon: 'electricity', words: ['luz', 'electricidad', 'enel', 'cge'] },
+  { icon: 'water', words: ['agua', 'aguas andinas', 'esval', 'sanitaria'] },
+  { icon: 'gas', words: ['gas', 'lipigas', 'abastible', 'gasco', 'parafina'] },
+  { icon: 'wifi', words: ['internet', 'wifi', 'fibra', 'router'] },
+  { icon: 'phone', words: ['celular', 'telefono', 'entel', 'movistar', 'wom'] },
+  {
+    icon: 'tv',
+    words: [
+      'netflix',
+      'cable',
+      'streaming',
+      'disney',
+      'hbo',
+      'television',
+      'tv',
+    ],
+  },
+
+  // Panoramas
+  { icon: 'ticket', words: ['entrada', 'ticket', 'boleto', 'ticketek'] },
+  { icon: 'film', words: ['cine', 'pelicula', 'teatro', 'cinemark'] },
+  {
+    icon: 'music',
+    words: [
+      'concierto',
+      'tocata',
+      'festival',
+      'recital',
+      'spotify',
+      'karaoke',
+      'musica',
+    ],
+  },
+  {
+    icon: 'party',
+    words: [
+      'carrete',
+      'fiesta',
+      'bowling',
+      'discoteca',
+      'previa',
+      'after',
+      'panorama',
+      'año nuevo',
+      'navidad',
+      'celebracion',
+      'reunion',
+      'bingo',
+    ],
+  },
+  {
+    icon: 'cake',
+    words: ['cumple', 'cumpleaños', 'torta', 'cumpleaño', 'kuchen', 'pastel'],
+  },
+  { icon: 'gift', words: ['regalo', 'obsequio', 'amigo secreto'] },
+
+  // Salud, mascotas, deporte
+  {
+    icon: 'pill',
+    words: [
+      'farmacia',
+      'remedio',
+      'medicamento',
+      'cruz verde',
+      'ahumada',
+      'salcobrand',
+    ],
+  },
+  {
+    icon: 'doctor',
+    words: [
+      'doctor',
+      'medico',
+      'consulta',
+      'clinica',
+      'dentista',
+      'examen',
+      'urgencia',
+      'isapre',
+      'hospital',
+    ],
+  },
+  {
+    icon: 'paw',
+    words: [
+      'veterinario',
+      'veterinaria',
+      'mascota',
+      'perro',
+      'gato',
+      'comida perro',
+      'comida gato',
+      'arena gato',
+    ],
+  },
+  {
+    icon: 'dumbbell',
+    words: [
+      'gimnasio',
+      'gym',
+      'crossfit',
+      'pesas',
+      'entrenamiento',
+      'pilates',
+      'yoga',
+    ],
+  },
+  {
+    icon: 'sports',
+    words: [
+      'cancha',
+      'futbol',
+      'futbolito',
+      'padel',
+      'tenis',
+      'basquetbol',
+      'basket',
+      'voleibol',
+      'pichanga',
+      'partido',
+      'golf',
+      'bicicleta',
+      'running',
+    ],
+  },
+
+  // Viajes y paseos
+  {
+    icon: 'palm-tree',
+    words: [
+      'vacacion',
+      'paseo',
+      'playa',
+      'verano',
+      'piscina',
+      'reloncavi',
+      'viña del mar',
+      'la serena',
+      'pichilemu',
+      'algarrobo',
+      'zapallar',
+      'cachagua',
+      'maitencillo',
+      'cartagena',
+      'iquique',
+      'arica',
+      'antofagasta',
+      'caribe',
+      'crucero',
+      'isla',
+      'escapada',
+      'finde',
+      'fin de semana',
+    ],
+  },
+  {
+    icon: 'mountain',
+    words: [
+      'sur',
+      'norte',
+      'pucón',
+      'villarrica',
+      'cerro',
+      'montaña',
+      'ski',
+      'nieve',
+      'trekking',
+      'torres del paine',
+      'patagonia',
+      'puerto varas',
+      'chiloe',
+      'valdivia',
+      'bariloche',
+      'atacama',
+      'san pedro',
+      'cajon del maipo',
+      'farellones',
+      'valle nevado',
+      'cordillera',
+      'volcan',
+      'lago',
+      'rio',
+    ],
+  },
+
+  // Otros
+  {
+    icon: 'shirt',
+    words: [
+      'ropa',
+      'zapatilla',
+      'zapato',
+      'polera',
+      'tienda',
+      'mall',
+      'falabella',
+      'ripley',
+    ],
+  },
+  {
+    icon: 'scissors',
+    words: ['peluqueria', 'barberia', 'corte', 'manicure', 'spa', 'masaje'],
+  },
+  {
+    icon: 'wrench',
+    words: [
+      'reparacion',
+      'taller',
+      'gasfiter',
+      'electricista',
+      'ferreteria',
+      'sodimac',
+      'herramienta',
+      'arreglo',
+    ],
+  },
+  {
+    icon: 'graduation',
+    words: [
+      'curso',
+      'universidad',
+      'matricula',
+      'colegio',
+      'clase',
+      'arancel',
+      'jardin',
+    ],
+  },
+  { icon: 'baby', words: ['bebe', 'pañal', 'guarderia', 'niño', 'sala cuna'] },
+  { icon: 'book', words: ['libro', 'libreria', 'revista'] },
+  { icon: 'briefcase', words: ['trabajo', 'oficina', 'coworking', 'empresa'] },
+  {
+    icon: 'banknote',
+    words: [
+      'propina',
+      'efectivo',
+      'prestamo',
+      'multa',
+      'impuesto',
+      'banco',
+      'comision',
+    ],
+  },
+];
