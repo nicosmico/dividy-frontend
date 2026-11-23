@@ -40,6 +40,24 @@ axe no reemplaza probar con un lector de pantalla; cubre contraste, nombres acce
 
 `e2e/offline.spec.ts` carga la app contra el build de `preview` (el servidor de Playwright ya hace `npm run build` primero), espera a que el service worker esté activo, recarga, pone el contexto sin red y comprueba: recarga en frío, enlace directo a `/groups/g1/members` (con su chunk y el generador de avatares precacheados) y que agregar un miembro sigue funcionando. Los demás E2E también corren con el service worker registrado.
 
+## Proyectos de Playwright
+
+`e2e/playwright.config.ts` define `chromium` (desktop), `mobile` (iPhone 13 emulado sobre Chromium) y `mobile-webkit` (iPhone 13 sobre WebKit real). `mobile-webkit` corre en CI (`CI` definida), donde el workflow instala `chromium webkit`. Localmente se omite, porque requiere `npx playwright install webkit`; para incluirlo, `PW_WEBKIT=1 npm run test:e2e`. El test de sin conexión se salta en WebKit (`setOffline` con service worker no es confiable ahí).
+
+`e2e/sheets-overflow.spec.ts` abre cada bottom sheet en los proyectos móviles (nuevo gasto con descripción larga y $999.999.999, editar gasto, renombrar grupo, renombrar miembro y eliminar miembro con ambas opciones) y comprueba que ni el documento ni el sheet tienen desborde horizontal y que ningún elemento sobresale de sus bordes.
+
+## Limitaciones: iOS
+
+El proyecto WebKit da un layout parecido al de Safari (motor de render, controles nativos de fecha, `100svh`), pero no idéntico a iOS. **No se puede automatizar**: el teclado virtual de iOS, el `visualViewport` real (que cambia al abrir y cerrar el teclado) ni el zoom de Safari al enfocar un campo.
+
+Checklist manual en un iPhone real para cada PR que toque formularios o sheets:
+
+1. Abrir cada sheet (nuevo gasto, editar gasto, renombrar grupo, renombrar miembro, eliminar miembro en ambas opciones, copiar resumen).
+2. Escribir en cada campo, incluido el selector de fecha.
+3. Cerrar el teclado (tocar fuera del campo o "OK").
+4. Girar el teléfono a horizontal y volver a vertical.
+5. Verificar en cada paso que no hay scroll horizontal dentro del sheet ni de la página, ni destellos blancos donde estaba el teclado.
+
 ## Convenciones
 
 - Los tests describen comportamiento en español del dominio (`it('reparte el resto de a un peso a los primeros participantes')`).
