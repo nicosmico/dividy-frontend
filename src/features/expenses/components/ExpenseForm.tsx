@@ -19,10 +19,14 @@ import {
   addExpense,
   computeShares,
   formatAmount,
+  isExpenseCoveredByPayments,
   MAX_DESCRIPTION_LENGTH,
+  previewBalanceChange,
   removeExpense,
   updateExpense,
+  type BalanceChange,
   type Expense,
+  type ExpenseFields,
   type Group,
 } from '@/domain';
 import {
@@ -34,6 +38,10 @@ import {
 import { MemberAvatar } from '@/features/members';
 import { todayLocal } from '@/lib/dates';
 import { AmountInput } from './AmountInput';
+import {
+  ConfirmCoveredChange,
+  type CoveredChangeKind,
+} from './ConfirmCoveredChange';
 import {
   parseAmount,
   validateExpenseForm,
@@ -79,6 +87,12 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   // Closed after the first submit: a double click can never save twice (finding 2).
   const submitted = useRef(false);
   const [formError, setFormError] = useState<string>();
+  // Set when the change touches an expense already covered by payments.
+  const [warning, setWarning] = useState<{
+    kind: CoveredChangeKind;
+    changes: BalanceChange[];
+    confirm: () => Promise<void>;
+  } | null>(null);
 
   const resolver: Resolver<ExpenseFormValues> = (values) => {
     const result = validateExpenseForm(group, values);
@@ -128,34 +142,67 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   const base = shares.size > 0 ? Math.floor(amount / shares.size) : Number.NaN;
   const roundedUp = group.members.filter((m) => (shares.get(m.id) ?? 0) > base);
 
+  /**
+   * Balance changes the user should confirm first: only when the expense was
+   * already considered in registered payments AND the balances really change.
+   * The next group comes from the domain operation itself (no duplicated rules).
+   */
+  function coveredChanges(
+    next: (g: Group) => ReturnType<typeof removeExpense>
+  ) {
+    if (!expense || !isExpenseCoveredByPayments(group, expense.id)) return [];
+    const result = next(group);
+    return result.ok ? previewBalanceChange(group, result.value) : [];
+  }
+
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     return handleSubmit(async (formValues) => {
       if (submitted.current) return;
       const checked = validateExpenseForm(group, formValues);
       if (!('fields' in checked)) return;
-      submitted.current = true;
-      setFormError(undefined);
-      const result = await operation.run((g) =>
-        expense
-          ? updateExpense(g, expense.id, checked.fields)
-          : addExpense(g, {
-              ...checked.fields,
-              id: newExpenseId,
-              createdAt: now(),
-            })
-      );
-      if (result.ok) {
-        toast.success(expense ? 'Gasto actualizado' : 'Gasto agregado');
-        onDone();
-        return;
+      const { fields } = checked;
+      if (expense) {
+        const changes = coveredChanges((g) =>
+          updateExpense(g, expense.id, fields)
+        );
+        if (changes.length > 0) {
+          setWarning({ kind: 'save', changes, confirm: () => save(fields) });
+          return;
+        }
       }
-      submitted.current = false;
-      if (!isInfrastructureError(result.error))
-        setFormError(result.error.message);
+      await save(fields);
     })(event);
   }
 
-  /** No confirmation: the toast offers "Deshacer" (decision 64). */
+  async function save(fields: ExpenseFields) {
+    if (submitted.current) return;
+    submitted.current = true;
+    setFormError(undefined);
+    const result = await operation.run((g) =>
+      expense
+        ? updateExpense(g, expense.id, fields)
+        : addExpense(g, { ...fields, id: newExpenseId, createdAt: now() })
+    );
+    if (result.ok) {
+      toast.success(expense ? 'Gasto actualizado' : 'Gasto agregado');
+      onDone();
+      return;
+    }
+    submitted.current = false;
+    setWarning(null);
+    if (!isInfrastructureError(result.error))
+      setFormError(result.error.message);
+  }
+
+  function requestDelete() {
+    if (!expense) return;
+    const changes = coveredChanges((g) => removeExpense(g, expense.id));
+    if (changes.length > 0)
+      setWarning({ kind: 'delete', changes, confirm: deleteExpense });
+    else void deleteExpense();
+  }
+
+  /** The toast offers "Deshacer" (decision 64), also after confirming a warning. */
   async function deleteExpense() {
     if (!expense || submitted.current) return;
     submitted.current = true;
@@ -166,6 +213,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
       return;
     }
     submitted.current = false;
+    setWarning(null);
     if (!isInfrastructureError(result.error))
       setFormError(result.error.message);
   }
@@ -173,191 +221,203 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   const busy = operation.isPending;
 
   return (
-    <form
-      onSubmit={onSubmit}
-      noValidate
-      className='grid grid-cols-[minmax(0,1fr)] gap-4'
-    >
-      <FormField
-        label='Descripción'
-        error={errors.description?.message}
-        counter={{
-          length: (values.description ?? '').length,
-          max: MAX_DESCRIPTION_LENGTH,
-        }}
+    <>
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        className='grid grid-cols-[minmax(0,1fr)] gap-4'
       >
-        {(c) => (
-          <Input
-            {...c}
-            autoComplete='off'
-            placeholder='Ej: Supermercado'
-            {...register('description')}
-          />
-        )}
-      </FormField>
-
-      <FormField label='Monto en pesos' error={errors.amount?.message}>
-        {(c) => (
-          <Controller
-            control={control}
-            name='amount'
-            render={({ field }) => (
-              <AmountInput
-                {...c}
-                ref={field.ref}
-                name={field.name}
-                onBlur={field.onBlur}
-                value={field.value}
-                onValueChange={field.onChange}
-              />
-            )}
-          />
-        )}
-      </FormField>
-
-      <FormField label='Pagado por' error={errors.payerId?.message}>
-        {(c) => (
-          <Controller
-            control={control}
-            name='payerId'
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger {...c}>
-                  <SelectValue placeholder='Elige quién pagó' />
-                </SelectTrigger>
-                <SelectContent>
-                  {group.members.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        )}
-      </FormField>
-
-      <fieldset className='grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2'>
-        <div className='flex items-center justify-between gap-2'>
-          <legend className='text-sm font-medium'>Dividir entre</legend>
-          <div className='flex gap-1'>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              className='-my-1 h-9'
-              onClick={() =>
-                setValue(
-                  'participantIds',
-                  group.members.map((m) => m.id),
-                  { shouldValidate: isSubmitted }
-                )
-              }
-            >
-              Todos
-            </Button>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              className='-my-1 h-9'
-              onClick={() =>
-                setValue('participantIds', [], {
-                  shouldValidate: isSubmitted,
-                })
-              }
-            >
-              Ninguno
-            </Button>
-          </div>
-        </div>
-        <Controller
-          control={control}
-          name='participantIds'
-          render={({ field }) => (
-            <ul className='grid grid-cols-[minmax(0,1fr)] gap-1 rounded-xl border bg-card p-1'>
-              {group.members.map((member) => {
-                const checked = field.value.includes(member.id);
-                const share = shares.get(member.id);
-                const id = `participant-${member.id}`;
-                return (
-                  <li
-                    key={member.id}
-                    className='flex min-h-11 items-center gap-3 rounded-lg px-2'
-                  >
-                    <Checkbox
-                      id={id}
-                      checked={checked}
-                      onCheckedChange={(next) =>
-                        field.onChange(
-                          next
-                            ? [...field.value, member.id]
-                            : field.value.filter((x) => x !== member.id)
-                        )
-                      }
-                    />
-                    <MemberAvatar member={member} className='size-7' />
-                    <Label
-                      htmlFor={id}
-                      className='min-w-0 flex-1 cursor-pointer py-2 [overflow-wrap:anywhere]'
-                    >
-                      {member.name}
-                    </Label>
-                    {checked && share !== undefined && (
-                      <span className='shrink-0 text-sm font-medium tabular-nums'>
-                        {formatAmount(share)}
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+        <FormField
+          label='Descripción'
+          error={errors.description?.message}
+          counter={{
+            length: (values.description ?? '').length,
+            max: MAX_DESCRIPTION_LENGTH,
+          }}
+        >
+          {(c) => (
+            <Input
+              {...c}
+              autoComplete='off'
+              placeholder='Ej: Supermercado'
+              {...register('description')}
+            />
           )}
-        />
-        {roundedUp.length > 0 && (
-          <p className='text-sm text-muted-foreground'>
-            Por redondeo, a {joinNames(roundedUp.map((m) => m.name))}{' '}
-            {roundedUp.length === 1 ? 'le toca' : 'les toca'} $1 más.
-          </p>
-        )}
-        {errors.participantIds?.message && (
+        </FormField>
+
+        <FormField label='Monto en pesos' error={errors.amount?.message}>
+          {(c) => (
+            <Controller
+              control={control}
+              name='amount'
+              render={({ field }) => (
+                <AmountInput
+                  {...c}
+                  ref={field.ref}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
+              )}
+            />
+          )}
+        </FormField>
+
+        <FormField label='Pagado por' error={errors.payerId?.message}>
+          {(c) => (
+            <Controller
+              control={control}
+              name='payerId'
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger {...c}>
+                    <SelectValue placeholder='Elige quién pagó' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {group.members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          )}
+        </FormField>
+
+        <fieldset className='grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2'>
+          <div className='flex items-center justify-between gap-2'>
+            <legend className='text-sm font-medium'>Dividir entre</legend>
+            <div className='flex gap-1'>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='-my-1 h-9'
+                onClick={() =>
+                  setValue(
+                    'participantIds',
+                    group.members.map((m) => m.id),
+                    { shouldValidate: isSubmitted }
+                  )
+                }
+              >
+                Todos
+              </Button>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='-my-1 h-9'
+                onClick={() =>
+                  setValue('participantIds', [], {
+                    shouldValidate: isSubmitted,
+                  })
+                }
+              >
+                Ninguno
+              </Button>
+            </div>
+          </div>
+          <Controller
+            control={control}
+            name='participantIds'
+            render={({ field }) => (
+              <ul className='grid grid-cols-[minmax(0,1fr)] gap-1 rounded-xl border bg-card p-1'>
+                {group.members.map((member) => {
+                  const checked = field.value.includes(member.id);
+                  const share = shares.get(member.id);
+                  const id = `participant-${member.id}`;
+                  return (
+                    <li
+                      key={member.id}
+                      className='flex min-h-11 items-center gap-3 rounded-lg px-2'
+                    >
+                      <Checkbox
+                        id={id}
+                        checked={checked}
+                        onCheckedChange={(next) =>
+                          field.onChange(
+                            next
+                              ? [...field.value, member.id]
+                              : field.value.filter((x) => x !== member.id)
+                          )
+                        }
+                      />
+                      <MemberAvatar member={member} className='size-7' />
+                      <Label
+                        htmlFor={id}
+                        className='min-w-0 flex-1 cursor-pointer py-2 [overflow-wrap:anywhere]'
+                      >
+                        {member.name}
+                      </Label>
+                      {checked && share !== undefined && (
+                        <span className='shrink-0 text-sm font-medium tabular-nums'>
+                          {formatAmount(share)}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          />
+          {roundedUp.length > 0 && (
+            <p className='text-sm text-muted-foreground'>
+              Por redondeo, a {joinNames(roundedUp.map((m) => m.name))}{' '}
+              {roundedUp.length === 1 ? 'le toca' : 'les toca'} $1 más.
+            </p>
+          )}
+          {errors.participantIds?.message && (
+            <p role='alert' className='text-sm text-destructive'>
+              {errors.participantIds.message}
+            </p>
+          )}
+        </fieldset>
+
+        <FormField label='Fecha' error={errors.date?.message}>
+          {(c) => <Input {...c} type='date' {...register('date')} />}
+        </FormField>
+
+        {formError && (
           <p role='alert' className='text-sm text-destructive'>
-            {errors.participantIds.message}
+            {formError}
           </p>
         )}
-      </fieldset>
 
-      <FormField label='Fecha' error={errors.date?.message}>
-        {(c) => <Input {...c} type='date' {...register('date')} />}
-      </FormField>
-
-      {formError && (
-        <p role='alert' className='text-sm text-destructive'>
-          {formError}
-        </p>
-      )}
-
-      <ResponsiveDialogFooter className='grid grid-cols-2 md:flex md:items-center'>
-        {expense && (
-          <Button
-            type='button'
-            variant='ghost'
-            disabled={busy}
-            className='order-last col-span-2 text-destructive hover:text-destructive md:order-none md:col-span-1 md:mr-auto'
-            onClick={() => void deleteExpense()}
-          >
-            Eliminar gasto
+        <ResponsiveDialogFooter className='grid grid-cols-2 md:flex md:items-center'>
+          {expense && (
+            <Button
+              type='button'
+              variant='ghost'
+              disabled={busy}
+              className='order-last col-span-2 text-destructive hover:text-destructive md:order-none md:col-span-1 md:mr-auto'
+              onClick={requestDelete}
+            >
+              Eliminar gasto
+            </Button>
+          )}
+          <Button type='button' variant='outline' onClick={onDone}>
+            Cancelar
           </Button>
-        )}
-        <Button type='button' variant='outline' onClick={onDone}>
-          Cancelar
-        </Button>
-        <Button type='submit' disabled={busy}>
-          Guardar
-        </Button>
-      </ResponsiveDialogFooter>
-    </form>
+          <Button type='submit' disabled={busy}>
+            Guardar
+          </Button>
+        </ResponsiveDialogFooter>
+      </form>
+      {warning && (
+        <ConfirmCoveredChange
+          kind={warning.kind}
+          changes={warning.changes}
+          members={group.members}
+          pending={busy}
+          onCancel={() => setWarning(null)}
+          onConfirm={() => void warning.confirm()}
+        />
+      )}
+    </>
   );
 }
 

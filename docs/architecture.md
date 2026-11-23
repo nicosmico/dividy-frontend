@@ -75,6 +75,8 @@ Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `
 - `FormField({ label, error?, hint?, counter?: { length, max }, children })`: `counter` muestra "12/80" junto a la etiqueta (rojo si se pasa del máximo).
 - `restoreFocusIfLost(fallback?)` (`@/lib/focus`): tras borrar algo que tenía el foco, lo mueve a `fallback` (o a `<main id="main-content">`) solo si se perdió en `<body>`.
 - `ResponsiveDialog` recuerda el elemento que lo abrió y le devuelve el foco al cerrarse (Radix no puede, porque estos diálogos se abren por estado y no con un trigger); el Drawer mueve el foco al panel al abrirse (sin abrir el teclado del celular).
+- `ConfirmCoveredChange` (expenses): `AlertDialog` que avisa que un gasto cubierto cambiará saldos, con antes y después por miembro (`describeBalance` de `@/lib/balance-text`) y botón destructivo; el foco inicial es Cancelar y al cerrar vuelve a quien lo abrió.
+- Toasts: abajo y centrados; `--toast-bottom` (index.css) respeta `env(safe-area-inset-bottom)` y sube sobre el botón fijo "Agregar gasto" en móvil (`data-floating-action` en `<html>`, lo pone `ExpensesTab`).
 - `formatAmount` (dominio), `todayLocal()` y `formatDate(value)` (`@/lib/dates`), `plural(n, 'gasto', 'gastos')` (`@/lib/plural`).
 
 ## Flujo de una escritura
@@ -112,6 +114,8 @@ Todo se importa desde `@/domain`. Las operaciones devuelven `Result<T>` (`{ ok: 
 - `computeBalances(group)`: `MemberBalance[]` en el orden de los miembros (`paid`, `share`, `paymentsSent`, `paymentsReceived`, `balance`).
 - `getMemberBreakdown(group, memberId)`: desglose por gasto y pagos de un miembro (`null` si no existe); alimenta "¿por qué?".
 - `isSettled(group)`: `true` si todos los saldos son 0.
+- `isExpenseCoveredByPayments(group, expenseId)`: `true` si el gasto es un **Covered expense** (hay un pago del grupo con `createdAt` posterior al del gasto). Prefiere avisar de más.
+- `previewBalanceChange(group, nextGroup)`: `BalanceChange[]` (`{ memberId, before, after }`) solo de los miembros cuyo saldo cambia, en el orden del grupo; la UI lo usa para advertir antes de editar o eliminar un gasto cubierto.
 - `suggestTransfers(group)`: transferencias sugeridas (voraz, máximo n-1, siempre positivas).
 
 **Operaciones del grupo** (inmutables)

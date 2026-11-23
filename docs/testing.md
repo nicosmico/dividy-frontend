@@ -46,6 +46,8 @@ axe no reemplaza probar con un lector de pantalla; cubre contraste, nombres acce
 
 `e2e/sheets-overflow.spec.ts` abre cada bottom sheet en los proyectos móviles (nuevo gasto con descripción larga y $999.999.999, editar gasto, renombrar grupo, renombrar miembro y eliminar miembro con ambas opciones) y comprueba que ni el documento ni el sheet tienen desborde horizontal y que ningún elemento sobresale de sus bordes.
 
+`e2e/covered-expenses.spec.ts` cubre el aviso de gastos ya saldados (el ejemplo de la Ronda 10 con montos calculados por el dominio) y la posición de los toasts: abajo, centrados, sin superponerse al botón "Agregar gasto" ni a los botones de un sheet abierto (compara bounding boxes).
+
 ## Limitaciones: iOS
 
 El proyecto WebKit da un layout parecido al de Safari (motor de render, controles nativos de fecha, `100svh`), pero no idéntico a iOS. **No se puede automatizar**: el teclado virtual de iOS, el `visualViewport` real (que cambia al abrir y cerrar el teclado) ni el zoom de Safari al enfocar un campo.

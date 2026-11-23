@@ -10,6 +10,7 @@ import {
   type MemberBreakdown,
 } from '@/domain';
 import { MemberAvatar } from '@/features/members';
+import { describeBalance } from '@/lib/balance-text';
 import { formatDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
@@ -21,24 +22,14 @@ export function BalanceLabel({
   balance: number;
   className?: string;
 }) {
-  if (balance > 0) {
-    return (
-      <span className={cn('font-semibold text-emerald-700', className)}>
-        Le deben {formatAmount(balance)}
-      </span>
-    );
-  }
-  if (balance < 0) {
-    return (
-      <span className={cn('font-semibold text-red-700', className)}>
-        Debe {formatAmount(-balance)}
-      </span>
-    );
-  }
+  const tone =
+    balance > 0
+      ? 'font-semibold text-emerald-700'
+      : balance < 0
+        ? 'font-semibold text-red-700'
+        : 'font-medium text-muted-foreground';
   return (
-    <span className={cn('font-medium text-muted-foreground', className)}>
-      Al día
-    </span>
+    <span className={cn(tone, className)}>{describeBalance(balance)}</span>
   );
 }
 

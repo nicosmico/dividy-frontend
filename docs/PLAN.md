@@ -10,13 +10,14 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ## Fases
 
-| Fase | Objetivo                                                                                                         | Estado     |
-| ---- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
-| 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada |
-| 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada |
-| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Completada |
-| 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Completada |
-| 4    | Futuro (no planificado en detalle): backend y grupos compartidos, más monedas, divisiones no equitativas         | —          |
+| Fase | Objetivo                                                                                                         | Estado      |
+| ---- | ---------------------------------------------------------------------------------------------------------------- | ----------- |
+| 0    | Fundaciones: dependencias al día, build/lint/format en verde, Vitest, CI                                         | Completada  |
+| 1    | Dominio y persistencia: lógica pura con tests (incluye property-based), repositorio, migración de datos antiguos | Completada  |
+| 2    | Nueva UI sobre shadcn/ui: grupos, gastos, saldos, pagos, miembros; tests de componentes y E2E                    | Completada  |
+| 3    | Pulido de experiencia: deshacer, estados vacíos, accesibilidad, compartir resumen, PWA                           | Completada  |
+| 4    | Consolidar la app local: tema y modo oscuro, calidad continua, divisiones, historial, monedas, búsqueda          | Planificada |
+| 5    | Compartir: backend y grupos compartidos, foto de la boleta, recordatorios                                        | Futura      |
 
 ### Fase 0 · Fundaciones
 
@@ -58,7 +59,7 @@ Dividy es un MVP para dividir gastos de un grupo, solo en CLP y guardado en el n
 
 ### Fase 3 · Pulido
 
-**Estado: completada.** Decisiones en la ronda 8; ideas para lo que sigue, en "Siguientes pasos sugeridos (Fase 4)".
+**Estado: completada.** Decisiones en la ronda 8; ideas para lo que sigue, en "Fases 4 y 5 · Roadmap acordado".
 
 - Deshacer al borrar (toast), estados vacíos con guía, revisión de accesibilidad (teclado, lectores de pantalla, contraste), compartir con Web Share API, instalable como PWA, revisión de textos.
 - Además: estado del grupo en Mis grupos ("Al día" / "Pendiente"), contadores de caracteres, avatares con carga diferida y auditoría axe en los E2E.
@@ -185,15 +186,58 @@ Decisiones tomadas en rondas. Las de las rondas 0 vienen del dueño del producto
 73. **Flash blanco al cerrar el teclado (Safari iOS)** → `Drawer` de vaul 1.1.2 tiene `repositionInputs` activo por defecto: ajusta `height` y `bottom` del drawer con los eventos `resize` de `visualViewport`, y en iOS el cierre del teclado no siempre se informa bien, así que quedaba desfasado. Se pasa `repositionInputs={false}`: iOS ya desplaza el campo enfocado a la vista y el sheet tiene `max-h-[90svh]` con scroll propio.
 74. **Pruebas** → Proyecto `mobile-webkit` (iPhone 13 en WebKit) en CI, omitido localmente salvo `PW_WEBKIT=1`; E2E de regresión `sheets-overflow.spec.ts`. Lo que no se automatiza (teclado, `visualViewport`, zoom) queda en el checklist manual de `docs/testing.md`.
 
-## Siguientes pasos sugeridos (Fase 4)
+### Ronda 10 · Gastos ya saldados y avisos
 
-Ordenados por el valor que aportan a quien usa la app hoy, de mayor a menor. Cada uno merece su propio ADR antes de empezar. Por decisión del dueño del producto, el backend va al final: primero se consolida la app local.
+75. **Advertir en vez de bloquear** → Los saldos se derivan siempre de todos los gastos y pagos, así que agregar un gasto después de registrar pagos funciona bien. Pero editar o eliminar un gasto que ya se consideró en pagos cambia saldos que la gente dio por cerrados (ejemplo: Ana paga $10.000 entre tres, Beto y Carla le pagan $3.333 y quedan al día; si alguien elimina el gasto, Ana pasa a "Debe $6.666" sin que nadie lo note). El cálculo es correcto, pero sorprende. El dueño del producto eligió **no bloquear**, porque corregir un error (monto mal escrito, gasto duplicado) debe seguir siendo posible, y **advertir con una vista previa del impacto**: un `AlertDialog` "Este gasto ya se consideró en pagos registrados" con el antes y el después de cada miembro afectado ("Ana: Al día → Debe $6.666", con las mismas palabras que Saldos) y un botón rojo "Eliminar de todas formas" / "Guardar de todas formas". Cancelar es el foco inicial y, al cerrar, el foco vuelve a quien abrió el aviso. Se descartó bloquear (obliga a borrar pagos a mano para corregir un error) y pedir confirmación siempre (ruido: el aviso solo sale cuando hay algo que decir).
+76. **Regla de "gasto cubierto" (Covered expense)** → Un gasto está cubierto si existe al menos un pago del grupo con `createdAt` **posterior** al del gasto (`isExpenseCoveredByPayments`). Es simple y explicable, y prefiere un aviso de más a uno de menos: no mira quién pagó a quién ni si el pago "corresponde" al gasto. Editar un gasto conserva su `createdAt`, así que editarlo no lo "descubre". El aviso solo aparece si además `previewBalanceChange(group, nextGroup)` no está vacío, donde `nextGroup` sale de aplicar `updateExpense` / `removeExpense` del dominio al grupo actual (no se duplican reglas). Una edición que no cambia saldos (por ejemplo solo la descripción) guarda directo, y eliminar un gasto no cubierto sigue siendo "Deshacer" sin confirmación. "Deshacer" funciona también después de confirmar el aviso. Eliminar un miembro conserva su propio diálogo de impacto.
+77. **Posición de los toasts** → Abajo y centrados (antes arriba, donde en móvil tapaban el logo y el título del grupo), también en escritorio. `--toast-bottom` (en `index.css`) suma `env(safe-area-inset-bottom)`; mientras el botón fijo "Agregar gasto" está en pantalla en móvil (`ExpensesTab` marca `<html data-floating-action>` si hay gastos), el toast sube sobre él (`5.5rem + max(1rem, inset)`) y nunca lo cubre. Como un toast abajo taparía los botones del pie de un bottom sheet o diálogo, **mientras hay un modal abierto** (se detecta con `data-scroll-locked` en `<body>`) los toasts pasan arriba. Dos detalles para que "Deshacer" siga usable con un sheet abierto: Radix deja `pointer-events: none` en `<body>` (el toaster vive fuera del modal), por eso los toasts fuerzan `pointer-events: auto`; y tocar un toast no cuenta como "clic fuera" de `ResponsiveDialog`, así el formulario no se cierra ni pierde lo escrito.
+78. **Exportar e importar datos: descartado** → Por decisión del dueño del producto, el respaldo en archivo no se hará: se resolverá con el backend (ítem final de la Fase 4). **Riesgo aceptado:** hasta entonces los datos viven solo en el navegador; borrar los datos del sitio, usar un modo privado o cambiar de dispositivo los pierde sin forma de recuperarlos. Se quitó el ítem de los siguientes pasos.
+79. **Pruebas** → Dominio: tabla de casos (el ejemplo, gasto posterior al último pago, grupo sin pagos, edición que no cambia saldos) y propiedades (`previewBalanceChange(g, g)` es `[]`; los cambios suman 0, siguen el orden del grupo y ninguno tiene `before === after`). Componentes: aviso al eliminar y al guardar con los montos, cancelar sin cambios y con foco de vuelta, confirmar con "Deshacer", gasto no cubierto y cubierto solo con cambio de descripción sin aviso. E2E (desktop y móvil): el flujo del ejemplo completo con montos calculados por el dominio, agregar un gasto después de los pagos sin aviso, el toast en la mitad inferior sin superponerse al botón "Agregar gasto" (bounding boxes) y el toast con un sheet abierto (no tapa sus botones, "Deshacer" funciona y el sheet sigue abierto). `ConfirmCoveredChange` y `describeBalance` (`@/lib/balance-text`, compartido con Saldos) son las piezas nuevas de UI.
 
-1. **Exportar e importar datos (respaldo).** Mientras todo sea local, borrar los datos del navegador o cambiar de celular borra los grupos. Un archivo JSON (el mismo documento versionado de `LocalStorageGroupRepository`) con "Exportar todo" e "Importar" (validando con `groupSchema`, y preguntando si fusionar o reemplazar) es barato, usa lo que ya existe y protege el dato más valioso. Pedir almacenamiento persistente (`navigator.storage.persist()`) es un complemento de una línea.
-2. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es un unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
-3. **Varias monedas.** Moneda por grupo (`currency` ya existe en el modelo) con formato por moneda y sus decimales; el dinero entero pasa a "unidad menor" (ADR 0001 tendría que reescribirse). Conversión entre monedas solo si hay demanda real.
-4. **Pasada con lector de pantalla y revisión de contraste a mano.** axe cubre lo automatizable (pasa limpio), pero falta probar VoiceOver y TalkBack en los flujos principales (diálogos, toasts, el `Select`), el orden de lectura del toast con **Deshacer** y el modo de alto contraste. Considerar un modo oscuro (hoy solo claro).
-5. **Historial y edición de pagos.** Hoy los pagos solo se registran o se eliminan; editar monto y fecha, y ver un historial de actividad del grupo ("Ana agregó Supermercado"), ayudaría a resolver dudas ("¿quién anotó esto?") y es la base natural de la sincronización.
-6. **Mejoras de la lista de gastos.** Búsqueda y filtro (por persona o fecha), categorías o notas, adjuntar foto de la boleta (guardada en el dispositivo), y recordatorios para saldar ("Pendiente: $X") usando las notificaciones de la PWA.
-7. **Calidad continua.** Reglas de rendimiento en CI (presupuesto de bundle), pruebas visuales de regresión (capturas a 390 y 1280 px) y un E2E con el aviso "Hay una nueva versión" (simular dos builds).
-8. **Backend y grupos compartidos.** Es el salto que el producto pide: que todos vean el mismo grupo. Implementar `HttpGroupRepository` detrás del puerto actual (pasando la suite de contrato), identidad ligera (enlace de invitación, sin cuenta al inicio), resolución de conflictos (hoy `updatedAt` sirve para deshacer; en un servidor haría falta versionado por grupo u operaciones) y sincronización con la cola offline que la PWA ya hace posible.
+### Ronda 11 · Prioridades de las fases 4 y 5 (dueño del producto)
+
+80. **Orden de la Fase 4** → tema de colores (claro y oscuro) → calidad continua → división por montos o partes → historial → monedas por grupo → búsqueda y filtros.
+81. **Moneda** → por grupo, elegida al crear el grupo, no por gasto. Solo editable mientras el grupo no tenga gastos.
+82. **Tema** → el dueño del producto entrega una imagen con dos colores para modo claro y oscuro; reemplaza la paleta amarilla/anaranjada actual.
+83. **Foto de la boleta y recordatorios** → a la Fase 5: sin backend no tienen sentido (no hay dónde guardar la foto, y una notificación con la app cerrada necesita un servidor).
+84. **Mejoras de la lista** → por ahora solo búsqueda y filtros; categorías y notas no entran.
+85. **Cerrar cuentas por períodos** → descartado: cuando termina una etapa se crea un grupo nuevo.
+86. **Backend** → Fase 5, después de consolidar la app local.
+
+### Ronda 12 · Tema, íconos y visualización (dueño del producto, con mockups)
+
+Mockups aprobados en el lienzo de diseño "Dividy · Nueva paleta" (artefacto privado de Claude; las decisiones quedan aquí).
+
+87. **Paleta** → Deep Fjord `#14305F` (primario) y Mint Cream `#D6FEC2` (acento), con tokens derivados para claro y oscuro (fondo `#F4F7F2`/`#0B1730`, superficie `#FFFFFF`/`#12264A`, texto `#10213F`/`#ECF6E6`, texto suave `#5B6B82`/`#A3B3CB`, borde `#DCE4D6`/`#24406E`, positivo `#1E7B3C`/`#86E3A4`, negativo `#B3261E`/`#FF9C90`). El menta nunca va como texto sobre blanco. Logo: cuadrado navy con el símbolo menta (claro) e invertido (oscuro). Modo oscuro: sigue al sistema, con selector "Sistema / Claro / Oscuro" que se recuerda.
+88. **Design system** → solo en el código (tokens semánticos + `docs/design-system.md` + regla en `CLAUDE.md` de no usar colores sueltos). No se crea un design system en Claude.
+89. **Íconos de grupos y gastos** → se deducen **automáticamente del nombre** con un diccionario de palabras clave en chileno ("asado", "once", "copete", "Uber", "bencina", "Líder", "arriendo"…), sin distinguir mayúsculas ni tildes y entendiendo plurales. No hay categorías, ni selector, ni dato nuevo: el ícono se calcula al mostrar, no se guarda ni se migra. Sin coincidencia: ícono genérico (boleta para gastos, personas para grupos). Los grupos no tienen color propio. Una función pura con tests de tabla.
+90. **Bienvenida (sin grupos)** → animación del algoritmo con un ejemplo: Ana paga carne $30.000 entre 3, Carla bebidas $15.000 entre Beto y Carla, Beto alojamiento $45.000 entre 3. Cuatro pasos (cada uno paga → se calcula su parte → se compara → se salda: Carla → Beto $12.500 y Carla → Ana $5.000), con texto por paso, pausar/anterior/siguiente y sin animación si el sistema pide reducir movimiento. Se construye con el dominio real (el ejemplo es un grupo de verdad en memoria), no con números escritos a mano. Descartados: grupo de ejemplo guardado, resumen arriba, secciones "Pendientes/Al día" y colores por grupo.
+91. **Vocabulario** → "Pagó" y "Su parte" (término del glosario) en la animación, el gráfico y el desglose de Saldos, en lugar de "Pagó en gastos" / "Le corresponde".
+92. **Gráfico "Pagó vs. su parte" en Saldos** → barras horizontales por miembro, divididas por gasto. Colores: los 6 categóricos validados para daltonismo en claro y oscuro (azul, naranjo, aqua, amarillo, magenta, violeta; verde y rojo quedan reservados para saldos), asignados a los gastos por monto: gastos 1–6 sólidos, 7–12 los mismos colores con rayas diagonales, 13+ gris "Otros". Leyenda con ícono, nombre, monto y muestra del color; tocar un tramo muestra gasto y monto; nunca solo color. Botón "Ver cómo se calculó" que reproduce la animación con los datos del grupo.
+93. **Caritas** → se mantienen los avatares ilustrados (generados en el dispositivo). Su humor refleja el saldo: **triste mientras tenga plata pendiente (debe o le deben), feliz cuando está al día**. Aplica en saldos, transferencias, gráfico y animación (en el último paso las caritas pasan de tristes a felices).
+94. **Pospuestos** → "quién eres tú" (saldo personal entre grupos) y una pestaña de estadísticas.
+
+## Fases 4 y 5 · Roadmap acordado
+
+Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece su propio ADR o ronda de decisiones antes de empezar.
+
+### Fase 4 · Consolidar la app local (en este orden)
+
+1. **Tema de colores claro y oscuro + design system en código** (Ronda 12, decisiones 87–88). Incluye logo, favicon e íconos de la PWA, la pasada con lector de pantalla (VoiceOver/TalkBack, manual) y la revisión de contraste en ambos temas.
+2. **Íconos y visualización** (Ronda 12, decisiones 89–93): ícono automático de grupos y gastos, bienvenida animada, gráfico "Pagó vs. su parte" con "Ver cómo se calculó" y caritas según el saldo.
+3. **Calidad continua.** Presupuesto de bundle en CI, pruebas visuales de regresión (capturas a 390 y 1280 px, claro y oscuro) y un E2E del aviso "Hay una nueva versión" (simular dos builds). Va después del tema y la visualización para que las capturas de referencia se tomen con el diseño definitivo.
+4. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es una unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
+5. **Historial de actividad y edición de pagos.** Ver qué pasó en el grupo ("Beto eliminó Supermercado $10.000") para responder "¿por qué cambió mi saldo?", y poder editar monto y fecha de un pago. Es también la base natural de la sincronización de la Fase 5.
+6. **Monedas por grupo.** La moneda se elige **al crear el grupo** (no por gasto) y todos sus gastos y pagos se expresan en ella; solo se puede cambiar mientras el grupo no tenga gastos. Sin conversión entre monedas. El dinero entero pasa a "unidad menor" de cada moneda (ADR 0001 tendrá que actualizarse).
+7. **Búsqueda y filtros en la lista de gastos.** Por texto, persona o fecha.
+
+### Fase 5 · Compartir (requiere backend)
+
+- **Backend y grupos compartidos.** Que todos vean el mismo grupo. `HttpGroupRepository` detrás del puerto actual (pasando la suite de contrato), identidad ligera (enlace de invitación, sin cuenta al inicio), resolución de conflictos (versionado por grupo u operaciones) y sincronización con la cola offline que la PWA hace posible. Trae también el respaldo de los datos (exportar/importar quedó descartado, Ronda 10).
+- **Foto de la boleta.** Sin backend no tiene sentido guardarla solo en el dispositivo.
+- **Recordatorios para saldar.** Notificaciones del tipo "Tienes $3.333 pendientes con Ana": para que lleguen con la app cerrada las tiene que enviar un servidor (Web Push), y en iPhone solo funcionan con la app instalada.
+
+### Descartado
+
+- **Exportar e importar datos** (Ronda 10, decisión 78): se resolverá con el backend.
+- **Cerrar cuentas por períodos** (Ronda 11): cuando termina una etapa, se crea un grupo nuevo.
