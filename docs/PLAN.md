@@ -204,18 +204,32 @@ Decisiones tomadas en rondas. Las de las rondas 0 vienen del dueño del producto
 85. **Cerrar cuentas por períodos** → descartado: cuando termina una etapa se crea un grupo nuevo.
 86. **Backend** → Fase 5, después de consolidar la app local.
 
+### Ronda 12 · Tema, íconos y visualización (dueño del producto, con mockups)
+
+Mockups aprobados en el lienzo de diseño "Dividy · Nueva paleta" (artefacto privado de Claude; las decisiones quedan aquí).
+
+87. **Paleta** → Deep Fjord `#14305F` (primario) y Mint Cream `#D6FEC2` (acento), con tokens derivados para claro y oscuro (fondo `#F4F7F2`/`#0B1730`, superficie `#FFFFFF`/`#12264A`, texto `#10213F`/`#ECF6E6`, texto suave `#5B6B82`/`#A3B3CB`, borde `#DCE4D6`/`#24406E`, positivo `#1E7B3C`/`#86E3A4`, negativo `#B3261E`/`#FF9C90`). El menta nunca va como texto sobre blanco. Logo: cuadrado navy con el símbolo menta (claro) e invertido (oscuro). Modo oscuro: sigue al sistema, con selector "Sistema / Claro / Oscuro" que se recuerda.
+88. **Design system** → solo en el código (tokens semánticos + `docs/design-system.md` + regla en `CLAUDE.md` de no usar colores sueltos). No se crea un design system en Claude.
+89. **Íconos de grupos y gastos** → se deducen **automáticamente del nombre** con un diccionario de palabras clave en chileno ("asado", "once", "copete", "Uber", "bencina", "Líder", "arriendo"…), sin distinguir mayúsculas ni tildes y entendiendo plurales. No hay categorías, ni selector, ni dato nuevo: el ícono se calcula al mostrar, no se guarda ni se migra. Sin coincidencia: ícono genérico (boleta para gastos, personas para grupos). Los grupos no tienen color propio. Una función pura con tests de tabla.
+90. **Bienvenida (sin grupos)** → animación del algoritmo con un ejemplo: Ana paga carne $30.000 entre 3, Carla bebidas $15.000 entre Beto y Carla, Beto alojamiento $45.000 entre 3. Cuatro pasos (cada uno paga → se calcula su parte → se compara → se salda: Carla → Beto $12.500 y Carla → Ana $5.000), con texto por paso, pausar/anterior/siguiente y sin animación si el sistema pide reducir movimiento. Se construye con el dominio real (el ejemplo es un grupo de verdad en memoria), no con números escritos a mano. Descartados: grupo de ejemplo guardado, resumen arriba, secciones "Pendientes/Al día" y colores por grupo.
+91. **Vocabulario** → "Pagó" y "Su parte" (término del glosario) en la animación, el gráfico y el desglose de Saldos, en lugar de "Pagó en gastos" / "Le corresponde".
+92. **Gráfico "Pagó vs. su parte" en Saldos** → barras horizontales por miembro, divididas por gasto. Colores: los 6 categóricos validados para daltonismo en claro y oscuro (azul, naranjo, aqua, amarillo, magenta, violeta; verde y rojo quedan reservados para saldos), asignados a los gastos por monto: gastos 1–6 sólidos, 7–12 los mismos colores con rayas diagonales, 13+ gris "Otros". Leyenda con ícono, nombre, monto y muestra del color; tocar un tramo muestra gasto y monto; nunca solo color. Botón "Ver cómo se calculó" que reproduce la animación con los datos del grupo.
+93. **Caritas** → se mantienen los avatares ilustrados (generados en el dispositivo). Su humor refleja el saldo: **triste mientras tenga plata pendiente (debe o le deben), feliz cuando está al día**. Aplica en saldos, transferencias, gráfico y animación (en el último paso las caritas pasan de tristes a felices).
+94. **Pospuestos** → "quién eres tú" (saldo personal entre grupos) y una pestaña de estadísticas.
+
 ## Fases 4 y 5 · Roadmap acordado
 
 Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece su propio ADR o ronda de decisiones antes de empezar.
 
 ### Fase 4 · Consolidar la app local (en este orden)
 
-1. **Tema de colores claro y oscuro.** Nueva paleta a partir de dos colores que entrega el dueño del producto (reemplaza el acento amarillo/anaranjado actual), con modo oscuro. Incluye la pasada con lector de pantalla (VoiceOver/TalkBack) y la revisión de contraste a mano en ambos temas. Va primero para que las capturas de referencia de los tests visuales se tomen con el tema definitivo.
-2. **Calidad continua.** Presupuesto de bundle en CI, pruebas visuales de regresión (capturas a 390 y 1280 px, claro y oscuro) y un E2E del aviso "Hay una nueva versión" (simular dos builds).
-3. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es una unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
-4. **Historial de actividad y edición de pagos.** Ver qué pasó en el grupo ("Beto eliminó Supermercado $10.000") para responder "¿por qué cambió mi saldo?", y poder editar monto y fecha de un pago. Es también la base natural de la sincronización de la Fase 5.
-5. **Monedas por grupo.** La moneda se elige **al crear el grupo** (no por gasto) y todos sus gastos y pagos se expresan en ella; solo se puede cambiar mientras el grupo no tenga gastos. Sin conversión entre monedas. El dinero entero pasa a "unidad menor" de cada moneda (ADR 0001 tendrá que actualizarse).
-6. **Búsqueda y filtros en la lista de gastos.** Por texto, persona o fecha.
+1. **Tema de colores claro y oscuro + design system en código** (Ronda 12, decisiones 87–88). Incluye logo, favicon e íconos de la PWA, la pasada con lector de pantalla (VoiceOver/TalkBack, manual) y la revisión de contraste en ambos temas.
+2. **Íconos y visualización** (Ronda 12, decisiones 89–93): ícono automático de grupos y gastos, bienvenida animada, gráfico "Pagó vs. su parte" con "Ver cómo se calculó" y caritas según el saldo.
+3. **Calidad continua.** Presupuesto de bundle en CI, pruebas visuales de regresión (capturas a 390 y 1280 px, claro y oscuro) y un E2E del aviso "Hay una nueva versión" (simular dos builds). Va después del tema y la visualización para que las capturas de referencia se tomen con el diseño definitivo.
+4. **División por montos exactos, porcentajes o partes.** El tipo `split` ya es una unión discriminada (`type: 'equal'`); falta `exact`, `percent` y `shares`, con la misma garantía de que las partes suman el monto al peso (extender `computeShares` y las propiedades de fast-check) y un selector de tipo en el formulario.
+5. **Historial de actividad y edición de pagos.** Ver qué pasó en el grupo ("Beto eliminó Supermercado $10.000") para responder "¿por qué cambió mi saldo?", y poder editar monto y fecha de un pago. Es también la base natural de la sincronización de la Fase 5.
+6. **Monedas por grupo.** La moneda se elige **al crear el grupo** (no por gasto) y todos sus gastos y pagos se expresan en ella; solo se puede cambiar mientras el grupo no tenga gastos. Sin conversión entre monedas. El dinero entero pasa a "unidad menor" de cada moneda (ADR 0001 tendrá que actualizarse).
+7. **Búsqueda y filtros en la lista de gastos.** Por texto, persona o fecha.
 
 ### Fase 5 · Compartir (requiere backend)
 
