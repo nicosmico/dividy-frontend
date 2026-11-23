@@ -63,6 +63,10 @@ Texto que resume miembros, gastos y transferencias sugeridas de un grupo, pensad
 
 ### Eliminar miembros
 
+**Activity** (Movimientos):
+Los gastos que un miembro pagó o en los que participa, y los pagos que envió o recibió. Un miembro sin movimientos se puede eliminar directo.
+_Avoid_: History, historial
+
 **Reassign** (Reasignar):
 Al eliminar un miembro con gastos o pagos, traspasar todas sus apariciones (como pagador, participante o en pagos) a otro miembro del grupo.
 

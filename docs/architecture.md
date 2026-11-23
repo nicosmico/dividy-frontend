@@ -14,7 +14,7 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 
 - Sin React, sin `localStorage`, sin fechas "de ahora" ni IDs aleatorios implícitos (se reciben como parámetros).
 - Tipos: `Group`, `Member`, `Expense`, `Payment`, `Amount`.
-- Funciones: división con resto (`splitExpense`), saldos (`computeBalances`, con desglose por miembro), transferencias sugeridas (`suggestTransfers`), operaciones inmutables sobre un grupo (`addExpense`, `removeMember`…) que validan invariantes y devuelven un grupo nuevo o un error tipado, y el texto del resumen.
+- Funciones: división con resto (`computeShares`), saldos (`computeBalances`, con desglose por miembro), transferencias sugeridas (`suggestTransfers`), operaciones inmutables sobre un grupo (`addExpense`, `removeMember`…) que validan invariantes y devuelven un grupo nuevo o un error tipado, y el texto del resumen.
 - Es la capa con más tests: tablas de casos y tests de propiedades.
 
 ### `src/data`: persistencia
@@ -44,3 +44,43 @@ Los saldos y transferencias **no se persisten**: siempre se derivan de gastos y 
 ## Pasar a backend (futuro)
 
 Implementar `HttpGroupRepository` con el mismo puerto, pasar los tests de contrato y cambiarlo en el provider. Probablemente convenga mover las operaciones del dominio al servidor también; como son funciones puras, se pueden reutilizar tal cual.
+
+## API del dominio
+
+Todo se importa desde `@/domain`. Las operaciones devuelven `Result<T>` (`{ ok: true, value }` o `{ ok: false, error: { code, message } }`, con `message` en español).
+
+**Dinero y división**
+
+- `isValidAmount(n)`: entero seguro entre 1 y 999.999.999.
+- `formatAmount(n)`: formatea en CLP (`$10.000`).
+- `computeShares(expense, members)`: parte de cada participante (`Map<MemberId, Amount>`), con el resto a los primeros según el orden del grupo. Única función que divide dinero.
+
+**Saldos y transferencias**
+
+- `computeBalances(group)`: `MemberBalance[]` en el orden de los miembros (`paid`, `share`, `paymentsSent`, `paymentsReceived`, `balance`).
+- `getMemberBreakdown(group, memberId)`: desglose por gasto y pagos de un miembro (`null` si no existe); alimenta "¿por qué?".
+- `isSettled(group)`: `true` si todos los saldos son 0.
+- `suggestTransfers(group)`: transferencias sugeridas (voraz, máximo n-1, siempre positivas).
+
+**Operaciones del grupo** (inmutables)
+
+- `createGroup({ id, name, members, now })`, `renameGroup(group, name)`, `touch(group, now)` (devuelve `Group`, actualiza `updatedAt`).
+- `addMember(group, member)`, `renameMember(group, memberId, name)`.
+- `getMemberRemovalImpact(group, memberId)`: gastos y pagos afectados, para la vista previa.
+- `removeMember(group, memberId, strategy)`: `none`, `reassign` o `cascade`.
+- `addExpense(group, input)`, `updateExpense(group, expenseId, fields)`, `removeExpense(group, expenseId)`.
+- `addPayment(group, input)`, `removePayment(group, paymentId)`.
+
+**Validación (para los formularios)**
+
+- `validateGroupName`, `validateMemberName(group, name, exceptId?)`, `validateDescription`, `validateAmount`, `validateDate`: devuelven el valor normalizado o el error.
+- `validateExpenseFields(group, fields)`, `validatePaymentFields(group, fields)`: validan un gasto o pago completo.
+- `getGroupIssues(group)`: lista de invariantes rotas (vacía si el grupo es válido).
+
+**Resumen**
+
+- `formatGroupSummary(group)`: texto en español para pegar en un chat.
+
+## API de datos
+
+Desde `@/data`: `GroupRepository` (`list`, `get`, `save`, `delete`), `InMemoryGroupRepository` y `LocalStorageGroupRepository({ storage?, newId?, now? })`. Los IDs se generan con `newId()` de `@/lib/id`. La suite `describeGroupRepositoryContract` (`src/data/group-repository.contract.ts`) se ejecuta contra cada implementación.
