@@ -18,7 +18,7 @@ Al eliminar un gasto, un pago o un miembro sin movimientos, un aviso de 6 segund
 
 ## Desarrollo
 
-Requisitos: Node.js 22 o superior.
+Requisitos: Node.js 22 o superior (fijado en `.nvmrc`; Netlify lo toma de `netlify.toml`).
 
 ```bash
 npm install
