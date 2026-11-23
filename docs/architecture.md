@@ -32,7 +32,7 @@ src/
                        (QueryClient + RepositoryProvider + Toaster), router.tsx (AppRoutes),
                        AppLayout (enlace "Saltar al contenido", header + columna max-w-lg),
                        ErrorBoundary, NotFoundPage, pwa.ts (registro del service worker)
-  components/          dividy-logo, form-field, responsive-dialog, page-fallback
+  components/          dividy-logo, theme-toggle, form-field, responsive-dialog, page-fallback
     ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
@@ -44,7 +44,7 @@ src/
                        dominio), expense-list.ts (orden y agrupación por fecha)
     balances/          BalancesTab: SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
                        PaymentsList, ShareSummaryButton (compartir o copiar el resumen)
-  hooks/               use-media-query
+  hooks/               use-media-query, use-theme (tema claro/oscuro; ver docs/design-system.md)
   lib/                 utils (cn), dates (todayLocal, formatDate), plural, id, query-client,
                        focus (restoreFocusIfLost, MAIN_ID)
   test/                setup.ts, render-with-providers.tsx, test-providers.tsx
