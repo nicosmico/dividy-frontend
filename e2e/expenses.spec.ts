@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { computeBalances, formatAmount, suggestTransfers } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
+import { openTab } from './navigation';
 
 async function createGroup(page: Page, name: string, members: string[]) {
   await page.goto('/groups/new');
@@ -55,12 +56,6 @@ function moods(scope: Locator) {
   return scope.locator('[data-mood]');
 }
 
-function tab(page: Page, name: string): Locator {
-  return page
-    .getByRole('navigation', { name: 'Secciones del grupo' })
-    .getByRole('link', { name });
-}
-
 test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', async ({
   page,
 }) => {
@@ -75,7 +70,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await expect(page.getByText('2 gastos')).toBeVisible();
   await expect(page.getByText('$13.000', { exact: true })).toBeVisible();
 
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
 
   // The same group computed by the domain: the UI must show those numbers.
   const group = makeGroup({
@@ -255,7 +250,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
     without: ['Beto'],
   });
 
-  await tab(page, 'Miembros').click();
+  await openTab(page, 'Miembros');
   await page.getByRole('button', { name: 'Eliminar a Carla' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Carla' });
   await dialog.getByText('Eliminar con sus gastos').click();
@@ -263,7 +258,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await expect(dialog).toBeHidden();
   await expect(page.getByText('2 miembros')).toBeVisible();
 
-  await tab(page, 'Gastos').click();
+  await openTab(page, 'Gastos');
   await expect(page.getByRole('button', { name: /Solo Carla/ })).toHaveCount(0);
   // "Cena" stays with Ana as the only participant.
   await page.getByRole('button', { name: /Cena/ }).click();
@@ -273,7 +268,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await edit.getByRole('button', { name: 'Cancelar' }).click();
 
   // Ana paid her own dinner: every balance is 0.
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
   await expect(
     memberBalances(page).getByText('Al día', { exact: true })
