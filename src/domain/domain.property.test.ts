@@ -1,7 +1,8 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { computeBalances } from './balances';
-import { removeMember } from './group';
+import { removeExpense, removeMember } from './group';
+import { previewBalanceChange } from './impact';
 import { computeShares } from './split';
 import { groupArb, amountArb } from './test-utils/arbitraries';
 import { suggestTransfers } from './transfers';
@@ -209,3 +210,34 @@ function expectNoReferences(group: Group, removedId: string) {
     expect(p.fromId).not.toBe(p.toId);
   }
 }
+
+describe('propiedades de previewBalanceChange', () => {
+  it('8. comparar un grupo consigo mismo no cambia nada', () => {
+    fc.assert(
+      fc.property(groupArb(), (group) => {
+        expect(previewBalanceChange(group, group)).toEqual([]);
+      })
+    );
+  });
+
+  it('8b. al eliminar un gasto, los cambios suman 0 y van en el orden del grupo', () => {
+    fc.assert(
+      fc.property(
+        groupArb({ maxExpenses: 10 }).filter((g) => g.expenses.length > 0),
+        fc.nat(),
+        (group, n) => {
+          const target = group.expenses[n % group.expenses.length];
+          const next = removeExpense(group, target.id);
+          expect(next.ok).toBe(true);
+          if (!next.ok) return;
+          const changes = previewBalanceChange(group, next.value);
+          expect(sum(changes.map((c) => c.after - c.before))).toBe(0);
+          const order = group.members.map((m) => m.id);
+          const indexes = changes.map((c) => order.indexOf(c.memberId));
+          expect(indexes).toEqual([...indexes].sort((a, b) => a - b));
+          expect(changes.every((c) => c.before !== c.after)).toBe(true);
+        }
+      )
+    );
+  });
+});

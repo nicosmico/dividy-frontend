@@ -55,6 +55,10 @@ _Avoid_: Simplified debt, transaction, deuda simplificada
 Dinero que un miembro efectivamente le transfirió a otro para saldar deudas. Se registra (por ejemplo, al marcar una transferencia sugerida como pagada) y afecta los saldos.
 _Avoid_: Settlement, transfer (para el hecho registrado), reembolso
 
+**Covered expense** (Gasto ya saldado):
+Gasto que ya existía cuando se registró algún pago del grupo (hay un pago creado después que él). Editarlo o eliminarlo puede cambiar saldos que la gente ya dio por cerrados, por eso la app avisa antes.
+_Avoid_: Closed expense, gasto cerrado
+
 **Settled** (Al día):
 Estado de un grupo en que todos los saldos son cero.
 

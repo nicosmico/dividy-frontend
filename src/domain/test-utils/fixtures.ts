@@ -15,6 +15,7 @@ interface ExpenseSpec {
   payer: string;
   among: string[];
   date?: string;
+  createdAt?: string;
 }
 
 interface PaymentSpec {
@@ -23,6 +24,7 @@ interface PaymentSpec {
   to: string;
   amount: number;
   date?: string;
+  createdAt?: string;
 }
 
 export function makeExpense(spec: ExpenseSpec, index = 0): Expense {
@@ -33,7 +35,7 @@ export function makeExpense(spec: ExpenseSpec, index = 0): Expense {
     payerId: spec.payer,
     split: { type: 'equal', participantIds: spec.among },
     date: spec.date ?? TODAY,
-    createdAt: NOW,
+    createdAt: spec.createdAt ?? NOW,
   };
 }
 
@@ -44,7 +46,7 @@ export function makePayment(spec: PaymentSpec, index = 0): Payment {
     toId: spec.to,
     amount: spec.amount,
     date: spec.date ?? TODAY,
-    createdAt: NOW,
+    createdAt: spec.createdAt ?? NOW,
   };
 }
 

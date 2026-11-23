@@ -26,6 +26,11 @@ export {
   type MemberBreakdown,
 } from './balances';
 export {
+  isExpenseCoveredByPayments,
+  previewBalanceChange,
+  type BalanceChange,
+} from './impact';
+export {
   getPendingAmount,
   suggestTransfers,
   type SuggestedTransfer,
