@@ -39,6 +39,15 @@ async function addExpense(page: Page, expense: NewExpense) {
   await expect(dialog).toBeHidden();
 }
 
+/** Icon tiles and avatar moods are decorative: find them by class / data. */
+function icon(scope: Page | Locator, name: string): Locator {
+  return scope.locator(`[data-slot="entity-icon"] svg.lucide-${name}`);
+}
+
+function moods(scope: Locator) {
+  return scope.locator('[data-mood]');
+}
+
 function tab(page: Page, name: string): Locator {
   return page
     .getByRole('navigation', { name: 'Secciones del grupo' })
@@ -100,8 +109,17 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await page
     .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     .click();
-  await expect(page.getByText('Pagó')).toBeVisible();
+  await expect(page.getByText('Pagó', { exact: true })).toBeVisible();
   await expect(page.getByText('Su parte $3.334')).toBeVisible();
+
+  // While there is money pending, everyone with a balance is sad (decision 93).
+  const balanceList = page
+    .getByRole('heading', { name: 'Saldo por miembro' })
+    .locator('xpath=ancestor::section[1]');
+  await expect(moods(balanceList)).toHaveCount(3);
+  for (const mood of await moods(balanceList).all()) {
+    await expect(mood).toHaveAttribute('data-mood', 'sad');
+  }
 
   // Mark every suggested transfer as paid.
   for (let remaining = transfers.length; remaining > 0; remaining--) {
@@ -119,11 +137,41 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await expect(
     page.getByRole('button', { name: /^Marcar como pagado/ })
   ).toHaveCount(0);
+  // Once everything is settled, all the faces are happy.
+  await expect(moods(balanceList)).toHaveCount(3);
+  for (const mood of await moods(balanceList).all()) {
+    await expect(mood).toHaveAttribute('data-mood', 'happy');
+  }
 
   await page.reload();
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Pagos registrados' })
+  ).toBeVisible();
+});
+
+test('el ícono del gasto se deduce de la descripción, en el formulario y en la lista', async ({
+  page,
+}) => {
+  await createGroup(page, 'Íconos', ['Ana', 'Beto']);
+  await page.getByRole('button', { name: 'Agregar gasto' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
+  await expect(icon(dialog, 'receipt')).toBeVisible();
+  await dialog.getByLabel('Descripción').fill('Uber al terminal');
+  await expect(icon(dialog, 'car-taxi-front')).toBeVisible();
+  await dialog.getByLabel('Monto en pesos').fill('12000');
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(dialog).toBeHidden();
+
+  const row = page.getByRole('button', { name: /Uber al terminal/ });
+  await expect(icon(row, 'car-taxi-front')).toBeVisible();
+  await expect(row.getByText('Pagó Ana')).toBeVisible();
+  await page.reload();
+  await expect(
+    icon(
+      page.getByRole('button', { name: /Uber al terminal/ }),
+      'car-taxi-front'
+    )
   ).toBeVisible();
 });
 

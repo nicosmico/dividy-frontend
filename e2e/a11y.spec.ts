@@ -81,7 +81,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page
         .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
         .click();
-      await expect(page.getByText('Pagó')).toBeVisible();
+      await expect(page.getByText('Pagó', { exact: true })).toBeVisible();
       await expectNoSeriousViolations(page);
 
       await page

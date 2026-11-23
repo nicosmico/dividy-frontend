@@ -13,7 +13,10 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   // Create a group with 3 members.
   await page.getByRole('link', { name: 'Crear grupo' }).click();
   await expect(page).toHaveURL(/\/groups\/new$/);
+  const newGroupIcons = page.locator('[data-slot="entity-icon"] svg');
+  await expect(newGroupIcons.first()).toHaveClass(/lucide-users/);
   await page.getByLabel('Nombre del grupo').fill('Viaje a Pucón');
+  await expect(newGroupIcons.first()).toHaveClass(/lucide-plane/);
   const memberInput = page.getByRole('textbox', { name: 'Miembros' });
   for (const name of ['Ana', 'Beto', 'Caro']) {
     await memberInput.fill(name);
@@ -25,6 +28,9 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   await expect(
     page.getByRole('heading', { name: 'Viaje a Pucón', level: 1 })
   ).toBeVisible();
+  await expect(
+    page.locator('[data-slot="entity-icon"] svg.lucide-plane')
+  ).toBeVisible();
 
   // It appears in "Mis grupos".
   await page.getByRole('link', { name: 'Dividy' }).click();
@@ -32,6 +38,11 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   await expect(page.getByRole('link', { name: /Viaje a Pucón/ })).toContainText(
     '3 miembros'
   );
+  await expect(
+    page
+      .getByRole('link', { name: /Viaje a Pucón/ })
+      .locator('svg.lucide-plane')
+  ).toBeVisible();
   await page.getByRole('link', { name: /Viaje a Pucón/ }).click();
 
   // Rename a member.
