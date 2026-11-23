@@ -1,0 +1,97 @@
+import { QueryClient } from '@tanstack/react-query';
+import {
+  render,
+  renderHook,
+  screen,
+  type RenderHookResult,
+  type RenderResult,
+} from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
+import type { ReactElement } from 'react';
+
+import { AppRoutes } from '@/app/router';
+import { InMemoryGroupRepository, type GroupRepository } from '@/data';
+import type { Group } from '@/domain';
+import { createQueryClient } from '@/lib/query-client';
+import { TestProviders } from './test-providers';
+
+export const TEST_NOW = '2026-05-01T10:00:00.000Z';
+
+/** Deterministic ids: `id1`, `id2`... */
+export function createIdSequence(prefix = 'id'): () => string {
+  let n = 0;
+  return () => `${prefix}${++n}`;
+}
+
+/** Current route of the render, e.g. `/groups/g1/members`. */
+export function currentPath(): string {
+  return screen.getByTestId('pathname').textContent ?? '';
+}
+
+export interface RenderWithProvidersOptions {
+  /** Initial URL. Default `/`. */
+  route?: string;
+  /** Groups the repository starts with (ignored if `repository` is given). */
+  groups?: Group[];
+  repository?: GroupRepository;
+  now?: () => string;
+  newId?: () => string;
+  queryClient?: QueryClient;
+}
+
+function resolve(options: RenderWithProvidersOptions) {
+  return {
+    repository:
+      options.repository ?? new InMemoryGroupRepository(options.groups),
+    queryClient: options.queryClient ?? createQueryClient(),
+    now: options.now ?? (() => TEST_NOW),
+    newId: options.newId ?? createIdSequence(),
+    route: options.route ?? '/',
+  };
+}
+
+export interface RenderWithProvidersResult extends RenderResult {
+  user: UserEvent;
+  repository: GroupRepository;
+  queryClient: QueryClient;
+}
+
+/**
+ * Renders `ui` (the whole `<AppRoutes />` by default) with every provider the
+ * app has: QueryClient, repository (in memory), fixed clock and ids, toaster
+ * and a `MemoryRouter`. Use `currentPath()` to assert navigation.
+ */
+export function renderWithProviders(
+  ui: ReactElement = <AppRoutes />,
+  options: RenderWithProvidersOptions = {}
+): RenderWithProvidersResult {
+  const providers = resolve(options);
+  const result = render(<TestProviders {...providers}>{ui}</TestProviders>);
+  return {
+    ...result,
+    user: userEvent.setup(),
+    repository: providers.repository,
+    queryClient: providers.queryClient,
+  };
+}
+
+/** Same providers for testing a hook: `renderHookWithProviders(() => useGroup('g1'), { groups })`. */
+export function renderHookWithProviders<Result>(
+  hook: () => Result,
+  options: RenderWithProvidersOptions = {}
+): RenderHookResult<Result, unknown> & {
+  repository: GroupRepository;
+  queryClient: QueryClient;
+} {
+  const providers = resolve(options);
+  const result = renderHook(hook, {
+    wrapper: ({ children }) => (
+      <TestProviders {...providers}>{children}</TestProviders>
+    ),
+  });
+  return {
+    ...result,
+    repository: providers.repository,
+    queryClient: providers.queryClient,
+  };
+}
