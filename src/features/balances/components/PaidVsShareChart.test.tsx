@@ -44,14 +44,14 @@ describe('Gráfico "Pagó vs. su parte"', () => {
     expect(screen.queryByText('Pagó vs. su parte')).toBeNull();
   });
 
-  it('muestra arriba de las transferencias una fila por miembro con saldo y totales', async () => {
+  it('va en el detalle, después de las transferencias, con una fila por miembro con saldo y totales', async () => {
     renderWithProviders(undefined, { route: ROUTE, groups: [tripGroup()] });
     const section = await chart();
     const transfers = screen.getByRole('heading', {
       name: 'Para quedar al día',
     });
     expect(
-      section.compareDocumentPosition(transfers) &
+      transfers.compareDocumentPosition(section) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 

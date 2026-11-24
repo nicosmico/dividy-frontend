@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useReturnFocus } from '@/hooks/use-return-focus';
 import { cn } from '@/lib/utils';
 
 interface ResponsiveDialogProps {
@@ -54,20 +55,8 @@ export function ResponsiveDialog({
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  // These dialogs are opened by state, not by a Radix trigger, so Radix does
-  // not know where to send focus when they close. Remember the opener and give
-  // focus back to it (if it still exists; otherwise the caller picks a place).
-  const opener = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    if (open) opener.current = document.activeElement as HTMLElement | null;
-  }, [open]);
-  const returnFocus = (event: Event) => {
-    const el = opener.current;
-    if (el && el.isConnected && el !== document.body) {
-      event.preventDefault();
-      el.focus();
-    }
-  };
+  // Opened by state, not by a Radix trigger: see `useReturnFocus`.
+  const returnFocus = useReturnFocus(open);
 
   // A tap on a toast ("Deshacer") is outside the dialog for Radix and would
   // close it, losing what the user was typing. Toasts are not "outside".

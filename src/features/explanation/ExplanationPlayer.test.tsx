@@ -324,23 +324,19 @@ describe('ExplanationPlayer con un grupo real', () => {
     expect(moods(container)).toEqual(['happy', 'happy']);
   });
 
-  describe('layout sheet (el diálogo "Ver cómo se calculó")', () => {
-    const renderSheet = () => {
-      const view = render(
-        <div data-testid='scroller' style={{ overflowY: 'auto' }}>
-          <ExplanationPlayer
-            group={buildExampleGroup()}
-            label='Diálogo'
-            layout='sheet'
-          />
-        </div>
+  describe('layout page (el diálogo "Ver cómo se calculó")', () => {
+    const renderPage = () =>
+      render(
+        <ExplanationPlayer
+          group={buildExampleGroup()}
+          label='Diálogo'
+          layout='page'
+        />
       );
-      return { ...view, scroller: screen.getByTestId('scroller') };
-    };
 
     it('en los pasos 1 a 3 no existe el contenido del paso 4 y en el 4 no existe la leyenda', async () => {
       const user = userEvent.setup();
-      renderSheet();
+      renderPage();
       for (let i = 0; i < FRAMES - 1; i++) {
         expect(slot(document, 'settling')).toHaveLength(0);
         expect(slot(document, 'transfer')).toHaveLength(0);
@@ -352,40 +348,92 @@ describe('ExplanationPlayer con un grupo real', () => {
       expect(slot(document, 'legend')).toHaveLength(0);
     });
 
-    it('el pie con la narración y los controles está en todos los pasos', async () => {
+    it('la narración va dentro del cuerpo, antes de las filas, y el pie solo tiene los controles', async () => {
       const user = userEvent.setup();
-      renderSheet();
+      renderPage();
       for (let i = 0; i < FRAMES; i++) {
+        const body = slot(document, 'player-body')[0];
         const footer = slot(document, 'player-footer')[0];
-        expect(footer).toBeDefined();
-        expect(footer.querySelector('[aria-live="polite"]')).not.toBeNull();
+        const live = body.querySelector('[aria-live="polite"]');
+        expect(live).not.toBeNull();
+        const firstRow = body.querySelector('[data-slot="paid-share-row"]')!;
         expect(
-          footer.querySelector('button[aria-label="Paso anterior"]')
-        ).not.toBeNull();
-        expect(
-          footer.querySelector('button[aria-label="Paso siguiente"]')
-        ).not.toBeNull();
-        // The rows are in the scrolling body, not in the footer.
+          live!.compareDocumentPosition(firstRow) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+        expect(footer.querySelector('[aria-live]')).toBeNull();
         expect(footer.querySelector('[data-slot="paid-share-row"]')).toBeNull();
+        expect(
+          [...footer.querySelectorAll('button')].map(
+            (b) => b.textContent || b.getAttribute('aria-label')
+          )
+        ).toEqual(['Paso anterior', 'Pausar', 'Paso siguiente']);
         await next(user);
       }
     });
 
-    it('al abrir el cuerpo empieza arriba, aunque algo lo haya desplazado', () => {
-      const scroller = document.createElement('div');
-      scroller.style.overflowY = 'auto';
-      scroller.scrollTop = 120;
-      document.body.append(scroller);
-      render(
-        <ExplanationPlayer
-          group={buildExampleGroup()}
-          label='Diálogo'
-          layout='sheet'
-        />,
-        { container: scroller.appendChild(document.createElement('div')) }
-      );
-      expect(scroller.scrollTop).toBe(0);
-      scroller.remove();
+    it('en el paso 2 muestra "Gasto X de Y" dentro del cuerpo', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await next(user);
+      expect(
+        slot(document, 'player-body')[0].querySelector(
+          '[data-slot="share-progress"]'
+        )
+      ).toHaveTextContent('Gasto 1 de 3');
+    });
+
+    it('al cambiar de paso sube hasta el título si quedó fuera de la vista', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      const body = slot(document, 'player-body')[0] as HTMLElement;
+      const scrollTo = vi.fn();
+      body.scrollTo = scrollTo as unknown as typeof body.scrollTo;
+      // The title is above the visible area of the body.
+      const title = screen.getByText(/^1 · /);
+      vi.spyOn(body, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 500,
+      } as DOMRect);
+      vi.spyOn(title, 'getBoundingClientRect').mockReturnValue({
+        top: -200,
+        bottom: -180,
+      } as DOMRect);
+      await next(user);
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo.mock.calls[0][0]).toMatchObject({ behavior: 'smooth' });
+    });
+
+    it('con "reducir movimiento" sube sin animar', async () => {
+      mockReducedMotion(true);
+      const user = userEvent.setup();
+      renderPage();
+      const body = slot(document, 'player-body')[0] as HTMLElement;
+      const scrollTo = vi.fn();
+      body.scrollTo = scrollTo as unknown as typeof body.scrollTo;
+      vi.spyOn(body, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 500,
+      } as DOMRect);
+      vi.spyOn(
+        screen.getByText(/^1 · /),
+        'getBoundingClientRect'
+      ).mockReturnValue({
+        top: -200,
+        bottom: -180,
+      } as DOMRect);
+      await next(user);
+      expect(scrollTo.mock.calls[0][0]).toMatchObject({ behavior: 'auto' });
+    });
+
+    it('no se mueve el scroll si el título y la narración están a la vista', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      const body = slot(document, 'player-body')[0] as HTMLElement;
+      const scrollTo = vi.fn();
+      body.scrollTo = scrollTo as unknown as typeof body.scrollTo;
+      await next(user);
+      expect(scrollTo).not.toHaveBeenCalled();
     });
 
     it('la bienvenida (card) conserva la leyenda y el paso 4 en el DOM todo el tiempo', async () => {

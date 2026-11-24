@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Pause,
@@ -14,7 +15,6 @@ import {
   useState,
   useSyncExternalStore,
   type CSSProperties,
-  type RefObject,
 } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -49,21 +49,19 @@ interface ExplanationPlayerProps {
   settleAtEnd?: boolean;
   /**
    * `card` (welcome): the card never changes height, so the legend and the
-   * step 4 content share one reserved cell. `sheet` (the "Ver cómo se
-   * calculó" dialog): the content scrolls and the narration and controls stay
-   * pinned to the bottom of the dialog's scroll area; step 4 content only
-   * exists from step 4 on.
+   * step 4 content share one reserved cell. `page` (the "Ver cómo se
+   * calculó" dialog): fills its parent (a flex column) with a scrolling body
+   * (title, narration, rows, legend; step 4 content only from step 4 on) and
+   * a footer that holds only the controls.
    */
   layout?: PlayerLayout;
   className?: string;
 }
 
-export type PlayerLayout = 'card' | 'sheet';
+export type PlayerLayout = 'card' | 'page';
 
-/** Scrolling by hand within this time keeps the guided scroll still. */
-const USER_SCROLL_GRACE_MS = 2000;
-/** After opening, scrolls that are not the user's go back to the top. */
-const OPEN_SETTLE_MS = 500;
+/** Space kept above the step title when scrolling up to it. */
+const REVEAL_GAP = 8;
 
 function subscribeVisibility(onChange: () => void) {
   document.addEventListener('visibilitychange', onChange);
@@ -153,208 +151,237 @@ export function ExplanationPlayer({
     [before, after, settleAtEnd, step, shareStep]
   );
 
-  const sheet = layout === 'sheet';
-  const sectionRef = useRef<HTMLElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
-  const guide = useGuidedScroll({
-    enabled: sheet,
-    sectionRef,
-    footerRef,
-    reducedMotion,
-  });
-  const shown = useRef(false);
-  useEffect(() => {
-    // The first position is the one the sheet opens on: nothing to bring in.
-    if (!sheet || !shown.current) {
-      shown.current = true;
-      return;
-    }
-    const involved = new Set<string>();
-    const payers = new Set<string>();
-    if (step === SHARE_STEP && shareStep) {
-      for (const id of shareStep.expenseIds) {
-        const expense = before.expenses.find((e) => e.id === id);
-        if (!expense) continue;
-        involved.add(expense.payerId);
-        payers.add(expense.payerId);
-        for (const share of expense.shares) involved.add(share.memberId);
+  const page = layout === 'page';
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const narrationRef = useRef<HTMLParagraphElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+
+  // Page layout: on a new position bring the step title and the narration
+  // into view if they scrolled out (step 4 may be taller than the body: the
+  // user scrolls down by hand, `moreBelow` hints at it).
+  const firstFrame = useRef(true);
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!page || !body) return;
+    const title = titleRef.current;
+    const narration = narrationRef.current;
+    if (!firstFrame.current && title && narration) {
+      const view = body.getBoundingClientRect();
+      const titleBox = title.getBoundingClientRect();
+      const narrationBox = narration.getBoundingClientRect();
+      if (titleBox.top < view.top || narrationBox.bottom > view.bottom) {
+        body.scrollTo?.({
+          top: Math.max(
+            0,
+            body.scrollTop + titleBox.top - view.top - REVEAL_GAP
+          ),
+          behavior: reducedMotion ? 'auto' : 'smooth',
+        });
       }
     }
-    guide({
-      step,
-      payerIndexes: before.members.flatMap((m, index) =>
-        payers.has(m.member.id) ? [index] : []
-      ),
-      rowIndexes: before.members.flatMap((m, index) =>
-        involved.has(m.member.id) ? [index] : []
-      ),
-    });
+    firstFrame.current = false;
     // Only a new position moves the scroll.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frame]);
 
-  const top = (
-    <>
-      <div className='flex items-center justify-between gap-2'>
-        <span
-          id={titleId}
-          className='text-xs font-bold tracking-wide text-muted-foreground uppercase'
-        >
-          {step + 1} · {STEP_TITLES[step]}
-        </span>
-        <div className='flex gap-1.5' aria-hidden='true'>
-          {STEP_TITLES.map((title, index) => (
-            <span
-              key={title}
-              className={cn(
-                'h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none',
-                index === step ? 'w-[18px] bg-primary' : 'w-1.5 bg-border'
-              )}
-            />
-          ))}
-        </div>
-      </div>
+  // Is there content below the fold? Checked on scroll, on resize and when the
+  // position changes.
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!page || !body) return;
+    const update = () =>
+      setMoreBelow(body.scrollTop + body.clientHeight < body.scrollHeight - 4);
+    update();
+    body.addEventListener('scroll', update, { passive: true });
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    observer?.observe(body);
+    if (body.firstElementChild) observer?.observe(body.firstElementChild);
+    return () => {
+      body.removeEventListener('scroll', update);
+      observer?.disconnect();
+    };
+  }, [page, frame]);
 
-      <div
-        aria-hidden='true'
-        data-slot='share-progress'
-        className='flex h-4 items-center justify-between gap-2 text-xs font-semibold text-muted-foreground'
+  const stepTitle = (
+    <div className='flex items-center justify-between gap-2'>
+      <span
+        ref={titleRef}
+        id={titleId}
+        className='text-xs font-bold tracking-wide text-muted-foreground uppercase'
       >
-        {step === SHARE_STEP && shareSteps.length > 0 && (
-          <>
-            <span>{shareProgressLabel(shareSteps, sub)}</span>
-            <span className='flex gap-1'>
-              {shareSteps.map((_, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    'size-1.5 rounded-full transition-colors duration-300 motion-reduce:transition-none',
-                    index <= sub ? 'bg-primary' : 'bg-border'
-                  )}
-                />
-              ))}
-            </span>
-          </>
-        )}
+        {step + 1} · {STEP_TITLES[step]}
+      </span>
+      <div className='flex gap-1.5' aria-hidden='true'>
+        {STEP_TITLES.map((title, index) => (
+          <span
+            key={title}
+            className={cn(
+              'h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none',
+              index === step ? 'w-[18px] bg-primary' : 'w-1.5 bg-border'
+            )}
+          />
+        ))}
       </div>
-
-      <ul aria-hidden='true' className='grid gap-4'>
-        {before.members.map((m, index) => {
-          const row = rows[index];
-          return (
-            <PaidShareRow
-              key={m.member.id}
-              member={m.member}
-              mood={moods.get(m.member.id)}
-              balance={row.balance}
-              paid={row.paid}
-              share={row.share}
-              scaleMax={scaleMax}
-              colors={before.colors}
-              motion={{
-                index,
-                paidGrown: grown,
-                focus: row.focus,
-                split: row.split,
-                shareShown: row.shareShown,
-                shareAmountVisible: step >= SHARE_STEP,
-                balanceVisible: step >= 2,
-              }}
-            />
-          );
-        })}
-      </ul>
-
-      <Footer step={step} before={before} layout={layout} />
-    </>
+    </div>
+  );
+  const shareProgress = (
+    <div
+      aria-hidden='true'
+      data-slot='share-progress'
+      className='flex h-4 items-center justify-between gap-2 text-xs font-semibold text-muted-foreground'
+    >
+      {step === SHARE_STEP && shareSteps.length > 0 && (
+        <>
+          <span>{shareProgressLabel(shareSteps, sub)}</span>
+          <span className='flex gap-1'>
+            {shareSteps.map((_, index) => (
+              <span
+                key={index}
+                className={cn(
+                  'size-1.5 rounded-full transition-colors duration-300 motion-reduce:transition-none',
+                  index <= sub ? 'bg-primary' : 'bg-border'
+                )}
+              />
+            ))}
+          </span>
+        </>
+      )}
+    </div>
+  );
+  const rowList = (
+    <ul aria-hidden='true' className='grid gap-4'>
+      {before.members.map((m, index) => {
+        const row = rows[index];
+        return (
+          <PaidShareRow
+            key={m.member.id}
+            member={m.member}
+            mood={moods.get(m.member.id)}
+            balance={row.balance}
+            paid={row.paid}
+            share={row.share}
+            scaleMax={scaleMax}
+            colors={before.colors}
+            motion={{
+              index,
+              paidGrown: grown,
+              focus: row.focus,
+              split: row.split,
+              shareShown: row.shareShown,
+              shareAmountVisible: step >= SHARE_STEP,
+              balanceVisible: step >= 2,
+            }}
+          />
+        );
+      })}
+    </ul>
   );
   const narration = (
-    <>
-      <p
-        aria-live='polite'
-        aria-atomic='true'
-        className={cn(
-          'text-[0.9375rem] leading-relaxed',
-          sheet ? 'min-h-[3lh]' : 'min-h-[5lh]'
-        )}
-      >
-        <span className='sr-only'>
-          Paso {step + 1} de {STEP_COUNT}: {STEP_TITLES[step]}.{' '}
-          {step === SHARE_STEP && shareSteps.length > 0
-            ? `${shareProgressLabel(shareSteps, sub)}. `
-            : ''}
-        </span>
-        {narrate(before, step, settleAtEnd, shareStep)}
-      </p>
-
-      <div className='flex items-center justify-center gap-2'>
-        <Button
-          variant='outline'
-          size='icon'
-          aria-label='Paso anterior'
-          onClick={() => go(frame - 1)}
-        >
-          <ChevronLeft className='size-5' aria-hidden='true' />
-        </Button>
-        {!reducedMotion && (
-          <Button
-            variant='outline'
-            onClick={() => setWantsPlay((value) => !value)}
-          >
-            {playing ? (
-              <Pause aria-hidden='true' />
-            ) : (
-              <Play aria-hidden='true' />
-            )}
-            {playing ? 'Pausar' : 'Reproducir'}
-          </Button>
-        )}
-        <Button
-          variant='outline'
-          size='icon'
-          aria-label='Paso siguiente'
-          onClick={() => go(frame + 1)}
-        >
-          <ChevronRight className='size-5' aria-hidden='true' />
-        </Button>
-      </div>
-    </>
+    <p
+      ref={narrationRef}
+      aria-live='polite'
+      aria-atomic='true'
+      className={cn(
+        'text-[0.9375rem] leading-relaxed',
+        page ? 'min-h-[4lh]' : 'min-h-[5lh]'
+      )}
+    >
+      <span className='sr-only'>
+        Paso {step + 1} de {STEP_COUNT}: {STEP_TITLES[step]}.{' '}
+        {step === SHARE_STEP && shareSteps.length > 0
+          ? `${shareProgressLabel(shareSteps, sub)}. `
+          : ''}
+      </span>
+      {narrate(before, step, settleAtEnd, shareStep)}
+    </p>
   );
+  const controls = (
+    <div className='flex items-center justify-center gap-2'>
+      <Button
+        variant='outline'
+        size='icon'
+        aria-label='Paso anterior'
+        onClick={() => go(frame - 1)}
+      >
+        <ChevronLeft className='size-5' aria-hidden='true' />
+      </Button>
+      {!reducedMotion && (
+        <Button
+          variant='outline'
+          onClick={() => setWantsPlay((value) => !value)}
+        >
+          {playing ? <Pause aria-hidden='true' /> : <Play aria-hidden='true' />}
+          {playing ? 'Pausar' : 'Reproducir'}
+        </Button>
+      )}
+      <Button
+        variant='outline'
+        size='icon'
+        aria-label='Paso siguiente'
+        onClick={() => go(frame + 1)}
+      >
+        <ChevronRight className='size-5' aria-hidden='true' />
+      </Button>
+    </div>
+  );
+  const below = <Footer step={step} before={before} layout={layout} />;
 
   return (
     <section
-      ref={sectionRef}
       aria-label={label}
       className={cn(
-        'grid gap-3',
-        sheet &&
-          'gap-0 [--sheet-pb:max(1rem,env(safe-area-inset-bottom))] [--sheet-px:1rem] md:[--sheet-pb:1.5rem] md:[--sheet-px:1.5rem]',
+        page ? 'flex min-h-0 flex-1 flex-col' : 'grid gap-3',
         className
       )}
       data-layout={layout}
       data-step={step}
       data-sub={step === SHARE_STEP ? sub : undefined}
     >
-      {sheet ? (
+      {page ? (
         <>
-          <div
-            data-slot='player-body'
-            className='grid gap-3 px-(--sheet-px) pb-4'
-          >
-            {top}
+          <div className='relative flex min-h-0 flex-1 flex-col'>
+            <div
+              ref={bodyRef}
+              data-slot='player-body'
+              // Focusable so the keyboard can scroll it (axe: scrollable region).
+              tabIndex={0}
+              className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-inset'
+            >
+              <div className='grid gap-3 px-4 pt-3 pb-4 md:px-6'>
+                {stepTitle}
+                {narration}
+                {shareProgress}
+                {rowList}
+                {below}
+              </div>
+            </div>
+            {moreBelow && (
+              <div
+                aria-hidden='true'
+                data-slot='scroll-more'
+                className='pointer-events-none absolute inset-x-0 bottom-0 flex h-10 items-end justify-center bg-linear-to-t from-card to-transparent'
+              >
+                <ChevronDown className='size-5 text-muted-foreground' />
+              </div>
+            )}
           </div>
           <div
-            ref={footerRef}
             data-slot='player-footer'
-            className='sticky bottom-0 z-10 grid gap-3 border-t border-border/60 bg-card px-(--sheet-px) pt-3 pb-(--sheet-pb)'
+            className='shrink-0 border-t border-border/60 bg-card px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-6'
           >
-            {narration}
+            {controls}
           </div>
         </>
       ) : (
         <>
-          {top}
+          {stepTitle}
+          {shareProgress}
+          {rowList}
+          {below}
           {narration}
+          {controls}
         </>
       )}
     </section>
@@ -462,7 +489,7 @@ function buildRows({
  * Below the plot: the color legend in steps 1 to 3 and, in the last one, the
  * payments already made and the transfers that are still missing. In the
  * `card` layout both live in the same grid cell so the card never changes
- * height; in the `sheet` layout only the one that applies exists.
+ * height; in the `page` layout only the one that applies exists.
  */
 function Footer({
   step,
@@ -474,7 +501,7 @@ function Footer({
   layout: PlayerLayout;
 }) {
   const last = step === STEP_COUNT - 1;
-  const sheet = layout === 'sheet';
+  const page = layout === 'page';
   const legend = buildLegend(before);
   const nameOf = (id: string) =>
     before.members.find((m) => m.member.id === id)?.member.name ?? 'alguien';
@@ -484,7 +511,7 @@ function Footer({
       data-slot='legend'
       className={cn(
         'flex flex-wrap content-start justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground transition-opacity duration-300 motion-reduce:transition-none',
-        !sheet && last && 'invisible opacity-0'
+        !page && last && 'invisible opacity-0'
       )}
     >
       {legend.map((entry) => (
@@ -505,7 +532,7 @@ function Footer({
       data-slot='settling'
       className={cn(
         'grid content-start gap-1.5 transition-opacity duration-500 motion-reduce:transition-none',
-        !sheet && !last && 'invisible opacity-0'
+        !page && !last && 'invisible opacity-0'
       )}
     >
       {before.payments.length > 0 && (
@@ -547,7 +574,7 @@ function Footer({
       </div>
     </div>
   );
-  if (sheet) return last ? settling : legendList;
+  if (page) return last ? settling : legendList;
   return (
     <div className='grid [&>*]:col-start-1 [&>*]:row-start-1'>
       {legendList}
@@ -588,135 +615,4 @@ function TransferRow({
       </span>
     </div>
   );
-}
-
-/* ------------------------------------------------------------------ */
-
-interface GuideTarget {
-  step: number;
-  /** Rows (by index) of the people involved in the current sub-step. */
-  rowIndexes: number[];
-  /** The ones among them who paid the expense(s) being split. */
-  payerIndexes: number[];
-}
-
-/** Nearest ancestor that scrolls vertically (the dialog or sheet body). */
-function findScroller(el: HTMLElement | null): HTMLElement | null {
-  for (let node = el?.parentElement; node; node = node.parentElement) {
-    const overflow = getComputedStyle(node).overflowY;
-    if (overflow === 'auto' || overflow === 'scroll') return node;
-  }
-  return null;
-}
-
-/**
- * Scroll behavior of the `sheet` layout. Returns a function that, given the
- * new position of the animation, brings what changed into view inside the
- * dialog's scroll area, above the pinned footer: the step 4 transfers, or the
- * rows of the people in the current sub-step. It never moves the scroll while
- * the user scrolled in the last couple of seconds, and it does not animate
- * with reduced motion. On opening, the body always starts at the top.
- */
-function useGuidedScroll({
-  enabled,
-  sectionRef,
-  footerRef,
-  reducedMotion,
-}: {
-  enabled: boolean;
-  sectionRef: RefObject<HTMLElement | null>;
-  footerRef: RefObject<HTMLElement | null>;
-  reducedMotion: boolean;
-}) {
-  const lastUserScroll = useRef(-Infinity);
-  // Set at the first move of the animation: from then on the scroll is ours.
-  const started = useRef(false);
-
-  useLayoutEffect(() => {
-    const scroller = enabled ? findScroller(sectionRef.current) : null;
-    if (!scroller) return;
-    const openedAt = performance.now();
-    scroller.scrollTop = 0;
-    const touch = (event: Event) => {
-      // Pressing the pinned buttons is not scrolling.
-      if (
-        event.target instanceof Node &&
-        footerRef.current?.contains(event.target)
-      )
-        return;
-      lastUserScroll.current = performance.now();
-    };
-    // Focus (or anything else) moving the body just after opening goes back.
-    const settle = () => {
-      if (
-        !started.current &&
-        performance.now() - openedAt < OPEN_SETTLE_MS &&
-        lastUserScroll.current === -Infinity &&
-        scroller.scrollTop !== 0
-      )
-        scroller.scrollTop = 0;
-    };
-    const events = ['wheel', 'touchstart', 'touchmove', 'pointerdown'] as const;
-    for (const name of events)
-      scroller.addEventListener(name, touch, { passive: true });
-    scroller.addEventListener('scroll', settle, { passive: true });
-    return () => {
-      for (const name of events) scroller.removeEventListener(name, touch);
-      scroller.removeEventListener('scroll', settle);
-    };
-  }, [enabled, sectionRef, footerRef]);
-
-  return ({ step, rowIndexes, payerIndexes }: GuideTarget) => {
-    started.current = true;
-    const section = sectionRef.current;
-    const scroller = enabled ? findScroller(section) : null;
-    if (!section || !scroller || typeof scroller.scrollTo !== 'function')
-      return;
-    if (performance.now() - lastUserScroll.current < USER_SCROLL_GRACE_MS)
-      return;
-    const behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth';
-    if (step === 0) {
-      // Back to the first step of the loop: show the first person again.
-      if (scroller.scrollTop > 0) scroller.scrollTo({ top: 0, behavior });
-      return;
-    }
-    const box = scroller.getBoundingClientRect();
-    const viewTop = box.top;
-    const viewBottom = Math.min(
-      box.bottom,
-      footerRef.current?.getBoundingClientRect().top ?? box.bottom
-    );
-    const gap = 8;
-    const room = viewBottom - viewTop - 2 * gap;
-    const rowRects = (indexes: number[]) => {
-      const rows = section.querySelectorAll('[data-slot="paid-share-row"]');
-      return indexes.flatMap((index) => {
-        const row = rows[index];
-        return row ? [row.getBoundingClientRect()] : [];
-      });
-    };
-    let rects: DOMRect[] = [];
-    if (step === STEP_COUNT - 1) {
-      const target = section.querySelector('[data-slot="pending-transfers"]');
-      if (target) rects = [target.getBoundingClientRect()];
-    } else if (step === SHARE_STEP) {
-      rects = rowRects(rowIndexes);
-      const span = (list: DOMRect[]) =>
-        Math.max(...list.map((r) => r.bottom)) -
-        Math.min(...list.map((r) => r.top));
-      // Not everybody fits: who paid is the one that must be on screen.
-      if (rects.length > 0 && span(rects) > room) {
-        const payers = rowRects(payerIndexes);
-        if (payers.length > 0) rects = payers;
-      }
-    }
-    if (rects.length === 0) return;
-    const top = Math.min(...rects.map((r) => r.top));
-    const bottom = Math.max(...rects.map((r) => r.bottom));
-    let delta = 0;
-    if (bottom - top > room || top < viewTop + gap) delta = top - viewTop - gap;
-    else if (bottom > viewBottom - gap) delta = bottom - viewBottom + gap;
-    if (Math.abs(delta) > 1)
-      scroller.scrollTo({ top: scroller.scrollTop + delta, behavior });
-  };
 }

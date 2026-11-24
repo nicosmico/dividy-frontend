@@ -22,9 +22,9 @@ export function MemberBalances({ group }: { group: Group }) {
   const moods = useMemberMoods(group);
   return (
     <section aria-labelledby='member-balances-heading' className='grid gap-2'>
-      <h2 id='member-balances-heading' className='text-sm font-semibold'>
+      <h3 id='member-balances-heading' className='text-sm font-semibold'>
         Saldo por miembro
-      </h2>
+      </h3>
       <ul className='grid gap-2'>
         {group.members.map((member) => {
           const breakdown = getMemberBreakdown(group, member.id);

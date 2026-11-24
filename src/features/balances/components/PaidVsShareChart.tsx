@@ -41,9 +41,9 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
     <section aria-labelledby='chart-heading'>
       <Card className='gap-4 rounded-card p-4'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
-          <h2 id='chart-heading' className='text-base font-bold'>
+          <h3 id='chart-heading' className='text-base font-bold'>
             Pagó vs. su parte
-          </h2>
+          </h3>
           <Button variant='accent' size='sm' onClick={onExplain}>
             <Play aria-hidden='true' className='fill-current' />
             Ver cómo se calculó
