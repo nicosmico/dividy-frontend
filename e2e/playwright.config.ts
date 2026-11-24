@@ -14,6 +14,19 @@ const withWebkit = !!process.env.CI || process.env.PW_WEBKIT === '1';
 // to `local`, which is git-ignored, so they can never be committed by mistake.
 const snapshotFolder = executablePath ? 'local' : 'baseline';
 
+// The `visual` project exists only when asked for (`--project=visual`, which
+// is what `npm run test:visual` does, or PW_VISUAL=1), so a plain
+// `npm run test:e2e` never runs the screenshots. Workers re-read this config,
+// hence the environment variable (it is inherited by them).
+const argv = process.argv;
+if (
+  argv.includes('--project=visual') ||
+  argv.some((arg, i) => arg === '--project' && argv[i + 1] === 'visual')
+) {
+  process.env.PW_VISUAL = '1';
+}
+const withVisual = process.env.PW_VISUAL === '1';
+
 // Only the `visual` project runs this spec, and it runs nothing else.
 const VISUAL_SPEC = /visual\.spec\.ts$/;
 
@@ -51,23 +64,27 @@ export default defineConfig({
         launchOptions,
       },
     },
-    {
-      // Visual regression (e2e/visual.spec.ts). Everything that can change a
-      // pixel is fixed: size, scale, motion, locale and time zone. Run it in
-      // the Playwright Docker image (docs/testing.md).
-      name: 'visual',
-      testMatch: VISUAL_SPEC,
-      retries: 0,
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 390, height: 844 },
-        deviceScaleFactor: 1,
-        reducedMotion: 'reduce',
-        locale: 'es-CL',
-        timezoneId: 'America/Santiago',
-        launchOptions,
-      },
-    },
+    ...(withVisual
+      ? [
+          {
+            // Visual regression (e2e/visual.spec.ts). Everything that can change a
+            // pixel is fixed: size, scale, motion, locale and time zone. Run it in
+            // the Playwright Docker image (docs/testing.md).
+            name: 'visual',
+            testMatch: VISUAL_SPEC,
+            retries: 0,
+            use: {
+              ...devices['Desktop Chrome'],
+              viewport: { width: 390, height: 844 },
+              deviceScaleFactor: 1,
+              reducedMotion: 'reduce' as const,
+              locale: 'es-CL',
+              timezoneId: 'America/Santiago',
+              launchOptions,
+            },
+          },
+        ]
+      : []),
     ...(withWebkit
       ? [
           {
