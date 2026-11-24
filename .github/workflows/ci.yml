@@ -62,3 +62,50 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
+
+  # The visual job runs inside the official Playwright image of the SAME
+  # version as @playwright/test (read from the lockfile): same browser build,
+  # same system fonts, so the baseline images match pixel for pixel on every run.
+  playwright-version:
+    name: Playwright version
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+
+  visual:
+    name: Visual regression
+    needs: playwright-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      options: --ipc=host
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Check that the baseline images exist
+        run: |
+          if ! ls e2e/__screenshots__/baseline/*.png > /dev/null 2>&1; then
+            echo "::error title=Faltan las imágenes base::No hay imágenes base de regresión visual en e2e/__screenshots__/baseline. Corre el workflow 'Update visual snapshots' sobre esta rama (Actions > Update visual snapshots > Run workflow) y vuelve a correr este job. Ver docs/testing.md."
+            exit 1
+          fi
+      # 'none': a missing or different image fails the job; nothing is written.
+      - name: Visual regression
+        run: npm run test:visual -- --update-snapshots=none
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diffs
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
