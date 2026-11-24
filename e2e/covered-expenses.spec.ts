@@ -10,6 +10,7 @@ import {
 } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
+import { skipViewerSheet } from './viewer';
 
 const MEMBERS = ['Ana', 'Beto', 'Carla'];
 
@@ -22,6 +23,7 @@ async function createGroup(page: Page) {
     await memberInput.press('Enter');
   }
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
   await expect(page).toHaveURL(/\/groups\/[^/]+\/expenses$/);
 }
 

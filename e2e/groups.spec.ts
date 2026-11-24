@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { skipViewerSheet } from './viewer';
 
 test('crear grupo, administrar miembros, persistir tras recargar y eliminar el grupo', async ({
   page,
@@ -23,6 +24,7 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
     await memberInput.press('Enter');
   }
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
 
   await expect(page).toHaveURL(/\/groups\/[^/]+\/expenses$/);
   await expect(

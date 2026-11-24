@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
+import { seedDocument } from './seed';
+import { skipViewerSheet } from './viewer';
 
 test('los nombres y las descripciones se guardan con mayúscula inicial y persisten', async ({
   page,
@@ -14,6 +16,7 @@ test('los nombres y las descripciones se guardan con mayúscula inicial y persis
     await memberInput.press('Enter');
   }
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
   await expect(page).toHaveURL(/\/groups\/[^/]+\/expenses$/);
   await expect(
     page.getByRole('heading', { name: 'Viaje al sur', level: 1 })
@@ -57,14 +60,7 @@ test('migra un documento v1 en minúsculas a v2 con mayúscula inicial', async (
       },
     ],
   });
-  await page.addInitScript(
-    (document) => {
-      if (!window.localStorage.getItem('dividy')) {
-        window.localStorage.setItem('dividy', document);
-      }
-    },
-    JSON.stringify({ version: 1, groups: [group] })
-  );
+  await seedDocument(page, { version: 1, groups: [group] });
 
   await page.goto('/');
   const card = page.getByRole('link', { name: /Viaje al sur/ });

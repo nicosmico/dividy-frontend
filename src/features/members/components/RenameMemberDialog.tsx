@@ -152,7 +152,11 @@ function RenameMemberForm({
         <Label htmlFor='member-is-me' className='text-base'>
           Soy yo
         </Label>
-        <Switch id='member-is-me' checked={isMe} onCheckedChange={setIsMe} />
+        {/* Radix adds a hidden checkbox inside a form and shifts it left by
+            its own width: `relative` keeps it inside the row, not off the sheet. */}
+        <span className='relative inline-flex'>
+          <Switch id='member-is-me' checked={isMe} onCheckedChange={setIsMe} />
+        </span>
       </div>
       <ResponsiveDialogFooter>
         <Button type='button' variant='outline' onClick={onDone}>

@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { computeBalances, formatAmount, suggestTransfers } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
+import { skipViewerSheet } from './viewer';
 
 async function createGroup(page: Page, name: string, members: string[]) {
   await page.goto('/groups/new');
@@ -13,6 +14,7 @@ async function createGroup(page: Page, name: string, members: string[]) {
     await memberInput.press('Enter');
   }
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
   await expect(page).toHaveURL(/\/groups\/[^/]+\/expenses$/);
 }
 

@@ -11,6 +11,7 @@ import { openTab } from './navigation';
 import { sampleGroups, seedDocument } from './seed';
 import { snapshotToken } from './snapshot-link';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
+import { skipViewerSheet } from './viewer';
 
 declare global {
   interface Window {
@@ -55,6 +56,7 @@ async function createGroup(page: Page, name: string, members: string[]) {
     await memberInput.press('Enter');
   }
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
   await expect(page).toHaveURL(/\/groups\/[^/]+\/expenses$/);
 }
 
@@ -153,6 +155,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   const context = await freshContext(browser, testInfo);
   const other = await context.newPage();
   await other.goto(first.link);
+  await skipViewerSheet(other);
   const banner = other.getByRole('region', { name: 'Captura de solo lectura' });
   await expect(banner).toBeVisible();
   await expect(banner).toContainText('Captura del');
@@ -380,6 +383,7 @@ test('un link armado por otro programa (zlib) también se abre', async ({
   await page.goto(
     `/shared#${snapshotToken(group, '2026-11-24T13:42:00.000Z')}`
   );
+  await skipViewerSheet(page);
   await expect(
     page.getByRole('heading', { name: 'Asado', level: 1 })
   ).toBeVisible();
@@ -405,6 +409,7 @@ test('un documento v3 (sin capturas) se migra a v4 al guardar una captura, sin p
   await page.goto(
     `/shared#${snapshotToken(other, '2026-11-24T13:42:00.000Z')}`
   );
+  await skipViewerSheet(page);
   await page.getByRole('button', { name: 'Guardar en mi celular' }).click();
   await expect(page.getByText('Captura guardada en Mis grupos')).toBeVisible();
 

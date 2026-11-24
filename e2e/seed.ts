@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 import type { Group } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
+import { seedViewers } from './viewer';
 
 /** Two groups: "Viaje a Pucón" with expenses and a payment, and an empty "Casa". */
 export function sampleGroups(): Group[] {
@@ -36,8 +37,19 @@ export function sampleGroups(): Group[] {
   return [trip, house];
 }
 
-/** Saves groups in localStorage before the app loads (only on the first load, so reloads keep the app's own changes). */
-export async function seedGroups(page: Page, groups: Group[]) {
+/** Saves groups (and, unless `askViewer`, "none" as who you are in each) in localStorage before the app loads (only on the first load, so reloads keep the app's own changes). */
+export async function seedGroups(
+  page: Page,
+  groups: Group[],
+  options: { askViewer?: boolean } = {}
+) {
+  // Existing tests are not about "¿Quién eres?": every seeded group starts as "none".
+  if (!options.askViewer) {
+    await seedViewers(
+      page,
+      Object.fromEntries(groups.map((g) => [`group:${g.id}`, { none: true }]))
+    );
+  }
   await page.addInitScript(
     (document) => {
       if (!window.localStorage.getItem('dividy')) {
@@ -48,8 +60,30 @@ export async function seedGroups(page: Page, groups: Group[]) {
   );
 }
 
-/** Saves an exact document (e.g. an old version) before the app loads, only on the first load. */
-export async function seedDocument(page: Page, document: unknown) {
+/**
+ * Saves an exact document (e.g. an old version) before the app loads, only on
+ * the first load. Like `seedGroups`, every group and snapshot in it starts as
+ * "none" for who you are, unless `askViewer`.
+ */
+export async function seedDocument(
+  page: Page,
+  document: unknown,
+  options: { askViewer?: boolean } = {}
+) {
+  if (!options.askViewer) {
+    const { groups = [], snapshots = [] } = document as {
+      groups?: { id: string }[];
+      snapshots?: { sourceGroupId: string }[];
+    };
+    await seedViewers(page, {
+      ...Object.fromEntries(
+        groups.map((g) => [`group:${g.id}`, { none: true }])
+      ),
+      ...Object.fromEntries(
+        snapshots.map((s) => [`snapshot:${s.sourceGroupId}`, { none: true }])
+      ),
+    });
+  }
   await page.addInitScript((raw) => {
     if (!window.localStorage.getItem('dividy')) {
       window.localStorage.setItem('dividy', raw);
