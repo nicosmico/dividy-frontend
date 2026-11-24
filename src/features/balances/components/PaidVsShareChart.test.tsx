@@ -1,7 +1,8 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { makeGroup } from '@/domain/test-utils/fixtures';
+import { ExplanationPlayer } from '@/features/explanation/ExplanationPlayer';
 import { renderWithProviders } from '@/test/render-with-providers';
 
 const ROUTE = '/groups/g1/balances';
@@ -191,7 +192,8 @@ describe('"Ver cómo se calculó"', () => {
     expect(
       within(dialog).getByText('2 · Se calcula su parte')
     ).toBeInTheDocument();
-    for (let i = 0; i < 2; i++) {
+    // Two expenses: step 2 has two sub-steps, then steps 3 and 4.
+    for (let i = 0; i < 3; i++) {
       await user.click(
         within(dialog).getByRole('button', { name: 'Paso siguiente' })
       );
@@ -201,5 +203,55 @@ describe('"Ver cómo se calculó"', () => {
         /Para quedar al día: Carla le transfiere \$13\.000 a Ana/
       )
     ).toBeInTheDocument();
+  });
+});
+
+describe('El gráfico y la animación dibujan la misma fila', () => {
+  /** What a row looks like: its pieces, their text and their paint. */
+  const fingerprint = (row: Element) =>
+    [
+      ...row.querySelectorAll(
+        '[data-slot="paid-share-row"], [data-slot="bar"], [data-slot="segment"], [data-slot="amount"], img[data-mood]'
+      ),
+    ].map((el) => [
+      el.getAttribute('data-slot') ?? 'face',
+      el.getAttribute('data-mood'),
+      el.textContent,
+      el.querySelector<HTMLElement>('span[style*="background"]')?.style
+        .backgroundColor ?? '',
+      (el as HTMLElement).style?.flex ?? '',
+    ]);
+
+  it('al final de la animación cada fila es la del gráfico', async () => {
+    const group = tripGroup();
+    const { unmount } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [group],
+    });
+    const section = await chart();
+    const chartRows = [
+      ...within(section)
+        .getAllByRole('list')[0]
+        .querySelectorAll(':scope > li'),
+    ];
+    const fromChart = chartRows.map(fingerprint);
+    expect(chartRows[0]).toHaveAttribute('data-slot', 'paid-share-row');
+    unmount();
+
+    const { container } = render(
+      <ExplanationPlayer group={group} label='Animación' />
+    );
+    // 2 expenses: step 1, two sub-steps, step 3 and step 4 (real data).
+    for (let i = 0; i < 4; i++) {
+      screen.getByRole('button', { name: 'Paso siguiente' }).click();
+      await waitFor(() => expect(container).toBeTruthy());
+    }
+    await waitFor(() =>
+      expect(screen.getByText('4 · Se salda')).toBeInTheDocument()
+    );
+    const fromPlayer = [
+      ...container.querySelectorAll('[data-slot="paid-share-row"]'),
+    ].map(fingerprint);
+    expect(fromPlayer).toEqual(fromChart);
   });
 });

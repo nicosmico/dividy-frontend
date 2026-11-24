@@ -16,7 +16,7 @@ export function LazyExplanationPlayer(props: Props) {
       fallback={
         <Skeleton
           aria-hidden='true'
-          className='h-[28rem] w-full rounded-card'
+          className='h-[40rem] w-full rounded-card'
         />
       }
     >

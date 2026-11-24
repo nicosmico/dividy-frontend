@@ -25,6 +25,19 @@ function renderExample() {
   };
 }
 
+/** The welcome example has 3 expenses, so step 2 has 3 sub-steps: 6 frames. */
+const FRAMES = 6;
+
+async function next(user: ReturnType<typeof userEvent.setup>, times = 1) {
+  for (let i = 0; i < times; i++) {
+    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+  }
+}
+
+const slot = (root: ParentNode, name: string) => [
+  ...root.querySelectorAll(`[data-slot="${name}"]`),
+];
+
 function mockReducedMotion(reduce: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: reduce && query.includes('reduce'),
@@ -49,25 +62,91 @@ describe('ExplanationPlayer', () => {
       screen.getByText(/Ana pagó Carne \(\$30\.000\)/)
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    await next(user);
     expect(screen.getByText('2 · Se calcula su parte')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    await next(user, 3);
     expect(screen.getByText('3 · Se compara')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    await next(user);
     expect(screen.getByText('4 · Se salda')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    await next(user);
     expect(section).toHaveAttribute('data-step', '0');
     await user.click(screen.getByRole('button', { name: 'Paso anterior' }));
     expect(section).toHaveAttribute('data-step', '3');
   });
 
+  it('el paso 2 recorre un gasto a la vez, del más grande al más chico, y "Anterior" retrocede de a uno', async () => {
+    const user = userEvent.setup();
+    const { section } = renderExample();
+    const live = () => document.querySelector('[aria-live="polite"]')!;
+    const progress = () => slot(section, 'share-progress')[0].textContent;
+
+    await next(user);
+    expect(section).toHaveAttribute('data-sub', '0');
+    expect(progress()).toContain('Gasto 1 de 3');
+    expect(live()).toHaveTextContent(
+      'Beto pagó Alojamiento ($45.000). Se divide entre 3: $15.000 cada uno.'
+    );
+    await next(user);
+    expect(progress()).toContain('Gasto 2 de 3');
+    expect(live()).toHaveTextContent(
+      'Ana pagó Carne ($30.000). Se divide entre 3: $10.000 cada uno.'
+    );
+    await next(user);
+    expect(live()).toHaveTextContent(
+      'Carla pagó Bebidas ($15.000). Se divide entre 2: $7.500 cada uno.'
+    );
+    await user.click(screen.getByRole('button', { name: 'Paso anterior' }));
+    expect(section).toHaveAttribute('data-sub', '1');
+    expect(progress()).toContain('Gasto 2 de 3');
+    await next(user, 2);
+    expect(section).toHaveAttribute('data-step', '2');
+    expect(section).not.toHaveAttribute('data-sub');
+  });
+
+  it('en cada sub-paso se resalta el gasto, se divide en partes y los tramos de "Su parte" aparecen de a uno', async () => {
+    const user = userEvent.setup();
+    const { section } = renderExample();
+    const opacities = (row: number, bar: number) =>
+      slot(slot(section, 'paid-share-row')[row], 'bar')[bar] &&
+      slot(
+        slot(slot(section, 'paid-share-row')[row], 'bar')[bar],
+        'segment'
+      ).map((el) => (el as HTMLElement).style.opacity);
+
+    // Step 1: "Su parte" is empty (hidden segments), no pieces anywhere.
+    expect(opacities(0, 1)).toEqual(['0', '0']);
+    expect(slot(section, 'pieces')).toHaveLength(0);
+
+    await next(user);
+    // Alojamiento (Beto's) is split in 3 pieces; the others are dimmed.
+    const pieces = slot(section, 'pieces');
+    expect(pieces).toHaveLength(1);
+    expect(pieces[0].children).toHaveLength(3);
+    expect(slot(section, 'paid-share-row')[1]).toContainElement(
+      pieces[0] as HTMLElement
+    );
+    // Ana: Alojamiento is her 2nd share slice (biggest first: 15.000, 10.000).
+    expect(opacities(0, 1)).toEqual(['1', '0']);
+    // Carla gets a slice of Alojamiento too; Beto's other expense is hidden.
+    expect(opacities(2, 1)).toEqual(['1', '0', '0']);
+
+    await next(user, 2);
+    expect(opacities(0, 1)).toEqual(['1', '1']);
+    expect(opacities(2, 1)).toEqual(['1', '1', '1']);
+    // The share amount is the running total.
+    expect(
+      slot(slot(section, 'paid-share-row')[0], 'amount')[1]
+    ).toHaveTextContent('$25.000');
+  });
+
   it('anuncia el texto de cada paso en una región aria-live', async () => {
     const user = userEvent.setup();
     renderExample();
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    await next(user);
     const live = document.querySelector('[aria-live="polite"]')!;
     expect(live).toHaveTextContent('Paso 2 de 4: Se calcula su parte.');
-    expect(live).toHaveTextContent('Bebidas solo entre Beto y Carla');
+    expect(live).toHaveTextContent('Gasto 1 de 3');
+    expect(live).toHaveTextContent('Beto pagó Alojamiento');
   });
 
   it('avanza solo cada 4 segundos en loop y se detiene con Pausar', () => {
@@ -75,7 +154,11 @@ describe('ExplanationPlayer', () => {
     const { section } = renderExample();
     act(() => void vi.advanceTimersByTime(4000));
     expect(section).toHaveAttribute('data-step', '1');
-    for (let i = 0; i < 3; i++) act(() => void vi.advanceTimersByTime(4000));
+    for (let i = 0; i < FRAMES - 2; i++) {
+      act(() => void vi.advanceTimersByTime(4000));
+    }
+    expect(section).toHaveAttribute('data-step', '3');
+    act(() => void vi.advanceTimersByTime(4000));
     expect(section).toHaveAttribute('data-step', '0');
 
     act(() => screen.getByRole('button', { name: 'Pausar' }).click());
@@ -120,15 +203,11 @@ describe('ExplanationPlayer', () => {
   it('las caritas están tristes en los pasos 1 a 3 y felices en el 4', async () => {
     const user = userEvent.setup();
     const { section } = renderExample();
-    for (const expected of [
-      ['sad', 'sad', 'sad'],
-      ['sad', 'sad', 'sad'],
-      ['sad', 'sad', 'sad'],
-      ['happy', 'happy', 'happy'],
-    ]) {
-      expect(moods(section)).toEqual(expected);
-      await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
+    for (let i = 0; i < FRAMES - 1; i++) {
+      expect(moods(section)).toEqual(['sad', 'sad', 'sad']);
+      await next(user);
     }
+    expect(moods(section)).toEqual(['happy', 'happy', 'happy']);
   });
 
   it('el paso 4 muestra las transferencias sugeridas del dominio', async () => {
@@ -141,26 +220,53 @@ describe('ExplanationPlayer', () => {
     ]);
     const container = rows()[0].parentElement!;
     expect(container).toHaveAttribute('aria-hidden', 'true');
-    for (let i = 0; i < 3; i++) {
-      await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
-    }
+    await next(user, FRAMES - 1);
     expect(container).toHaveAttribute('aria-hidden', 'false');
   });
 
-  it('el pie es el mismo con los tags de saldo en el paso 3', async () => {
+  it('el saldo en palabras aparece en el paso 3 y pasa a "Al día" en el 4', async () => {
     const user = userEvent.setup();
     const { section } = renderExample();
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
-    await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
-    const tags = [...section.querySelectorAll('[data-slot="balance-tag"]')].map(
-      (t) => t.textContent
-    );
-    expect(tags).toEqual(['Le deben$5.000', 'Le deben$12.500', 'Debe$17.500']);
+    const balances = () =>
+      slot(section, 'paid-share-row').map((row) => ({
+        text: row.querySelector('span.shrink-0.text-right')!.textContent,
+        hidden: row
+          .querySelector('span.shrink-0.text-right')!
+          .classList.contains('opacity-0'),
+      }));
+    expect(balances().every((b) => b.hidden)).toBe(true);
+    await next(user, 1 + 3);
+    expect(balances()).toEqual([
+      { text: 'Le deben $5.000', hidden: false },
+      { text: 'Le deben $12.500', hidden: false },
+      { text: 'Debe $17.500', hidden: false },
+    ]);
+    await next(user);
+    expect(balances().map((b) => b.text)).toEqual([
+      'Al día',
+      'Al día',
+      'Al día',
+    ]);
+  });
+
+  it('en el paso 4 de la bienvenida la barra "Pagó" iguala su parte', async () => {
+    const user = userEvent.setup();
+    const { section } = renderExample();
+    const paidAmounts = () =>
+      slot(section, 'paid-share-row').map(
+        (row) => slot(row, 'amount')[0].textContent
+      );
+    expect(paidAmounts()).toEqual(['$30.000', '$45.000', '$15.000']);
+    await next(user, FRAMES - 1);
+    expect(paidAmounts()).toEqual(['$25.000', '$32.500', '$32.500']);
   });
 });
 
 describe('ExplanationPlayer con un grupo real', () => {
-  it('con más de 4 miembros usa filas y el último paso refleja los pagos', async () => {
+  beforeEach(() => mockReducedMotion(false));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('con 5 miembros usa las mismas filas horizontales y el último paso refleja los pagos', async () => {
     const user = userEvent.setup();
     const names = ['A', 'B', 'C', 'D', 'E'];
     const group = makeGroup({
@@ -168,14 +274,39 @@ describe('ExplanationPlayer con un grupo real', () => {
       expenses: [{ amount: 10000, payer: 'A', among: names }],
       payments: [{ from: 'B', to: 'A', amount: 2000 }],
     });
-    render(<ExplanationPlayer group={group} label='Real' />);
-    expect(document.querySelector('ul.grid.gap-3')).not.toBeNull();
-    for (let i = 0; i < 3; i++) {
-      await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
-    }
+    const { container } = render(
+      <ExplanationPlayer group={group} label='Real' />
+    );
+    expect(slot(container, 'paid-share-row')).toHaveLength(5);
+    // 1 expense: frames are step 1, its sub-step, step 3 and step 4.
+    await next(user, 3);
     expect(screen.getByText('Pagos ya registrados')).toBeInTheDocument();
     expect(screen.getByText('Falta transferir')).toBeInTheDocument();
     expect(screen.getByText(/Ya se registró 1 pago/)).toBeInTheDocument();
+  });
+
+  it('con más de 6 gastos recorre los 6 más grandes y reparte el resto junto', async () => {
+    const user = userEvent.setup();
+    const names = ['A', 'B'];
+    const group = makeGroup({
+      members: names,
+      expenses: Array.from({ length: 9 }, (_, i) => ({
+        amount: (20 - i) * 1000,
+        payer: 'A',
+        among: names,
+      })),
+    });
+    const { container } = render(
+      <ExplanationPlayer group={group} label='Real' />
+    );
+    await next(user, 7);
+    expect(slot(container, 'share-progress')[0].textContent).toContain(
+      'Los otros gastos'
+    );
+    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(
+      'Los otros 3 gastos'
+    );
+    expect(slot(container, 'pieces')).toHaveLength(0);
   });
 
   it('si no falta nada dice que están al día', async () => {
@@ -188,9 +319,7 @@ describe('ExplanationPlayer con un grupo real', () => {
     const { container } = render(
       <ExplanationPlayer group={group} label='Real' />
     );
-    for (let i = 0; i < 3; i++) {
-      await user.click(screen.getByRole('button', { name: 'Paso siguiente' }));
-    }
+    await next(user, 3);
     expect(screen.getByText('¡Están al día!')).toBeInTheDocument();
     expect(moods(container)).toEqual(['happy', 'happy']);
   });

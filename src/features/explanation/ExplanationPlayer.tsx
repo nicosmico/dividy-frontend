@@ -15,7 +15,7 @@ import {
 } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { computeMemberMoods, MemberAvatar } from '@/features/members';
+import { computeMemberMoods } from '@/features/members';
 import { formatAmount, type Group } from '@/domain';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
@@ -23,15 +23,15 @@ import {
   buildExplanation,
   buildLegend,
   type Explanation,
-  type MemberExplanation,
-  type Slice,
 } from './build-explanation';
-import { fillStyle, type ColorMap } from './colors';
+import { fillStyle } from './colors';
 import { settleGroup } from './example-group';
 import { narrate, STEP_COUNT, STEP_TITLES } from './narration';
+import { PaidShareRow, type BarData } from './PaidShareRow';
+import { buildShareSteps, type ShareStep } from './share-steps';
 
-/** With up to this many members the bars are vertical columns. */
-export const MAX_COLUMN_MEMBERS = 4;
+/** Step 2 ("Se calcula su parte") is the one that has sub-steps. */
+const SHARE_STEP = 1;
 const STEP_MS = 4000;
 
 interface ExplanationPlayerProps {
@@ -64,9 +64,11 @@ function usePageVisible(): boolean {
 /**
  * The four-step animation of how Dividy computes who owes whom (decision 90),
  * drawn from the real domain: `buildExplanation` for the bars and
- * `computeMemberMoods` for the faces. Vertical columns for up to 4 members,
- * horizontal rows beyond that. CSS transitions only; with reduced motion there
- * is no autoplay and no transition, just the previous / next buttons.
+ * `computeMemberMoods` for the faces. The rows are the same `PaidShareRow` the
+ * Saldos chart draws, for any number of members. Step 2 goes through the
+ * expenses one by one (`buildShareSteps`). CSS transitions only; with reduced
+ * motion there is no autoplay and no transition, just the previous / next
+ * buttons.
  */
 export function ExplanationPlayer({
   group,
@@ -91,33 +93,53 @@ export function ExplanationPlayer({
     false
   );
   const visible = usePageVisible();
-  const [step, setStep] = useState(0);
+  const shareSteps = useMemo(() => buildShareSteps(before), [before]);
+  // Every position of the animation: the 4 steps, with step 2 repeated once
+  // per expense.
+  const frames = useMemo(() => buildFrames(shareSteps.length), [shareSteps]);
+  const [frame, setFrame] = useState(0);
+  const { step, sub } = frames[frame];
+  const [grown, setGrown] = useState(false);
   const [wantsPlay, setWantsPlay] = useState(true);
   const playing = wantsPlay && !reducedMotion;
 
-  // One timer per step: moving by hand restarts the count. It does not run
+  // The "Pagó" bars start empty and grow once the first frame is on screen.
+  useEffect(() => {
+    const id = window.setTimeout(() => setGrown(true), 60);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  // One timer per frame: moving by hand restarts the count. It does not run
   // while the tab is hidden.
   useEffect(() => {
     if (!playing || !visible) return;
     const id = window.setTimeout(
-      () => setStep((current) => (current + 1) % STEP_COUNT),
+      () => setFrame((current) => (current + 1) % frames.length),
       STEP_MS
     );
     return () => window.clearTimeout(id);
-  }, [playing, visible, step]);
+  }, [playing, visible, frame, frames.length]);
 
-  const go = (target: number) => setStep((target + STEP_COUNT) % STEP_COUNT);
+  const go = (target: number) =>
+    setFrame((target + frames.length) % frames.length);
   const last = step === STEP_COUNT - 1;
   const moods = last ? moodsAfter : moodsBefore;
   const scaleMax = Math.max(before.scaleMax, after.scaleMax, 1);
-  const columns = group.members.length <= MAX_COLUMN_MEMBERS;
   const titleId = useId();
+  const shareStep: ShareStep | undefined =
+    step === SHARE_STEP ? shareSteps[sub] : undefined;
+  const rows = useMemo(
+    () =>
+      buildRows({ before, after, settledAtEnd: settleAtEnd, step, shareStep }),
+    [before, after, settleAtEnd, step, shareStep]
+  );
 
   return (
     <section
       aria-label={label}
       className={cn('grid gap-3', className)}
       data-step={step}
+      data-sub={step === SHARE_STEP ? sub : undefined}
     >
       <div className='flex items-center justify-between gap-2'>
         <span
@@ -139,37 +161,70 @@ export function ExplanationPlayer({
         </div>
       </div>
 
-      <div aria-hidden='true'>
-        {columns ? (
-          <Columns
-            step={step}
-            before={before}
-            after={after}
-            moods={moods}
-            scaleMax={scaleMax}
-          />
-        ) : (
-          <Rows
-            step={step}
-            before={before}
-            after={after}
-            moods={moods}
-            scaleMax={scaleMax}
-          />
+      <div
+        aria-hidden='true'
+        data-slot='share-progress'
+        className='flex h-4 items-center justify-between gap-2 text-xs font-semibold text-muted-foreground'
+      >
+        {step === SHARE_STEP && shareSteps.length > 0 && (
+          <>
+            <span>{shareProgressLabel(shareSteps, sub)}</span>
+            <span className='flex gap-1'>
+              {shareSteps.map((_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    'size-1.5 rounded-full transition-colors duration-300 motion-reduce:transition-none',
+                    index <= sub ? 'bg-primary' : 'bg-border'
+                  )}
+                />
+              ))}
+            </span>
+          </>
         )}
       </div>
+
+      <ul aria-hidden='true' className='grid gap-4'>
+        {before.members.map((m, index) => {
+          const row = rows[index];
+          return (
+            <PaidShareRow
+              key={m.member.id}
+              member={m.member}
+              mood={moods.get(m.member.id)}
+              balance={row.balance}
+              paid={row.paid}
+              share={row.share}
+              scaleMax={scaleMax}
+              colors={before.colors}
+              motion={{
+                index,
+                paidGrown: grown,
+                focus: row.focus,
+                split: row.split,
+                shareShown: row.shareShown,
+                shareAmountVisible: step >= SHARE_STEP,
+                balanceVisible: step >= 2,
+              }}
+            />
+          );
+        })}
+      </ul>
 
       <Footer step={step} before={before} />
 
       <p
         aria-live='polite'
         aria-atomic='true'
-        className='min-h-[4.5rem] text-[0.9375rem] leading-relaxed'
+        className='min-h-[6rem] text-[0.9375rem] leading-relaxed'
       >
         <span className='sr-only'>
           Paso {step + 1} de {STEP_COUNT}: {STEP_TITLES[step]}.{' '}
+          {step === SHARE_STEP && shareSteps.length > 0
+            ? `${shareProgressLabel(shareSteps, sub)}. `
+            : ''}
         </span>
-        {narrate(before, step, settleAtEnd)}
+        {narrate(before, step, settleAtEnd, shareStep)}
       </p>
 
       <div className='flex items-center justify-center gap-2'>
@@ -177,7 +232,7 @@ export function ExplanationPlayer({
           variant='outline'
           size='icon'
           aria-label='Paso anterior'
-          onClick={() => go(step - 1)}
+          onClick={() => go(frame - 1)}
         >
           <ChevronLeft className='size-5' aria-hidden='true' />
         </Button>
@@ -198,7 +253,7 @@ export function ExplanationPlayer({
           variant='outline'
           size='icon'
           aria-label='Paso siguiente'
-          onClick={() => go(step + 1)}
+          onClick={() => go(frame + 1)}
         >
           <ChevronRight className='size-5' aria-hidden='true' />
         </Button>
@@ -209,300 +264,99 @@ export function ExplanationPlayer({
 
 /* ------------------------------------------------------------------ */
 
-const TRANSITION =
-  'transition-[height,width,opacity] duration-700 ease-out motion-reduce:transition-none';
-
-/** What each bar and tag shows at each step (mirrors the approved mockup). */
-function stepState(
-  step: number,
-  member: MemberExplanation,
-  after: MemberExplanation
-) {
-  const settled = after.balance === 0;
-  // Last step: someone who paid exactly their share shows the share's pieces.
-  const paidSlices =
-    step === 3 && settled ? after.shareSlices : member.paidSlices;
-  const paidTotal = step === 3 && settled ? after.share : member.paid;
-  return {
-    paidSlices,
-    paidTotal,
-    paidOpacity: step === 1 ? 0.45 : 1,
-    paidLabelVisible: step !== 1,
-    shareVisible: step >= 1,
-    tag: tagFor(step, step === 3 ? after.balance : member.balance),
-  };
-}
-
-type Tone = 'positive' | 'negative' | 'ok';
-
-function tagFor(
-  step: number,
-  balance: number
-): { top: string; amount: string; tone: Tone } | null {
-  if (step < 2) return null;
-  if (balance === 0) return { top: 'Saldo', amount: 'Al día', tone: 'ok' };
-  return balance > 0
-    ? { top: 'Le deben', amount: formatAmount(balance), tone: 'positive' }
-    : { top: 'Debe', amount: formatAmount(-balance), tone: 'negative' };
-}
-
-const TONES: Record<Tone, string> = {
-  positive: 'border border-positive/40 bg-card text-positive',
-  negative: 'border border-negative/40 bg-card text-negative',
-  ok: 'border border-transparent bg-accent text-accent-foreground',
-};
-
-/** Balance tag; two lines in a column, one line in a row. */
-function Tag({
-  tag,
-  inline,
-}: {
-  tag: ReturnType<typeof tagFor>;
-  inline?: boolean;
-}) {
-  return (
-    <span
-      data-slot='balance-tag'
-      className={cn(
-        'inline-flex max-w-full flex-col items-center justify-center rounded-xl px-2.5 py-1 leading-tight transition-[opacity,transform] duration-500 motion-reduce:transition-none',
-        inline ? 'min-h-8 flex-row gap-1.5 whitespace-nowrap' : 'min-h-10',
-        tag ? TONES[tag.tone] : 'translate-y-1.5 opacity-0'
-      )}
-    >
-      <span className='text-[11px] font-semibold whitespace-nowrap'>
-        {tag?.top ?? '·'}
-      </span>
-      <span className='text-[13px] font-extrabold whitespace-nowrap tabular-nums'>
-        {tag?.amount ?? '·'}
-      </span>
-    </span>
-  );
-}
-
-function SliceFill({
-  slices,
-  colors,
-  vertical,
-}: {
-  slices: Slice[];
-  colors: ColorMap;
-  vertical: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        'flex h-full w-full gap-[2px] overflow-hidden',
-        vertical ? 'flex-col-reverse' : 'flex-row'
-      )}
-    >
-      {slices.map((slice) => {
-        const color = colors.get(slice.expenseId);
-        return (
-          <span
-            key={slice.expenseId}
-            data-slot='slice'
-            className='min-h-[3px] min-w-[3px] rounded-[3px] ring-1 ring-foreground/15 ring-inset'
-            style={{
-              flex: `${slice.amount} 1 0%`,
-              ...(color ? fillStyle(color) : undefined),
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-interface LayoutProps {
+interface Frame {
   step: number;
+  /** Index of the expense being split (step 2 only). */
+  sub: number;
+}
+
+/** The positions of the animation; step 2 has one per sub-step (at least one). */
+function buildFrames(shareStepCount: number): Frame[] {
+  const frames: Frame[] = [];
+  for (let step = 0; step < STEP_COUNT; step++) {
+    const count = step === SHARE_STEP ? Math.max(shareStepCount, 1) : 1;
+    for (let sub = 0; sub < count; sub++) frames.push({ step, sub });
+  }
+  return frames;
+}
+
+function shareProgressLabel(steps: ShareStep[], sub: number): string {
+  const step = steps[sub];
+  return step.kind === 'rest'
+    ? step.expenseIds.length === 1
+      ? 'El otro gasto'
+      : 'Los otros gastos'
+    : `Gasto ${sub + 1} de ${steps.length}`;
+}
+
+interface RowState {
+  balance: number;
+  paid: BarData;
+  share: BarData;
+  focus: ReadonlySet<string> | null;
+  split: { expenseId: string; amounts: number[] } | null;
+  shareShown: ReadonlySet<string>;
+}
+
+/** What each row shows at a step (and sub-step); the same data as the chart. */
+function buildRows({
+  before,
+  after,
+  settledAtEnd,
+  step,
+  shareStep,
+}: {
   before: Explanation;
   after: Explanation;
-  moods: ReturnType<typeof computeMemberMoods>;
-  scaleMax: number;
-}
-
-function Columns({ step, before, after, moods, scaleMax }: LayoutProps) {
-  const compact = before.members.length > 3;
-  const barWidth = compact ? 'w-7' : 'w-9';
-  return (
-    <ul
-      className='grid items-start gap-2'
-      style={{
-        gridTemplateColumns: `repeat(${before.members.length}, minmax(0, 1fr))`,
-      }}
-    >
-      {before.members.map((m, index) => {
-        const s = stepState(step, m, after.members[index]);
-        const paidRatio = s.paidTotal / scaleMax;
-        const shareRatio = s.shareVisible ? m.share / scaleMax : 0;
-        return (
-          <li
-            key={m.member.id}
-            className='flex min-w-0 flex-col items-center gap-1.5'
-          >
-            <Tag tag={s.tag} />
-            <div className='flex h-40 w-full items-end justify-center gap-1.5'>
-              <div
-                className={cn(
-                  barWidth,
-                  TRANSITION,
-                  'overflow-hidden rounded-t-lg'
-                )}
-                style={bar('height', paidRatio, s.paidOpacity)}
-              >
-                <SliceFill
-                  slices={s.paidSlices}
-                  colors={before.colors}
-                  vertical
-                />
-              </div>
-              <div
-                className={cn(
-                  barWidth,
-                  TRANSITION,
-                  'overflow-hidden rounded-t-lg'
-                )}
-                style={bar('height', shareRatio, s.shareVisible ? 1 : 0)}
-              >
-                <SliceFill
-                  slices={m.shareSlices}
-                  colors={before.colors}
-                  vertical
-                />
-              </div>
-            </div>
-            <div className='flex w-full gap-1.5 text-[10px] leading-tight font-semibold text-muted-foreground'>
-              <span className='flex-1 text-center'>Pagó</span>
-              <span className='flex-1 text-center'>Su parte</span>
-            </div>
-            <div className='grid w-full gap-0.5 text-[11px] font-bold tabular-nums'>
-              <span
-                className={cn(
-                  'text-left transition-opacity duration-300 motion-reduce:transition-none',
-                  !s.paidLabelVisible && 'opacity-0'
-                )}
-              >
-                {formatAmount(s.paidTotal)}
-              </span>
-              <span
-                className={cn(
-                  'text-right transition-opacity duration-300 motion-reduce:transition-none',
-                  !s.shareVisible && 'opacity-0'
-                )}
-              >
-                {formatAmount(m.share)}
-              </span>
-            </div>
-            <MemberAvatar
-              member={m.member}
-              mood={moods.get(m.member.id)}
-              decorative
-              className='size-9'
-            />
-            <span className='max-w-full text-center text-sm font-semibold break-words'>
-              {m.member.name}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+  settledAtEnd: boolean;
+  step: number;
+  shareStep?: ShareStep;
+}): RowState[] {
+  const last = step === STEP_COUNT - 1;
+  const allIds = before.expenses.map((e) => e.id);
+  const shareShown = new Set<string>(
+    step === 0
+      ? []
+      : step === SHARE_STEP
+        ? (shareStep?.revealedIds ?? [])
+        : allIds
   );
-}
+  const focus = shareStep ? new Set(shareStep.expenseIds) : null;
+  const focused =
+    shareStep?.kind === 'expense'
+      ? before.expenses.find((e) => e.id === shareStep.expenseIds[0])
+      : undefined;
+  const split = focused
+    ? {
+        expenseId: focused.id,
+        amounts: focused.shares.map((share) => share.amount),
+      }
+    : null;
 
-/** Height or width of a bar as a fraction of the plot (a CSS calc so it can transition). */
-function bar(
-  axis: 'height' | 'width',
-  ratio: number,
-  opacity: number
-): CSSProperties {
-  const full = axis === 'height' ? '10rem' : '(100% - 5.25rem)';
-  return { [axis]: `calc(${ratio} * ${full})`, opacity };
-}
-
-function Rows({ step, before, after, moods, scaleMax }: LayoutProps) {
-  return (
-    <ul className='grid gap-3'>
-      {before.members.map((m, index) => {
-        const s = stepState(step, m, after.members[index]);
-        return (
-          <li key={m.member.id} className='grid gap-1.5'>
-            <div className='flex items-center gap-2'>
-              <MemberAvatar
-                member={m.member}
-                mood={moods.get(m.member.id)}
-                decorative
-                className='size-8'
-              />
-              <span className='min-w-0 flex-1 text-sm font-semibold break-words'>
-                {m.member.name}
-              </span>
-              <Tag tag={s.tag} inline />
-            </div>
-            <BarRow
-              label='Pagó'
-              slices={s.paidSlices}
-              total={s.paidTotal}
-              colors={before.colors}
-              ratio={s.paidTotal / scaleMax}
-              opacity={s.paidOpacity}
-              showAmount={s.paidLabelVisible}
-            />
-            <BarRow
-              label='Su parte'
-              slices={m.shareSlices}
-              total={m.share}
-              colors={before.colors}
-              ratio={s.shareVisible ? m.share / scaleMax : 0}
-              opacity={s.shareVisible ? 1 : 0}
-              showAmount={s.shareVisible}
-            />
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function BarRow({
-  label,
-  slices,
-  total,
-  colors,
-  ratio,
-  opacity,
-  showAmount,
-}: {
-  label: string;
-  slices: Slice[];
-  total: number;
-  colors: ColorMap;
-  ratio: number;
-  opacity: number;
-  showAmount: boolean;
-}) {
-  return (
-    <div className='flex items-center gap-2'>
-      <span className='w-14 shrink-0 text-[11px] text-muted-foreground'>
-        {label}
-      </span>
-      <div className='flex min-w-0 flex-1 items-center gap-2'>
-        <div
-          className={cn('h-3.5 overflow-hidden rounded-[4px]', TRANSITION)}
-          style={bar('width', ratio, opacity)}
-        >
-          <SliceFill slices={slices} colors={colors} vertical={false} />
-        </div>
-        <span
-          className={cn(
-            'text-xs font-semibold whitespace-nowrap tabular-nums transition-opacity duration-300 motion-reduce:transition-none',
-            !showAmount && 'opacity-0'
-          )}
-        >
-          {formatAmount(total)}
-        </span>
-      </div>
-    </div>
-  );
+  return before.members.map((m, index) => {
+    const settled = after.members[index];
+    // The welcome example ends with the transfers paid: each "Pagó" bar
+    // becomes what the member really put in, which is their share.
+    const evened = last && settledAtEnd;
+    const paid: BarData = evened
+      ? { slices: settled.shareSlices, total: settled.share }
+      : { slices: m.paidSlices, total: m.paid };
+    const shownTotal = m.shareSlices
+      .filter((slice) => shareShown.has(slice.expenseId))
+      .reduce((sum, slice) => sum + slice.amount, 0);
+    return {
+      balance: last ? settled.balance : m.balance,
+      paid,
+      share: {
+        slices: m.shareSlices,
+        total: m.share,
+        displayTotal: shownTotal,
+      },
+      focus,
+      split,
+      shareShown,
+    };
+  });
 }
 
 /**
