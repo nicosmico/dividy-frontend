@@ -70,13 +70,15 @@ describe('control segmentado "Dividir entre"', () => {
     });
     const dialog = await openNewForm(user);
     await user.click(within(dialog).getByRole('radio', { name: 'Iguales' }));
-    // Held down: Radix moves focus on a timer and checks it only while the arrow is down.
-    await user.keyboard('{ArrowRight>}');
-    await waitFor(() =>
-      expect(
-        within(dialog).getByRole('radio', { name: 'Montos' })
-      ).toBeChecked()
-    );
+    await user.keyboard('{ArrowRight}');
+    expect(within(dialog).getByRole('radio', { name: 'Montos' })).toBeChecked();
+    expect(within(dialog).getByRole('radio', { name: 'Montos' })).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(within(dialog).getByRole('radio', { name: 'Partes' })).toBeChecked();
+    await user.keyboard('{ArrowRight}');
+    expect(
+      within(dialog).getByRole('radio', { name: 'Iguales' })
+    ).toBeChecked();
   });
 });
 
