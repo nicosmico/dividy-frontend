@@ -283,17 +283,14 @@ export function ExplanationPlayer({
       })}
     </ul>
   );
-  const narration = (
+  const liveNarration = (
     <p
       ref={narrationRef}
       aria-live='polite'
       aria-atomic='true'
       className={cn(
         'text-[0.9375rem] leading-relaxed',
-        // Reserved lines, so the bars do not move between steps (and, in
-        // the card, so the card keeps one height): at 360 px or more every
-        // narration fits in 3 lines; narrower phones need 4.
-        page ? 'min-h-[4lh]' : 'min-h-[3lh] max-[359px]:min-h-[4lh]'
+        page ? 'min-h-[4lh]' : 'col-start-1 row-start-1'
       )}
     >
       <span className='sr-only'>
@@ -304,6 +301,32 @@ export function ExplanationPlayer({
       </span>
       {narrate(before, step, settleAtEnd, shareStep)}
     </p>
+  );
+  // Card: every narration sits invisible in the same grid cell as the live
+  // one, so the cell is as tall as the longest of them whatever the font and
+  // the width, and the card keeps one height on every step.
+  const narration = page ? (
+    liveNarration
+  ) : (
+    <div className='grid'>
+      {frames.map((f, index) => (
+        // The text goes in `::before` so it is not one more copy of the
+        // narration in the DOM (for text queries and assistive tech).
+        <span
+          key={index}
+          aria-hidden='true'
+          data-slot='narration-sizer'
+          data-text={narrate(
+            before,
+            f.step,
+            settleAtEnd,
+            f.step === SHARE_STEP ? shareSteps[f.sub] : undefined
+          )}
+          className='invisible col-start-1 row-start-1 text-[0.9375rem] leading-relaxed before:content-[attr(data-text)]'
+        />
+      ))}
+      {liveNarration}
+    </div>
   );
   const controls = (
     <div className='flex items-center justify-center gap-2'>
