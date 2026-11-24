@@ -216,7 +216,7 @@ export function ExplanationPlayer({
       <p
         aria-live='polite'
         aria-atomic='true'
-        className='min-h-[6rem] text-[0.9375rem] leading-relaxed'
+        className='min-h-[5lh] text-[0.9375rem] leading-relaxed'
       >
         <span className='sr-only'>
           Paso {step + 1} de {STEP_COUNT}: {STEP_TITLES[step]}.{' '}
