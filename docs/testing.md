@@ -11,6 +11,9 @@ En una app de plata, los tests son la evidencia de que los números son correcto
 | End-to-end    | Playwright (desktop y móvil)     | Flujos completos en un navegador real y regresiones de bugs conocidos                                                                        | `e2e/`                                                          |
 | Accesibilidad | Playwright + axe-core            | Auditoría de cada pantalla principal en claro y oscuro (sin violaciones `serious` ni `critical`) y navegación con teclado                    | `e2e/a11y.spec.ts`, `e2e/keyboard.spec.ts`, `e2e/theme.spec.ts` |
 | Sin conexión  | Playwright contra `vite preview` | Manifest e íconos, y que tras una carga la app abre y escribe con `context.setOffline(true)`                                                 | `e2e/offline.spec.ts`                                           |
+| Nueva versión | Vitest + Playwright              | El aviso "Hay una nueva versión de Dividy": lógica del toast y flujo real con un segundo `sw.js`                                             | `src/app/pwa.test.tsx`, `e2e/pwa-update.spec.ts`                |
+| Visual        | Playwright `toHaveScreenshot`    | Capturas de las pantallas principales en claro y oscuro contra imágenes base (solo en Docker, proyecto `visual`)                             | `e2e/visual.spec.ts`                                            |
+| Tamaño        | Node + Vitest                    | Presupuesto de tamaño gzip del bundle y de cada chunk                                                                                        | `scripts/check-bundle-size.mjs`, `bundle-budget.json`           |
 
 ## Propiedades del dominio
 
@@ -51,9 +54,39 @@ axe no reemplaza probar con un lector de pantalla; cubre contraste, nombres acce
 
 `e2e/offline.spec.ts` carga la app contra el build de `preview` (el servidor de Playwright ya hace `npm run build` primero), espera a que el service worker esté activo, recarga, pone el contexto sin red y comprueba: recarga en frío, enlace directo a `/groups/g1/members` (con su chunk y el generador de avatares precacheados) y que agregar un miembro sigue funcionando. Los demás E2E también corren con el service worker registrado.
 
+## Nueva versión (PWA)
+
+El aviso "Hay una nueva versión de Dividy" (`src/app/pwa.ts`) se prueba en dos niveles:
+
+- **Unitario** (`src/app/pwa.test.tsx`): `registerSW` se reemplaza por un doble; verifica que registrar no muestra nada, que `onNeedRefresh` muestra el toast, que no desaparece solo y que "Recargar" llama a `updateSW(true)`. La lógica del toast vive en `showUpdateToast(updateSW)`, separada del registro.
+- **E2E con el build real** (`e2e/pwa-update.spec.ts`): carga la app, espera al service worker, "publica" una versión nueva y verifica que aparece el aviso, que la página **no** se recarga sola (una marca en `window` sigue ahí y hay un worker en espera), que "Recargar" recarga y activa el worker nuevo y que los datos siguen. También que la primera visita y una revisión sin cambios no muestran el aviso.
+
+Cómo se simula el segundo build: `e2e/dist-server.ts` sirve `dist/` en un puerto libre (su propio origen, así cada test tiene su propio service worker) y `publishNewVersion()` agrega un comentario a `sw.js`; para el navegador, cualquier cambio de bytes es una versión nueva, y `registerType: 'prompt'` la deja en espera hasta tocar "Recargar". Se descartaron dos alternativas: interceptar `sw.js` con `page.route` / `context.route` (Playwright no intercepta la petición de actualización del propio service worker, lo comprobamos: el handler nunca se ejecuta) y modificar `dist/sw.js` en disco (afectaría a los demás tests, que comparten el servidor de `preview`). El test se salta en WebKit por lo mismo que `offline.spec.ts`.
+
+## Regresión visual
+
+`e2e/visual.spec.ts` toma una captura (`toHaveScreenshot`) de cada pantalla principal en **claro y oscuro**: Bienvenida, Mis grupos (con "Compartidos conmigo"), Gastos, Nuevo gasto, Saldos (página completa), Miembros, "Ver cómo se calculó" en el paso 4, una captura de solo lectura y el link inválido. Corre **solo** en el proyecto `visual` (Chromium, 390×844, escala 1, `reducedMotion: 'reduce'`, `es-CL`, `America/Santiago`), y ese proyecto no corre ningún otro spec; los demás proyectos ignoran `visual.spec.ts`.
+
+Determinismo: datos de `e2e/seed.ts`, reloj fijo con `page.clock.setFixedTime` (24-nov-2026 11:45 -03:00), `animations: 'disabled'`, `caret: 'hide'`, espera de `document.fonts.ready`, de las imágenes y de que los avatares (DiceBear, perezosos) reemplacen su placeholder, y `maxDiffPixelRatio: 0.005`. La Bienvenida se captura en su primer cuadro, que es estable porque con movimiento reducido no hay reproducción automática. No se enmascara nada: no hubo nada inevitablemente variable.
+
+**Por qué en Docker.** Los píxeles dependen del build de Chromium y de las fuentes del sistema (la app usa la pila `system-ui`), así que una imagen base hecha en un Mac, o con otro Chromium, falla en CI. Por eso las imágenes se generan y comparan **siempre** en la imagen oficial `mcr.microsoft.com/playwright:v<versión>-noble`, con la misma versión que `@playwright/test` en `package-lock.json` (los workflows la leen del lockfile).
+
+- **CI** (`.github/workflows/ci.yml`, job `visual`): corre `npm run test:visual -- --update-snapshots=none` dentro de ese contenedor. Si todavía no existe **ninguna** imagen base (solo pasó al agregar la regresión visual: el workflow de actualización solo se puede lanzar cuando ya está en `main`), deja un aviso y no compara. Desde que existe alguna, una imagen que falta o que cambia hace fallar el job (no las crea en silencio: eso escondería regresiones). Si hay diferencias, sube el reporte con los diffs como artefacto `visual-diffs`.
+- **Actualizar las imágenes** (cambio de diseño intencional, o la primera vez): Actions > "Update visual snapshots" > Run workflow, con el nombre de la rama (nunca `main`: el workflow se niega). Corre `npm run test:visual:update` en el mismo contenedor y hace commit y push de `e2e/__screenshots__/baseline/` como `github-actions[bot]` ("test(visual): update baselines"). Un push hecho con el `GITHUB_TOKEN` no dispara CI: vuelve a correr el workflow `CI` de la rama a mano. Revisa las imágenes cambiadas en el PR antes de aceptarlas.
+- **Local**: `npm run test:visual` y `npm run test:visual:update`. Si defines `PW_CHROMIUM_PATH` (un Chromium que no es el de CI), las imágenes van a `e2e/__screenshots__/local/`, que está en `.gitignore`, y nunca se comparan contra las de CI. Sirven para verificar que el spec corre y es determinista (3 corridas seguidas pasan), no como referencia. Para generar las de verdad sin esperar a CI: `docker run --rm --ipc=host -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v<versión>-noble sh -c "npm ci && npm run test:visual:update"`.
+- Una captura que falla por un cambio **no intencional** es una regresión: corrígela. Si el cambio es intencional, actualiza las imágenes.
+
+## Presupuesto de tamaño del bundle
+
+`npm run size` (después de `npm run build`; corre también en CI, y escribe la tabla en el resumen del job) mide el tamaño **gzip** del JS inicial (el script de entrada y los `modulepreload` de `index.html`), del CSS inicial y de cada chunk de `dist/assets`, y lo compara con `bundle-budget.json` (valores en bytes, con ~10 % de margen sobre lo medido, redondeados a 100 B). Imprime siempre una tabla; si algo se pasa, falla diciendo qué pieza y por cuánto. Un chunk nuevo, sin presupuesto, también falla. Los chunks se identifican sin el hash (`index.js`, `members.js`).
+
+**Subir el presupuesto conscientemente:** si el aumento es intencional (una dependencia nueva, una pantalla nueva), corre `npm run build && npm run size -- --write`, revisa el diff de `bundle-budget.json` y explica el aumento en el PR. Antes de subirlo, pregúntate si el código puede cargarse de forma diferida (`React.lazy`) o si hay una alternativa más liviana. La lógica de comparación es una función pura (`scripts/bundle-size-lib.mjs`) con sus tests en `scripts/bundle-size.test.mjs`.
+
 ## Proyectos de Playwright
 
-`e2e/playwright.config.ts` define `chromium` (desktop), `mobile` (iPhone 13 emulado sobre Chromium) y `mobile-webkit` (iPhone 13 sobre WebKit real). `mobile-webkit` corre en CI (`CI` definida), donde el workflow instala `chromium webkit`. Localmente se omite, porque requiere `npx playwright install webkit`; para incluirlo, `PW_WEBKIT=1 npm run test:e2e`. El test de sin conexión se salta en WebKit (`setOffline` con service worker no es confiable ahí).
+`e2e/playwright.config.ts` define `chromium` (desktop), `mobile` (iPhone 13 emulado sobre Chromium) y `mobile-webkit` (iPhone 13 sobre WebKit real). `mobile-webkit` corre en CI (`CI` definida), donde el workflow instala `chromium webkit`. Localmente se omite, porque requiere `npx playwright install webkit`; para incluirlo, `PW_WEBKIT=1 npm run test:e2e`. El test de sin conexión se salta en WebKit (`setOffline` con service worker no es confiable ahí). El proyecto `visual` se describe en "Regresión visual".
+
+**Tests "skipped" en una corrida local.** Es lo esperado, no un problema: `mobile-webkit` no corre localmente (sin `PW_WEBKIT=1`), así que sus tests no se cuentan; los que figuran como saltados son condicionales por proyecto: `e2e/sheets-overflow.spec.ts` solo aplica a los proyectos móviles (se salta en `chromium`, que abre diálogos centrados y no bottom sheets), el test de escritorio de `e2e/explanation-page.spec.ts` se salta en los móviles, y los de service worker (`offline.spec.ts`, `pwa-update.spec.ts`) se saltan en WebKit, es decir, solo en CI. Cada `test.skip` lleva su motivo en el código.
 
 `e2e/sheets-overflow.spec.ts` abre cada bottom sheet en los proyectos móviles (nuevo gasto con descripción larga y $999.999.999, editar gasto, renombrar grupo, renombrar miembro y eliminar miembro con ambas opciones) y comprueba que ni el documento ni el sheet tienen desborde horizontal y que ningún elemento sobresale de sus bordes.
 
@@ -85,5 +118,8 @@ Checklist manual en un iPhone real para cada PR que toque formularios o sheets:
 ```bash
 npm test               # unitarios + componentes
 npm run test:coverage  # con cobertura (meta: ≥ 95 % en src/domain)
-npm run test:e2e       # Playwright
+npm run test:e2e       # Playwright (no incluye el proyecto `visual`, que solo existe con `--project=visual`)
+npm run test:visual    # regresión visual (en CI y en Docker; ver arriba)
+npm run test:visual:update  # regenera las imágenes base
+npm run size           # presupuesto de tamaño del bundle (después de build)
 ```

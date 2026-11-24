@@ -29,3 +29,6 @@ TODO.md
 coverage
 playwright-report
 test-results
+
+# Visual regression images rendered locally (not CI's Chromium): never committed
+e2e/__screenshots__/local

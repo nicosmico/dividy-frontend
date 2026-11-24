@@ -1,0 +1,76 @@
+name: Update visual snapshots
+
+# Manual. Re-renders the visual regression baselines inside the same Playwright
+# image CI compares against and commits them to the chosen branch.
+# Run it after an intentional UI change, and the first time (no baselines yet).
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to update (never main)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  playwright-version:
+    name: Playwright version
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - name: Refuse to run on the default branch
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          case "$BRANCH" in
+            main|master|refs/heads/main|refs/heads/master|"")
+              echo "::error::Este workflow no puede correr sobre '$BRANCH'. Usa una rama de trabajo y entra a main con un PR."
+              exit 1
+              ;;
+          esac
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      - id: read
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+
+  update:
+    name: Update baselines
+    needs: playwright-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      options: --ipc=host
+    steps:
+      # The checkout must be a real git clone to commit from it.
+      - name: Install git
+        run: command -v git > /dev/null || (apt-get update && apt-get install -y --no-install-recommends git)
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Render the baselines
+        run: npm run test:visual:update
+      - name: Commit and push
+        env:
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all e2e/__screenshots__/baseline
+          if git diff --cached --quiet; then
+            echo "Las imágenes base ya estaban al día."
+            exit 0
+          fi
+          git commit -m "test(visual): update baselines"
+          git push origin "HEAD:refs/heads/$BRANCH"
