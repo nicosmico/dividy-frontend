@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createSnapshot, type Group } from '@/domain';
@@ -44,6 +44,8 @@ describe('resumen compartido con moneda', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Copiar resumen' })
     );
+    // The copy or share is async (the link may still be compressing).
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
     const text = flat(writeText.mock.calls[0][0]);
     expect(text.split('\n')[0]).toBe('*Viaje a Lima* · en soles (PEN)');
     expect(text).toContain('• Cena: PEN 125,50, pagó Ana, entre Ana y Beto');

@@ -435,6 +435,8 @@ describe('Pestaña Saldos', () => {
       await screen.findByRole('button', { name: 'Copiar resumen' })
     );
     expect(writeText).toHaveBeenCalledTimes(1);
+    // The copy or share is async (the link may still be compressing).
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
     expect(writeText.mock.calls[0][0]).toContain('Supermercado');
     expect(await screen.findByText('Resumen copiado')).toBeInTheDocument();
   });
@@ -487,6 +489,8 @@ describe('Pestaña Saldos', () => {
         await screen.findByRole('button', { name: 'Compartir resumen' })
       );
       expect(share).toHaveBeenCalledTimes(1);
+      // The copy or share is async (the link may still be compressing).
+      await waitFor(() => expect(share).toHaveBeenCalled());
       expect(share.mock.calls[0]).toEqual([
         expect.objectContaining({
           text: expect.stringContaining('Supermercado'),
