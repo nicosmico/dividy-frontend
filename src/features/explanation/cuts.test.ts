@@ -78,22 +78,22 @@ describe('describeDivision', () => {
     [10000, ['A', 'B', 'C'], 'entre 3: $3.334 / $3.333 / $3.333'],
     [9000, ['A', 'B'], 'entre 2: $4.500 c/u'],
   ])('%i entre %j', (amount, among, text) => {
-    expect(describeDivision(explained(amount, among))).toBe(text);
+    expect(describeDivision(explained(amount, among), 'CLP')).toBe(text);
   });
 
   it('una sola persona: no hay división', () => {
-    expect(describeDivision(explained(5000, ['A']))).toBeNull();
+    expect(describeDivision(explained(5000, ['A']), 'CLP')).toBeNull();
   });
 
   it('con muchas partes agrupa las iguales', () => {
     const among = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    expect(describeDivision(explained(10002, among))).toBe(
+    expect(describeDivision(explained(10002, among), 'CLP')).toBe(
       'entre 10: $1.001 (2) / $1.000 (8)'
     );
   });
 
   it('cuenta también a quienes les toca $0', () => {
-    expect(describeDivision(explained(2, ['A', 'B', 'C']))).toBe(
+    expect(describeDivision(explained(2, ['A', 'B', 'C']), 'CLP')).toBe(
       'entre 3: $1 / $1 / $0'
     );
   });
@@ -158,7 +158,8 @@ describe('divisiones personalizadas', () => {
   it('describeDivision dice cómo se dividió', () => {
     expect(
       describeDivision(
-        group(150_000, { type: 'shares', parts: { A: 2, B: 1, C: 1 } })
+        group(150_000, { type: 'shares', parts: { A: 2, B: 1, C: 1 } }),
+        'CLP'
       )
     ).toBe('por partes: A 2, B 1, C 1');
     expect(
@@ -166,7 +167,8 @@ describe('divisiones personalizadas', () => {
         group(100_000, {
           type: 'exact',
           amounts: { A: 50_000, B: 30_000, C: 20_000 },
-        })
+        }),
+        'CLP'
       )
     ).toBe('por montos: A $50.000, B $30.000, C $20.000');
     expect(
@@ -174,7 +176,8 @@ describe('divisiones personalizadas', () => {
         group(100_000, {
           type: 'percent',
           basisPoints: { A: 5000, B: 3350, C: 1650 },
-        })
+        }),
+        'CLP'
       )
     ).toBe('por porcentaje: A 50 %, B 33,5 %, C 16,5 %');
   });

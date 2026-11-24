@@ -82,7 +82,11 @@ function MemberRow({
             <span className='block font-medium break-words'>
               <ViewerName name={member.name} isViewer={isViewer} />
             </span>
-            <BalanceLabel balance={balance.balance} className='text-sm' />
+            <BalanceLabel
+              balance={balance.balance}
+              currency={group.currency}
+              className='text-sm'
+            />
           </span>
           <ChevronDown className='size-5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />
         </Collapsible.Trigger>
@@ -90,28 +94,31 @@ function MemberRow({
           <dl className='grid gap-1.5'>
             <Line
               label='Lo que gastó en el grupo'
-              value={formatAmount(balance.paid)}
+              value={formatAmount(balance.paid, group.currency)}
             />
             <Line
               label='Menos su parte de los gastos'
-              value={`−${formatAmount(balance.share)}`}
+              value={`−${formatAmount(balance.share, group.currency)}`}
             />
             {balance.paymentsReceived > 0 && (
               <Line
                 label='Menos los pagos que recibió'
-                value={`−${formatAmount(balance.paymentsReceived)}`}
+                value={`−${formatAmount(balance.paymentsReceived, group.currency)}`}
               />
             )}
             {balance.paymentsSent > 0 && (
               <Line
                 label='Más los pagos que envió'
-                value={`+${formatAmount(balance.paymentsSent)}`}
+                value={`+${formatAmount(balance.paymentsSent, group.currency)}`}
               />
             )}
             <div className='flex items-baseline justify-between gap-3 border-t pt-1.5 font-semibold'>
               <dt>Saldo</dt>
               <dd>
-                <BalanceLabel balance={balance.balance} />
+                <BalanceLabel
+                  balance={balance.balance}
+                  currency={group.currency}
+                />
               </dd>
             </div>
           </dl>
@@ -134,11 +141,11 @@ function MemberRow({
                     <span className='shrink-0 text-right tabular-nums'>
                       {line.paid > 0 && (
                         <span className='block'>
-                          Gastó {formatAmount(line.paid)}
+                          Gastó {formatAmount(line.paid, group.currency)}
                         </span>
                       )}
                       <span className='block text-muted-foreground'>
-                        Su parte {formatAmount(line.share)}
+                        Su parte {formatAmount(line.share, group.currency)}
                       </span>
                     </span>
                   </li>
@@ -158,7 +165,7 @@ function MemberRow({
                       Envió a {nameOf(p.toId)} · {formatDate(p.date)}
                     </span>
                     <span className='shrink-0 tabular-nums'>
-                      +{formatAmount(p.amount)}
+                      +{formatAmount(p.amount, group.currency)}
                     </span>
                   </li>
                 ))}
@@ -168,7 +175,7 @@ function MemberRow({
                       Recibió de {nameOf(p.fromId)} · {formatDate(p.date)}
                     </span>
                     <span className='shrink-0 tabular-nums'>
-                      −{formatAmount(p.amount)}
+                      −{formatAmount(p.amount, group.currency)}
                     </span>
                   </li>
                 ))}

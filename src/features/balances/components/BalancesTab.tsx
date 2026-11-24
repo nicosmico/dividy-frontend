@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import {
   describeViewerStatus,
   formatAmount,
+  type CurrencyCode,
   suggestTransfers,
   type ViewerStatus,
 } from '@/domain';
@@ -63,7 +64,7 @@ export function BalancesTab() {
             settled && 'bg-accent text-accent-foreground'
           )}
         >
-          <StatusHeadline status={status} />
+          <StatusHeadline status={status} currency={group.currency} />
           <ShareSummaryButton group={group} snapshot={snapshot} />
         </Card>
       </section>
@@ -97,12 +98,18 @@ export function BalancesTab() {
   );
 }
 
-const money = (amount: number) => (
-  <span className='tabular-nums'>{formatAmount(amount)}</span>
+const money = (amount: number, currency: CurrencyCode) => (
+  <span className='tabular-nums'>{formatAmount(amount, currency)}</span>
 );
 
 /** The card's headline: about the group, or about you when we know who you are. */
-function StatusHeadline({ status }: { status: ViewerStatus }) {
+function StatusHeadline({
+  status,
+  currency,
+}: {
+  status: ViewerStatus;
+  currency: CurrencyCode;
+}) {
   switch (status.kind) {
     case 'group-settled':
       return (
@@ -116,14 +123,14 @@ function StatusHeadline({ status }: { status: ViewerStatus }) {
     case 'general':
       return (
         <h2 id='status-heading' className='text-xl font-bold'>
-          Pendiente: {money(status.pending)} por saldar
+          Pendiente: {money(status.pending, currency)} por saldar
         </h2>
       );
     case 'owes':
       return (
         <div className='grid gap-0.5'>
           <h2 id='status-heading' className='text-xl font-bold'>
-            Debes {money(status.amount)}
+            Debes {money(status.amount, currency)}
           </h2>
           <p className='text-sm text-muted-foreground'>
             {status.payTo.length === 1
@@ -135,7 +142,7 @@ function StatusHeadline({ status }: { status: ViewerStatus }) {
     case 'owed':
       return (
         <h2 id='status-heading' className='text-xl font-bold'>
-          Te deben {money(status.amount)}
+          Te deben {money(status.amount, currency)}
         </h2>
       );
     case 'even':
@@ -145,7 +152,7 @@ function StatusHeadline({ status }: { status: ViewerStatus }) {
             Estás al día 🎉
           </h2>
           <p className='text-sm text-muted-foreground'>
-            Al grupo le falta {money(status.groupPending)} por saldar
+            Al grupo le falta {money(status.groupPending, currency)} por saldar
           </p>
         </div>
       );

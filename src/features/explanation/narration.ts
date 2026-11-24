@@ -43,13 +43,14 @@ function payNarration(explanation: Explanation): string {
       (m) =>
         `${m.member.name} pagó ${joinList(
           m.paidSlices.map(
-            (s) => `${description(s.expenseId)} (${formatAmount(s.amount)})`
+            (s) =>
+              `${description(s.expenseId)} (${formatAmount(s.amount, explanation.currency)})`
           )
         )}`
     );
     return `${joinList(parts)}.`;
   }
-  return `Se registraron ${expenses.length} gastos por ${formatAmount(explanation.totalSpent)} en total. La barra "Gastó" muestra cuánto gastó cada uno, dividido por gasto.`;
+  return `Se registraron ${expenses.length} gastos por ${formatAmount(explanation.totalSpent, explanation.currency)} en total. La barra "Gastó" muestra cuánto gastó cada uno, dividido por gasto.`;
 }
 
 function shareNarration(explanation: Explanation): string {
@@ -104,9 +105,9 @@ function compareNarration(explanation: Explanation): string {
   }
   const describe = (m: MemberExplanation) =>
     m.balance > 0
-      ? `a ${m.member.name} le deben ${formatAmount(m.balance)}`
+      ? `a ${m.member.name} le deben ${formatAmount(m.balance, explanation.currency)}`
       : m.balance < 0
-        ? `${m.member.name} debe ${formatAmount(-m.balance)}`
+        ? `${m.member.name} debe ${formatAmount(-m.balance, explanation.currency)}`
         : `${m.member.name} está al día`;
   return `Se compara lo que gastó cada uno con su parte: ${joinList(members.map(describe))}.${tail}`;
 }
@@ -115,7 +116,9 @@ function transfersText(explanation: Explanation): string {
   const byPayer = new Map<string, string[]>();
   for (const t of explanation.transfers) {
     const list = byPayer.get(t.fromId) ?? [];
-    list.push(`${formatAmount(t.amount)} a ${nameOf(explanation, t.toId)}`);
+    list.push(
+      `${formatAmount(t.amount, explanation.currency)} a ${nameOf(explanation, t.toId)}`
+    );
     byPayer.set(t.fromId, list);
   }
   return [...byPayer.entries()]
@@ -145,9 +148,13 @@ function settleNarration(
 }
 
 /** What each one puts in a value, as said in the narration ("2 partes", "$50.000", "50 %"). */
-function entryText(expense: ExplainedExpense, value: number): string {
+function entryText(
+  explanation: Explanation,
+  expense: ExplainedExpense,
+  value: number
+): string {
   return expense.split.type === 'exact'
-    ? formatAmount(value)
+    ? formatAmount(value, explanation.currency)
     : expense.split.type === 'percent'
       ? formatPercent(value)
       : `${value} ${value === 1 ? 'parte' : 'partes'}`;
@@ -178,7 +185,7 @@ function customDivisionText(
     .map((m) => ({ name: m.member.name, value: values[m.member.id] ?? 0 }));
   const head = `${expense.description} se divide ${splitTypeLabel(split.type)}`;
   if (entries.length === 1) {
-    return `${head}: solo ${entries[0].name}, con ${entryText(expense, entries[0].value)}.`;
+    return `${head}: solo ${entries[0].name}, con ${entryText(explanation, expense, entries[0].value)}.`;
   }
   const counts = new Map<number, number>();
   for (const { value } of entries)
@@ -187,18 +194,18 @@ function customDivisionText(
     entry[1] > best[1] ? entry : best
   );
   if (counts.size === 1) {
-    return `${head}: cada uno pone ${entryText(expense, common)}.`;
+    return `${head}: cada uno pone ${entryText(explanation, expense, common)}.`;
   }
   const named =
     count >= 2 ? entries.filter((e) => e.value !== common) : entries;
   const told = named.map((e, i) =>
     i === 0
-      ? `${e.name} pone ${entryText(expense, e.value)}`
-      : `${e.name} ${split.type === 'shares' ? e.value : entryText(expense, e.value)}`
+      ? `${e.name} pone ${entryText(explanation, expense, e.value)}`
+      : `${e.name} ${split.type === 'shares' ? e.value : entryText(explanation, expense, e.value)}`
   );
   if (count >= 2) {
     told.push(
-      `los demás ${split.type === 'shares' ? common : entryText(expense, common)}`
+      `los demás ${split.type === 'shares' ? common : entryText(explanation, expense, common)}`
     );
   }
   return `${head}: ${joinList(told)}.`;
@@ -206,7 +213,7 @@ function customDivisionText(
 
 /**
  * Text of one sub-step of step 2: who paid the expense and how it is split.
- * With a remainder, says who gets the extra peso. Generated from the data.
+ * With a remainder, says who gets the extra unit. Generated from the data.
  */
 export function narrateShareStep(
   explanation: Explanation,
@@ -221,14 +228,14 @@ export function narrateShareStep(
       ? 'igual'
       : 'según su división';
     return rest.length === 1
-      ? `El otro gasto (${formatAmount(total)}) se divide ${how} entre quienes lo comparten. Con eso, la parte de cada uno queda completa.`
-      : `Los otros ${rest.length} gastos (${formatAmount(total)} en total) se dividen ${how} entre quienes los comparten. Con eso, la parte de cada uno queda completa.`;
+      ? `El otro gasto (${formatAmount(total, explanation.currency)}) se divide ${how} entre quienes lo comparten. Con eso, la parte de cada uno queda completa.`
+      : `Los otros ${rest.length} gastos (${formatAmount(total, explanation.currency)} en total) se dividen ${how} entre quienes los comparten. Con eso, la parte de cada uno queda completa.`;
   }
   const expense = explanation.expenses.find((e) => e.id === step.expenseIds[0]);
   if (!expense) return '';
   const { shares } = expense;
   const people = expense.participantIds.length;
-  const paid = `${nameOf(explanation, expense.payerId)} pagó ${expense.description} (${formatAmount(expense.amount)}).`;
+  const paid = `${nameOf(explanation, expense.payerId)} pagó ${expense.description} (${formatAmount(expense.amount, explanation.currency)}).`;
   if (shares.length === 0) return paid;
   if (expense.split.type !== 'equal') {
     return `${paid} ${customDivisionText(explanation, expense)}`;
@@ -240,13 +247,13 @@ export function narrateShareStep(
   const each =
     people === 1
       ? `${nameOf(explanation, shares[0].memberId)}.`
-      : `${formatAmount(base)} cada uno.`;
+      : `${formatAmount(base, explanation.currency)} cada uno.`;
   const rounding =
     extra.length === 0 || extra.length === shares.length
       ? ''
       : extra.length === 1
-        ? ` A ${nameOf(explanation, extra[0].memberId)} le toca $1 más por redondeo.`
-        : ` A ${joinList(extra.map((s) => nameOf(explanation, s.memberId)))} les toca $1 más por redondeo.`;
+        ? ` A ${nameOf(explanation, extra[0].memberId)} le toca ${formatAmount(1, explanation.currency)} más por redondeo.`
+        : ` A ${joinList(extra.map((s) => nameOf(explanation, s.memberId)))} les toca ${formatAmount(1, explanation.currency)} más por redondeo.`;
   return `${paid} ${everyone} ${each}${rounding}`;
 }
 

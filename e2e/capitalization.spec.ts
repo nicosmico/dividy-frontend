@@ -25,7 +25,7 @@ test('los nombres y las descripciones se guardan con mayúscula inicial y persis
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill('pizza');
-  await dialog.getByLabel('Monto en pesos').fill('10000');
+  await dialog.getByLabel('Monto').fill('10000');
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Pizza', { exact: true })).toBeVisible();

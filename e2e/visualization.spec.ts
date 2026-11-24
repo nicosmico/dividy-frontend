@@ -182,8 +182,8 @@ test('el gráfico de Saldos muestra los montos que calcula el dominio', async ({
   await expect(rows).toHaveCount(5);
   for (const [i, b] of balances.entries()) {
     await expect(rows.nth(i)).toContainText(tripGroup.members[i].name);
-    await expect(rows.nth(i)).toContainText(formatAmount(b.paid));
-    await expect(rows.nth(i)).toContainText(formatAmount(b.share));
+    await expect(rows.nth(i)).toContainText(formatAmount(b.paid, 'CLP'));
+    await expect(rows.nth(i)).toContainText(formatAmount(b.share, 'CLP'));
     const word = b.balance > 0 ? 'Le deben' : b.balance < 0 ? 'Debe' : 'Al día';
     await expect(rows.nth(i)).toContainText(word);
   }
@@ -257,7 +257,7 @@ test('"Ver cómo se calculó" abre la animación con los datos del grupo y naveg
     transfers.length
   );
   await expect(dialog.locator('[data-slot="transfer"]').first()).toContainText(
-    formatAmount(transfers[0].amount)
+    formatAmount(transfers[0].amount, 'CLP')
   );
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();

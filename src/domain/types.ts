@@ -1,9 +1,14 @@
+import type { CurrencyCode } from './currency';
+
 export type MemberId = string;
 export type ExpenseId = string;
 export type PaymentId = string;
 export type GroupId = string;
 
-/** Whole Chilean pesos (CLP has no decimals). See ADR 0001. */
+/**
+ * A whole number of the smallest unit of the group's currency: pesos for CLP,
+ * cents for USD. Decimals only exist when an amount is shown or typed (ADR 0009).
+ */
 export type Amount = number;
 
 /**
@@ -27,7 +32,7 @@ export interface EqualSplit {
   participantIds: MemberId[];
 }
 
-/** Each participant owes a whole-peso amount; the amounts add up to the expense. */
+/** Each participant owes an amount in the group's smallest unit; the amounts add up to the expense. */
 export interface ExactSplit {
   type: 'exact';
   participantIds: MemberId[];
@@ -81,7 +86,7 @@ export interface Payment {
 export interface Group {
   id: GroupId;
   name: string;
-  currency: 'CLP';
+  currency: CurrencyCode;
   /** Order matters: it decides who receives the remainder and display order. */
   members: Member[];
   expenses: Expense[];
@@ -103,6 +108,8 @@ export type DomainErrorCode =
   | 'payment_not_found'
   | 'invalid_description'
   | 'invalid_amount'
+  | 'invalid_currency'
+  | 'currency_locked'
   | 'invalid_date'
   | 'payer_not_found'
   | 'participant_not_found'

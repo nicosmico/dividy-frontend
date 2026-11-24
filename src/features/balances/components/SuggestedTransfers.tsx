@@ -76,7 +76,7 @@ export function SuggestedTransfers({
                   />
                   <MemberAvatar member={to} mood={moods.get(to.id)} />
                   <p className='min-w-0 flex-1 text-right text-xl font-bold tabular-nums'>
-                    {formatAmount(t.amount)}
+                    {formatAmount(t.amount, group.currency)}
                   </p>
                 </div>
                 <p className='font-medium break-words'>
@@ -89,7 +89,7 @@ export function SuggestedTransfers({
                 {!readOnly && (
                   <Button
                     variant='accent'
-                    aria-label={`Marcar como pagado: ${from.name} le transfiere ${formatAmount(t.amount)} a ${to.name}`}
+                    aria-label={`Marcar como pagado: ${from.name} le transfiere ${formatAmount(t.amount, group.currency)} a ${to.name}`}
                     onClick={() => setPaying(t)}
                   >
                     Marcar como pagado
@@ -160,8 +160,8 @@ function ConfirmPayment({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            ¿{from.name} le transfirió {formatAmount(transfer.amount)} a{' '}
-            {to.name}?
+            ¿{from.name} le transfirió{' '}
+            {formatAmount(transfer.amount, group.currency)} a {to.name}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             Se registrará un pago por ese monto y los saldos se actualizarán.

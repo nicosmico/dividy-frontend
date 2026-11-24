@@ -120,7 +120,7 @@ describe('Aviso de gasto ya saldado', () => {
       groups: [coveredGroup()],
     });
     const dialog = await openExpense(user);
-    const amount = within(dialog).getByLabelText('Monto en pesos');
+    const amount = within(dialog).getByLabelText('Monto');
     await user.clear(amount);
     await user.type(amount, '6000');
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
@@ -150,7 +150,7 @@ describe('Aviso de gasto ya saldado', () => {
       groups: [coveredGroup()],
     });
     const dialog = await openExpense(user);
-    const amount = within(dialog).getByLabelText('Monto en pesos');
+    const amount = within(dialog).getByLabelText('Monto');
     await user.clear(amount);
     await user.type(amount, '6000');
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));

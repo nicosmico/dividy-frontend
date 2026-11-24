@@ -5,7 +5,12 @@ import { BalanceLabel } from '@/components/balance-label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ViewerName } from '@/components/viewer-name';
-import { formatAmount, viewerFirst, type Group } from '@/domain';
+import {
+  formatAmount,
+  viewerFirst,
+  type CurrencyCode,
+  type Group,
+} from '@/domain';
 import {
   buildExplanation,
   buildLegend,
@@ -68,6 +73,7 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
             <PaidShareRow
               key={m.member.id}
               member={m.member}
+              currency={group.currency}
               isViewer={m.member.id === viewerId}
               mood={moods.get(m.member.id)}
               balance={m.balance}
@@ -81,7 +87,7 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
           ))}
         </ul>
 
-        <Legend explanation={explanation} />
+        <Legend explanation={explanation} currency={group.currency} />
         <TableAlternative
           group={group}
           members={members}
@@ -93,7 +99,13 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
   );
 }
 
-function Legend({ explanation }: { explanation: Explanation }) {
+function Legend({
+  explanation,
+  currency,
+}: {
+  explanation: Explanation;
+  currency: CurrencyCode;
+}) {
   const entries = buildLegend(explanation);
   return (
     <ul
@@ -117,7 +129,7 @@ function Legend({ explanation }: { explanation: Explanation }) {
               {entry.label}
             </span>
             <span className='block text-muted-foreground tabular-nums'>
-              {formatAmount(entry.total)}
+              {formatAmount(entry.total, currency)}
             </span>
           </span>
         </li>
@@ -163,7 +175,7 @@ function TableAlternative({
                   name={m.member.name}
                   isViewer={m.member.id === viewerId}
                 />{' '}
-                · <BalanceLabel balance={m.balance} />
+                · <BalanceLabel balance={m.balance} currency={group.currency} />
               </caption>
               <thead className='text-xs text-muted-foreground'>
                 <tr>
@@ -188,10 +200,10 @@ function TableAlternative({
                       {expense.description}
                     </th>
                     <td className='py-1 text-right tabular-nums'>
-                      {formatAmount(paid)}
+                      {formatAmount(paid, group.currency)}
                     </td>
                     <td className='py-1 pl-2 text-right tabular-nums'>
-                      {formatAmount(share)}
+                      {formatAmount(share, group.currency)}
                     </td>
                   </tr>
                 ))}
@@ -202,10 +214,10 @@ function TableAlternative({
                     Total
                   </th>
                   <td className='py-1 text-right tabular-nums'>
-                    {formatAmount(m.paid)}
+                    {formatAmount(m.paid, group.currency)}
                   </td>
                   <td className='py-1 pl-2 text-right tabular-nums'>
-                    {formatAmount(m.share)}
+                    {formatAmount(m.share, group.currency)}
                   </td>
                 </tr>
               </tfoot>

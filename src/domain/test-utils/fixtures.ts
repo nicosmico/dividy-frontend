@@ -1,4 +1,5 @@
 import { AVATAR_COLOR_COUNT } from '../avatar';
+import type { CurrencyCode } from '../currency';
 import type { Expense, Group, Member, Payment, Split } from '../types';
 
 export const NOW = '2026-01-01T12:00:00.000Z';
@@ -62,11 +63,12 @@ export function makeGroup(options: {
   expenses?: ExpenseSpec[];
   payments?: PaymentSpec[];
   name?: string;
+  currency?: CurrencyCode;
 }): Group {
   return {
     id: 'g1',
     name: options.name ?? 'Grupo',
-    currency: 'CLP',
+    currency: options.currency ?? 'CLP',
     members: members(...options.members),
     expenses: (options.expenses ?? []).map(makeExpense),
     payments: (options.payments ?? []).map(makePayment),

@@ -27,6 +27,7 @@ import {
   addExpense,
   computeShares,
   formatAmount,
+  formatAmountInput,
   isExpenseCoveredByPayments,
   MAX_DESCRIPTION_LENGTH,
   previewBalanceChange,
@@ -81,12 +82,12 @@ function initialValues(group: Group, expense?: Expense): ExpenseFormValues {
   if (expense) {
     return {
       description: expense.description,
-      amount: String(expense.amount),
+      amount: formatAmountInput(expense.amount, group.currency),
       payerId: expense.payerId,
       participantIds: [...expense.split.participantIds],
       date: expense.date,
       splitType: expense.split.type,
-      splitValues: splitToValues(expense.split),
+      splitValues: splitToValues(expense.split, group.currency),
     };
   }
   return {
@@ -159,7 +160,8 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     name: 'splitValues',
   }).field;
   const moods = useMemberMoods(group);
-  const amount = parseAmount(values.amount ?? '');
+  const { currency } = group;
+  const amount = parseAmount(values.amount ?? '', currency);
   const splitType = (values.splitType ?? 'equal') as SplitType;
   const custom = splitType !== 'equal';
   const typed = (values.splitValues ?? {}) as Record<string, string>;
@@ -167,21 +169,25 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
 
   // What each participant owes, live. Equal always; a custom split only once
   // it adds up (otherwise the numbers would be a guess).
-  const read = readSplit(group.members, {
-    participantIds: chosenIds,
-    splitType,
-    splitValues: typed,
-  });
+  const read = readSplit(
+    group.members,
+    {
+      participantIds: chosenIds,
+      splitType,
+      splitValues: typed,
+    },
+    currency
+  );
   const liveSplit = 'split' in read ? read.split : null;
   const shares =
     liveSplit &&
     Number.isInteger(amount) &&
     amount > 0 &&
-    (!custom || validateSplit(amount, liveSplit, group.members).ok)
+    (!custom || validateSplit(amount, liveSplit, group.members, currency).ok)
       ? computeShares({ amount, split: liveSplit }, group.members)
       : new Map<string, number>();
-  const base =
-    !custom && shares.size > 0 ? Math.floor(amount / shares.size) : Number.NaN;
+  // Equal parts differ by at most 1 unit: the smallest one is what everyone gets.
+  const base = shares.size > 0 ? Math.min(...shares.values()) : Number.NaN;
   const roundedUp = custom
     ? []
     : group.members.filter((m) => (shares.get(m.id) ?? 0) > base);
@@ -190,7 +196,10 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     ? describeSplitStatus(
         splitType as CustomSplitType,
         amount,
-        chosenMembers.map((m) => parseSplitValue(splitType, typed[m.id] ?? ''))
+        chosenMembers.map((m) =>
+          parseSplitValue(splitType, typed[m.id] ?? '', currency)
+        ),
+        currency
       )
     : null;
 
@@ -210,7 +219,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   function changeSplitType(next: SplitType) {
     splitTypeField.onChange(next);
     splitValuesField.onChange(
-      presetValues(next, amount, chosenIds, group.members)
+      presetValues(next, amount, chosenIds, group.members, currency)
     );
   }
 
@@ -350,7 +359,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           )}
         </FormField>
 
-        <FormField label='Monto en pesos' error={errors.amount?.message}>
+        <FormField label='Monto' error={errors.amount?.message}>
           {(c) => (
             <Controller
               control={control}
@@ -359,6 +368,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 <AmountInput
                   {...c}
                   ref={field.ref}
+                  currency={currency}
                   name={field.name}
                   onBlur={field.onBlur}
                   value={field.value}
@@ -432,7 +442,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                   const share = shares.get(member.id);
                   const id = `participant-${member.id}`;
                   const text = typed[member.id] ?? '';
-                  const parts = parseSplitValue(splitType, text);
+                  const parts = parseSplitValue(splitType, text, currency);
                   return (
                     <li
                       key={member.id}
@@ -464,25 +474,27 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                         {checked && splitType === 'shares' && parts >= 1 && (
                           <p className='-mt-1.5 pb-1.5 text-xs text-muted-foreground tabular-nums'>
                             {plural(parts, 'parte', 'partes')}
-                            {share !== undefined && ` · ${formatAmount(share)}`}
+                            {share !== undefined &&
+                              ` · ${formatAmount(share, currency)}`}
                           </p>
                         )}
                         {checked &&
                           splitType === 'percent' &&
                           share !== undefined && (
                             <p className='-mt-1.5 pb-1.5 text-xs text-muted-foreground tabular-nums'>
-                              {formatAmount(share)}
+                              {formatAmount(share, currency)}
                             </p>
                           )}
                       </div>
                       {checked && !custom && share !== undefined && (
                         <span className='shrink-0 text-sm font-medium tabular-nums'>
-                          {formatAmount(share)}
+                          {formatAmount(share, currency)}
                         </span>
                       )}
                       {checked && custom && (
                         <SplitValueInput
                           type={splitType as CustomSplitType}
+                          currency={currency}
                           memberName={member.name}
                           value={text}
                           invalid={Number.isNaN(parts)}
@@ -526,7 +538,8 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           {roundedUp.length > 0 && (
             <p className='text-sm text-muted-foreground'>
               Por redondeo, a {joinNames(roundedUp.map((m) => m.name))}{' '}
-              {roundedUp.length === 1 ? 'le toca' : 'les toca'} $1 más.
+              {roundedUp.length === 1 ? 'le toca' : 'les toca'}{' '}
+              {formatAmount(1, currency)} más.
             </p>
           )}
           {errors.participantIds?.message && (
@@ -571,6 +584,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
           kind={warning.kind}
           changes={warning.changes}
           members={group.members}
+          currency={currency}
           pending={busy}
           onCancel={() => setWarning(null)}
           onConfirm={() => void warning.confirm()}

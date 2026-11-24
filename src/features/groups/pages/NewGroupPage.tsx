@@ -1,6 +1,6 @@
 import { Plus, X } from 'lucide-react';
 import { useState, type KeyboardEvent } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -11,14 +11,17 @@ import { Input } from '@/components/ui/input';
 import { EntityIcon } from '@/features/icons';
 import { AvatarButton } from '@/features/members';
 import {
+  DEFAULT_CURRENCY,
   MAX_GROUP_NAME_LENGTH,
   MAX_MEMBER_NAME_LENGTH,
   validateGroupName,
   nextAvatarColor,
   validateMemberName,
+  type CurrencyCode,
   type NewMemberInput,
 } from '@/domain';
 import { isInfrastructureError, useCreateGroup, useServices } from '../data';
+import { CurrencyField } from '../components/CurrencyField';
 
 const MIN_MEMBERS = 2;
 
@@ -44,7 +47,9 @@ export function NewGroupPage() {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<{ name: string }>({ defaultValues: { name: '' } });
+  } = useForm<{ name: string; currency: CurrencyCode }>({
+    defaultValues: { name: '', currency: DEFAULT_CURRENCY },
+  });
   const groupName = useWatch({ control, name: 'name' });
 
   /** Validates `draft` against the current members; returns the new list or null. */
@@ -90,7 +95,7 @@ export function NewGroupPage() {
     );
   }
 
-  const onSubmit = handleSubmit(async ({ name }) => {
+  const onSubmit = handleSubmit(async ({ name, currency }) => {
     let finalMembers = members;
     if (memberDraft.trim()) {
       const next = withDraft(members, memberDraft);
@@ -108,7 +113,7 @@ export function NewGroupPage() {
       name: m.name,
       avatarSeed: m.seed,
     }));
-    const result = await create({ name, members: input });
+    const result = await create({ name, members: input, currency });
     if (result.ok) {
       toast.success('Grupo creado');
       navigate(`/groups/${result.value.id}`);
@@ -144,6 +149,17 @@ export function NewGroupPage() {
               </div>
             )}
           </FormField>
+
+          <Controller
+            control={control}
+            name='currency'
+            render={({ field }) => (
+              <CurrencyField
+                value={field.value}
+                onValueChange={field.onChange}
+              />
+            )}
+          />
 
           <div className='grid gap-3'>
             <FormField

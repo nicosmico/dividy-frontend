@@ -72,7 +72,7 @@ async function addExpense(
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(expense.description);
-  await dialog.getByLabel('Monto en pesos').fill(String(expense.amount));
+  await dialog.getByLabel('Monto').fill(String(expense.amount));
   if (expense.payer) {
     await dialog.getByLabel('Pagado por').click();
     await page.getByRole('option', { name: expense.payer }).click();

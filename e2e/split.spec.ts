@@ -78,7 +78,7 @@ async function openForm(
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(options.description);
-  await dialog.getByLabel('Monto en pesos').fill(String(options.amount));
+  await dialog.getByLabel('Monto').fill(String(options.amount));
   if (options.payer) {
     await dialog.getByLabel('Pagado por').click();
     await page.getByRole('option', { name: options.payer }).click();
@@ -110,9 +110,9 @@ async function expectBalances(page: Page, group: Group) {
     const item = list.locator('li', { hasText: name }).first();
     const text =
       b.balance > 0
-        ? `Le deben ${formatAmount(b.balance)}`
+        ? `Le deben ${formatAmount(b.balance, 'CLP')}`
         : b.balance < 0
-          ? `Debe ${formatAmount(-b.balance)}`
+          ? `Debe ${formatAmount(-b.balance, 'CLP')}`
           : 'Al día';
     await expect(item).toContainText(text);
   }
@@ -261,7 +261,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
   const edit = page.getByRole('dialog', { name: 'Editar gasto' });
   await expect(edit.getByRole('radio', { name: 'Montos' })).toBeChecked();
   await expect(edit.getByLabel('Monto de Ana')).toHaveValue('50.000');
-  await edit.getByLabel('Monto en pesos').fill('120000');
+  await edit.getByLabel('Monto').fill('120000');
   await expect(statusLine(edit)).toContainText('faltan $20.000');
   await edit.getByRole('button', { name: 'Guardar' }).click();
   await expect(edit.getByRole('alert')).toHaveText(
@@ -274,7 +274,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
   // ...and a by-parts expense recalculates by itself when its amount changes.
   await page.getByRole('button', { name: /Bencina/ }).click();
   const editParts = page.getByRole('dialog', { name: 'Editar gasto' });
-  await editParts.getByLabel('Monto en pesos').fill('40000');
+  await editParts.getByLabel('Monto').fill('40000');
   await expect(editParts.getByText('2 partes · $20.000')).toBeVisible();
   await editParts.getByRole('button', { name: 'Guardar' }).click();
   await expect(editParts).toBeHidden();

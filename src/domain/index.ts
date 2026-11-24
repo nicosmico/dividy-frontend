@@ -19,7 +19,32 @@ export type {
   Split,
   SplitType,
 } from './types';
-export { MAX_AMOUNT, MIN_AMOUNT, formatAmount, isValidAmount } from './money';
+export {
+  CURRENCIES,
+  CURRENCY_CODES,
+  CURRENCY_LOCKED_MESSAGE,
+  DEFAULT_CURRENCY,
+  canChangeCurrency,
+  changeCurrency,
+  currencyInfo,
+  currencyLabel,
+  currencyNameInSentence,
+  currencyPluralLabel,
+  isCurrencyCode,
+  type CurrencyCode,
+  type CurrencyInfo,
+} from './currency';
+export {
+  MAX_AMOUNT,
+  MIN_AMOUNT,
+  amountRangeMessage,
+  currencySymbol,
+  formatAmount,
+  formatAmountInput,
+  isValidAmount,
+  parseAmountText,
+  wholeUnit,
+} from './money';
 export {
   AVATAR_COLOR_COUNT,
   isValidAvatarColor,
@@ -98,12 +123,15 @@ export {
   decideSnapshotSave,
   fromCompactSnapshotV1,
   fromCompactSnapshotV2,
+  fromCompactSnapshotV3,
   getSnapshotIssues,
   snapshotToGroup,
   toCompactSnapshotV1,
   toCompactSnapshotV2,
+  toCompactSnapshotV3,
   type CompactSnapshotV1,
   type CompactSnapshotV2,
+  type CompactSnapshotV3,
   type Snapshot,
   type SnapshotSaveDecision,
 } from './snapshot';

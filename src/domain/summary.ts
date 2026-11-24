@@ -1,4 +1,5 @@
 import { computeBalances } from './balances';
+import { currencyPluralLabel, DEFAULT_CURRENCY } from './currency';
 import { formatAmount } from './money';
 import { describeSplitValues, splitTypeLabel } from './split';
 import { suggestTransfers } from './transfers';
@@ -25,7 +26,13 @@ export function formatGroupSummary(
     group.members.map((m) => [m.id, m.name])
   );
   const name = (id: MemberId) => nameOf.get(id) ?? '?';
-  const lines: string[] = [`*${group.name}*`];
+  const { currency } = group;
+  // The currency is said once, in the title, and only when it is not the default.
+  const where =
+    currency === DEFAULT_CURRENCY
+      ? ''
+      : ` · en ${currencyPluralLabel(currency)}`;
+  const lines: string[] = [`*${group.name}*${where}`];
   if (options.asOf) lines.push(`Cuentas al ${options.asOf}`);
   lines.push('');
 
@@ -41,9 +48,9 @@ export function formatGroupSummary(
       const how =
         e.split.type === 'equal'
           ? `entre ${joinNames(among)}`
-          : `${splitTypeLabel(e.split.type)} (${describeSplitValues(e.split, group.members)})`;
+          : `${splitTypeLabel(e.split.type)} (${describeSplitValues(e.split, group.members, currency)})`;
       lines.push(
-        `• ${e.description}: ${formatAmount(e.amount)}, pagó ${name(e.payerId)}, ${how}`
+        `• ${e.description}: ${formatAmount(e.amount, currency)}, pagó ${name(e.payerId)}, ${how}`
       );
     }
   }
@@ -52,9 +59,9 @@ export function formatGroupSummary(
   for (const b of computeBalances(group)) {
     const who = name(b.memberId);
     if (b.balance > 0)
-      lines.push(`• ${who}: le deben ${formatAmount(b.balance)}`);
+      lines.push(`• ${who}: le deben ${formatAmount(b.balance, currency)}`);
     else if (b.balance < 0)
-      lines.push(`• ${who}: debe ${formatAmount(-b.balance)}`);
+      lines.push(`• ${who}: debe ${formatAmount(-b.balance, currency)}`);
     else lines.push(`• ${who}: está al día`);
   }
 
@@ -65,7 +72,7 @@ export function formatGroupSummary(
   } else {
     for (const t of transfers) {
       lines.push(
-        `• ${name(t.fromId)} le transfiere ${formatAmount(t.amount)} a ${name(t.toId)}`
+        `• ${name(t.fromId)} le transfiere ${formatAmount(t.amount, currency)} a ${name(t.toId)}`
       );
     }
   }

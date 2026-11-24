@@ -31,7 +31,7 @@ async function addExpense(page: Page, description: string, amount: number) {
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(description);
-  await dialog.getByLabel('Monto en pesos').fill(String(amount));
+  await dialog.getByLabel('Monto').fill(String(amount));
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
 }
@@ -61,8 +61,8 @@ async function settleEverything(page: Page) {
 
 /** Same words as the Saldos tab: "Al día", "Debe $X", "Le deben $X". */
 function words(balance: number) {
-  if (balance > 0) return `Le deben ${formatAmount(balance)}`;
-  if (balance < 0) return `Debe ${formatAmount(-balance)}`;
+  if (balance > 0) return `Le deben ${formatAmount(balance, 'CLP')}`;
+  if (balance < 0) return `Debe ${formatAmount(-balance, 'CLP')}`;
   return 'Al día';
 }
 

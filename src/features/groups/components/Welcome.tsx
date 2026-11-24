@@ -39,7 +39,7 @@ export function Welcome() {
         </Link>
       </Button>
       <p className='text-center text-sm text-muted-foreground'>
-        Solo pesos chilenos. Tus datos se guardan en este dispositivo.
+        Pesos, dólares, euros y más. Tus datos se guardan en este dispositivo.
       </p>
     </div>
   );

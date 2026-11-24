@@ -160,10 +160,8 @@ describe('Pestaña Gastos', () => {
         within(dialog).getByLabelText('Descripción'),
         'Supermercado'
       );
-      await user.type(within(dialog).getByLabelText('Monto en pesos'), '10000');
-      expect(within(dialog).getByLabelText('Monto en pesos')).toHaveValue(
-        '10.000'
-      );
+      await user.type(within(dialog).getByLabelText('Monto'), '10000');
+      expect(within(dialog).getByLabelText('Monto')).toHaveValue('10.000');
       await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
 
       await waitFor(() =>
@@ -192,7 +190,7 @@ describe('Pestaña Gastos', () => {
         'Ana'
       );
       await user.type(within(dialog).getByLabelText('Descripción'), 'Bencina');
-      await user.type(within(dialog).getByLabelText('Monto en pesos'), '5000');
+      await user.type(within(dialog).getByLabelText('Monto'), '5000');
       await user.click(within(dialog).getByLabelText('Pagado por'));
       await user.click(await screen.findByRole('option', { name: 'Caro' }));
       expect(within(dialog).getByLabelText('Pagado por')).toHaveTextContent(
@@ -230,7 +228,7 @@ describe('Pestaña Gastos', () => {
         groups: [makeGroup({ members: ['Ana', 'Beto'] })],
       });
       const dialog = await openNewForm(user);
-      const amount = within(dialog).getByLabelText('Monto en pesos');
+      const amount = within(dialog).getByLabelText('Monto');
       await user.type(amount, '1a2.3b4567');
       expect(amount).toHaveValue('1.234.567');
       await user.clear(amount);
@@ -244,9 +242,7 @@ describe('Pestaña Gastos', () => {
         groups: [makeGroup({ members: ['Ana', 'Beto'] })],
       });
       const dialog = await openNewForm(user);
-      const amount = within(dialog).getByLabelText(
-        'Monto en pesos'
-      ) as HTMLInputElement;
+      const amount = within(dialog).getByLabelText('Monto') as HTMLInputElement;
       await user.type(amount, '1000');
       expect(amount).toHaveValue('1.000');
       // Put the caret after the "1" and type a 5: 1|.000 → 15|.000 → 15.000
@@ -267,7 +263,7 @@ describe('Pestaña Gastos', () => {
         await within(dialog).findByText('Escribe una descripción del gasto.')
       ).toBeInTheDocument();
       expect(
-        within(dialog).getByText(/Ingresa un monto en pesos enteros/)
+        within(dialog).getByText(/Ingresa un monto entre/)
       ).toBeInTheDocument();
       expect(within(dialog).getByLabelText('Descripción')).toHaveAttribute(
         'aria-invalid',
@@ -289,7 +285,7 @@ describe('Pestaña Gastos', () => {
         groups: [makeGroup({ members: ['Ana', 'Beto', 'Caro'] })],
       });
       const dialog = await openNewForm(user);
-      await user.type(within(dialog).getByLabelText('Monto en pesos'), '10000');
+      await user.type(within(dialog).getByLabelText('Monto'), '10000');
 
       expect(within(dialog).getByText('$3.334')).toBeInTheDocument();
       expect(within(dialog).getAllByText('$3.333')).toHaveLength(2);
@@ -332,7 +328,7 @@ describe('Pestaña Gastos', () => {
       });
       const dialog = await openNewForm(user);
       await user.type(within(dialog).getByLabelText('Descripción'), 'Taxi');
-      await user.type(within(dialog).getByLabelText('Monto en pesos'), '3000');
+      await user.type(within(dialog).getByLabelText('Monto'), '3000');
       const save = within(dialog).getByRole('button', { name: 'Guardar' });
       fireEvent.click(save);
       fireEvent.click(save);
@@ -351,7 +347,7 @@ describe('Pestaña Gastos', () => {
       });
       const dialog = await openNewForm(user);
       await user.type(within(dialog).getByLabelText('Descripción'), 'Taxi');
-      await user.type(within(dialog).getByLabelText('Monto en pesos'), '3000');
+      await user.type(within(dialog).getByLabelText('Monto'), '3000');
       await user.click(
         within(dialog).getByRole('button', { name: 'Cancelar' })
       );
@@ -375,9 +371,7 @@ describe('Pestaña Gastos', () => {
       expect(within(dialog).getByLabelText('Descripción')).toHaveValue(
         'Bencina'
       );
-      expect(within(dialog).getByLabelText('Monto en pesos')).toHaveValue(
-        '5.000'
-      );
+      expect(within(dialog).getByLabelText('Monto')).toHaveValue('5.000');
       expect(within(dialog).getByLabelText('Fecha')).toHaveValue('2026-03-09');
       expect(within(dialog).getByLabelText('Pagado por')).toHaveTextContent(
         'Beto'
@@ -503,9 +497,7 @@ describe('Pestaña Gastos', () => {
       expect(within(dialog).getByLabelText('Descripción')).toHaveValue(
         'Bencina'
       );
-      expect(within(dialog).getByLabelText('Monto en pesos')).toHaveValue(
-        '5.000'
-      );
+      expect(within(dialog).getByLabelText('Monto')).toHaveValue('5.000');
       await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
       await waitFor(() =>
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

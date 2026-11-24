@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { buttonVariants } from '@/components/ui/button';
-import type { BalanceChange, Member } from '@/domain';
+import type { BalanceChange, CurrencyCode, Member } from '@/domain';
 import { describeBalance } from '@/lib/balance-text';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ interface ConfirmCoveredChangeProps {
   kind: CoveredChangeKind;
   changes: BalanceChange[];
   members: Member[];
+  currency: CurrencyCode;
   pending?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -35,6 +36,7 @@ export function ConfirmCoveredChange({
   kind,
   changes,
   members,
+  currency,
   pending = false,
   onConfirm,
   onCancel,
@@ -63,7 +65,7 @@ export function ConfirmCoveredChange({
         <ul className='grid gap-1.5 rounded-xl bg-secondary/60 p-3 text-sm [overflow-wrap:anywhere]'>
           {changes.map((c) => (
             <li key={c.memberId}>
-              {`${nameOf(c.memberId)}: ${describeBalance(c.before)} → ${describeBalance(c.after)}`}
+              {`${nameOf(c.memberId)}: ${describeBalance(c.before, currency)} → ${describeBalance(c.after, currency)}`}
             </li>
           ))}
         </ul>

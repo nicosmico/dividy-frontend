@@ -1,4 +1,4 @@
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/form-field';
@@ -10,36 +10,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EntityIcon } from '@/features/icons';
 import {
+  canChangeCurrency,
+  changeCurrency,
   MAX_GROUP_NAME_LENGTH,
   renameGroup,
   validateGroupName,
+  type CurrencyCode,
   type Group,
 } from '@/domain';
 import { isInfrastructureError, useGroupOperation } from '../data';
+import { CurrencyField } from './CurrencyField';
 
-interface RenameGroupDialogProps {
+interface EditGroupDialogProps {
   group: Group;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function RenameGroupDialog({
+export function EditGroupDialog({
   group,
   open,
   onOpenChange,
-}: RenameGroupDialogProps) {
+}: EditGroupDialogProps) {
   return (
     <ResponsiveDialog
       open={open}
       onOpenChange={onOpenChange}
-      title='Renombrar grupo'
+      title='Editar grupo'
     >
-      <RenameGroupForm group={group} onDone={() => onOpenChange(false)} />
+      <EditGroupForm group={group} onDone={() => onOpenChange(false)} />
     </ResponsiveDialog>
   );
 }
 
-function RenameGroupForm({
+function EditGroupForm({
   group,
   onDone,
 }: {
@@ -53,16 +57,25 @@ function RenameGroupForm({
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<{ name: string }>({ defaultValues: { name: group.name } });
+  } = useForm<{ name: string; currency: CurrencyCode }>({
+    defaultValues: { name: group.name, currency: group.currency },
+  });
   const draftName = useWatch({ control, name: 'name' });
 
-  const onSubmit = handleSubmit(async ({ name }) => {
-    const result = await operation.run((g) => renameGroup(g, name));
+  const locked = !canChangeCurrency(group);
+
+  const onSubmit = handleSubmit(async ({ name, currency }) => {
+    const result = await operation.run((g) => {
+      const renamed = renameGroup(g, name);
+      return renamed.ok ? changeCurrency(renamed.value, currency) : renamed;
+    });
     if (result.ok) {
-      toast.success('Grupo renombrado');
+      toast.success('Grupo actualizado');
       onDone();
     } else if (!isInfrastructureError(result.error)) {
-      setError('name', { message: result.error.message });
+      setError(result.error.code === 'currency_locked' ? 'currency' : 'name', {
+        message: result.error.message,
+      });
     }
   });
 
@@ -93,6 +106,18 @@ function RenameGroupForm({
           </div>
         )}
       </FormField>
+      <Controller
+        control={control}
+        name='currency'
+        render={({ field }) => (
+          <CurrencyField
+            value={field.value}
+            onValueChange={field.onChange}
+            locked={locked}
+            error={errors.currency?.message}
+          />
+        )}
+      />
       <ResponsiveDialogFooter>
         <Button type='button' variant='outline' onClick={onDone}>
           Cancelar

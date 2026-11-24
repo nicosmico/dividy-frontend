@@ -269,7 +269,7 @@ describe('propiedades de computeShares', () => {
             group
           );
           // Percent needs at least 1 bp each: n <= 8 always.
-          expect(validateSplit(amount, split, group).ok).toBe(true);
+          expect(validateSplit(amount, split, group, 'CLP').ok).toBe(true);
           if (type === 'exact') {
             const equal = computeShares(
               {
@@ -344,7 +344,7 @@ describe('validateSplit', () => {
     parts,
   });
   const message = (amount: number, split: Split) => {
-    const result = validateSplit(amount, split, ABC);
+    const result = validateSplit(amount, split, ABC, 'CLP');
     return result.ok ? 'ok' : result.error.message;
   };
 
@@ -415,7 +415,8 @@ describe('validateSplit', () => {
         participantIds: ['A'],
         amounts: { A: 100, B: 7 },
       },
-      ABC
+      ABC,
+      'CLP'
     );
     expect(result).toEqual({
       ok: true,
@@ -425,7 +426,7 @@ describe('validateSplit', () => {
 
   it('el error del dominio lleva el código invalid_split', () => {
     const result = validateExpenseFields(
-      { members: ABC },
+      { members: ABC, currency: 'CLP' },
       {
         description: 'Cabaña',
         amount: 100_000,
@@ -454,17 +455,19 @@ describe('formatPercent y describeSplitValues', () => {
           participantIds: ['C', 'A'],
           parts: { A: 2, C: 1 },
         },
-        ABC
+        ABC,
+        'CLP'
       )
     ).toBe('A 2, C 1');
     expect(
       describeSplitValues(
         { type: 'exact', participantIds: ['A'], amounts: { A: 1500 } },
-        ABC
+        ABC,
+        'CLP'
       )
     ).toBe('A $1.500');
     expect(
-      describeSplitValues({ type: 'equal', participantIds: ['A'] }, ABC)
+      describeSplitValues({ type: 'equal', participantIds: ['A'] }, ABC, 'CLP')
     ).toBeNull();
   });
 });

@@ -25,7 +25,7 @@ async function formIn(
 ) {
   const dialog = await openNewForm(user);
   await user.type(within(dialog).getByLabelText('Descripción'), 'Cabaña');
-  await user.type(within(dialog).getByLabelText('Monto en pesos'), amount);
+  await user.type(within(dialog).getByLabelText('Monto'), amount);
   await user.click(within(dialog).getByRole('radio', { name: mode }));
   return dialog;
 }
@@ -57,7 +57,7 @@ describe('control segmentado "Dividir entre"', () => {
       groups: [threeMembers()],
     });
     const dialog = await openNewForm(user);
-    await user.type(within(dialog).getByLabelText('Monto en pesos'), '10000');
+    await user.type(within(dialog).getByLabelText('Monto'), '10000');
     expect(within(dialog).queryByLabelText(/^Monto de /)).toBeNull();
     expect(status(dialog)).toBeNull();
     expect(within(dialog).getByText('$3.334')).toBeInTheDocument();
@@ -354,7 +354,7 @@ describe('Partes', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'Caro' }));
     await user.click(within(dialog).getByRole('checkbox', { name: 'Caro' }));
     expect(within(dialog).getByLabelText('Partes de Caro')).toHaveValue('1');
-    await user.type(within(dialog).getByLabelText('Monto en pesos'), '0');
+    await user.type(within(dialog).getByLabelText('Monto'), '0');
     expect(within(dialog).getAllByText('1 parte · $300.000')).toHaveLength(3);
   });
 
@@ -444,7 +444,7 @@ describe('editar un gasto con división personalizada', () => {
     });
     await user.click(await screen.findByRole('button', { name: /Cabaña/ }));
     const dialog = await screen.findByRole('dialog', { name: 'Editar gasto' });
-    const amount = within(dialog).getByLabelText('Monto en pesos');
+    const amount = within(dialog).getByLabelText('Monto');
     await user.clear(amount);
     await user.type(amount, '120000');
     expect(status(dialog)).toHaveTextContent(
@@ -473,7 +473,7 @@ describe('editar un gasto con división personalizada', () => {
     });
     await user.click(await screen.findByRole('button', { name: /Cena/ }));
     const dialog = await screen.findByRole('dialog', { name: 'Editar gasto' });
-    const amount = within(dialog).getByLabelText('Monto en pesos');
+    const amount = within(dialog).getByLabelText('Monto');
     await user.clear(amount);
     await user.type(amount, '80000');
     expect(within(dialog).getByText('2 partes · $40.000')).toBeInTheDocument();

@@ -63,7 +63,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.goto('/groups/g1/expenses');
       await page.getByRole('button', { name: /Agregar gasto/ }).click();
       const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
-      await dialog.getByLabel('Monto en pesos').fill('100000');
+      await dialog.getByLabel('Monto').fill('100000');
       await dialog.getByRole('radio', { name: 'Montos' }).click();
       await expect(dialog.getByLabel('Monto de Ana')).toBeVisible();
       await expectNoSeriousViolations(page);

@@ -19,7 +19,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { computeMemberMoods } from '@/features/members';
-import { formatAmount, type Group } from '@/domain';
+import { formatAmount, type CurrencyCode, type Group } from '@/domain';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 import {
@@ -263,6 +263,7 @@ export function ExplanationPlayer({
           <PaidShareRow
             key={m.member.id}
             member={m.member}
+            currency={before.currency}
             mood={moods.get(m.member.id)}
             balance={row.balance}
             paid={row.paid}
@@ -564,6 +565,7 @@ function Footer({
               key={p.id}
               from={nameOf(p.fromId)}
               to={nameOf(p.toId)}
+              currency={before.currency}
               amount={p.amount}
               muted
             />
@@ -581,6 +583,7 @@ function Footer({
             key={`${t.fromId}-${t.toId}`}
             from={nameOf(t.fromId)}
             to={nameOf(t.toId)}
+            currency={before.currency}
             amount={t.amount}
             style={{ transitionDelay: last ? `${index * 250}ms` : '0ms' }}
           />
@@ -606,12 +609,14 @@ function TransferRow({
   from,
   to,
   amount,
+  currency,
   muted,
   style,
 }: {
   from: string;
   to: string;
   amount: number;
+  currency: CurrencyCode;
   muted?: boolean;
   style?: CSSProperties;
 }) {
@@ -630,7 +635,7 @@ function TransferRow({
         {to}
       </span>
       <span className='font-extrabold tabular-nums'>
-        {formatAmount(amount)}
+        {formatAmount(amount, currency)}
       </span>
     </div>
   );

@@ -171,7 +171,7 @@ describe('abrir un link de solo lectura', () => {
       ).toBeInTheDocument();
       // Same numbers as the original group.
       expect(screen.getByText(/Pendiente:/)).toHaveTextContent(
-        formatAmount(getPendingAmount(tripGroup()))
+        formatAmount(getPendingAmount(tripGroup()), 'CLP')
       );
       expect(screen.getAllByText('Beto → Ana').length).toBeGreaterThan(0);
       expect(
@@ -666,7 +666,7 @@ describe('compartir un grupo propio', () => {
     const text = writeText.mock.calls[0][0];
     expect(text).not.toContain('Cuentas al');
     const [, link] = text.split('\n\nVer el detalle: ');
-    expect(link.startsWith(`${window.location.origin}/shared#v2.`)).toBe(true);
+    expect(link.startsWith(`${window.location.origin}/shared#v3.`)).toBe(true);
     const url = new URL(link);
     expect(url.search).toBe('');
     // The link opens a capture with the same numbers as the group.
