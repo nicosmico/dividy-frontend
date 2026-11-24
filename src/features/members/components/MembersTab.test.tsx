@@ -281,6 +281,36 @@ describe('Pestaña Miembros', () => {
     ).toBeDisabled();
   });
 
+  it('muestra solo los movimientos que tiene (sin "0 pagos")', async () => {
+    const group = makeGroup({
+      members: ['Ana', 'Beto'],
+      expenses: [
+        {
+          id: 'e1',
+          description: 'Asado',
+          amount: 9000,
+          payer: 'Ana',
+          among: ['Ana', 'Beto'],
+        },
+      ],
+    });
+    const { user } = renderWithProviders(undefined, {
+      route: `/groups/${group.id}/members`,
+      groups: [group],
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Eliminar a Beto' })
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Eliminar a Beto',
+    });
+    expect(
+      within(dialog).getByText('Participa en 1 gasto')
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByText(/^Pagó/)).toBeNull();
+    expect(within(dialog).queryByText(/^Tiene \d+ pago/)).toBeNull();
+  });
+
   it('reasigna sus movimientos a otro miembro', async () => {
     const { user, repository } = renderWithProviders(undefined, {
       route: ROUTE,

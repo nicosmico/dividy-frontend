@@ -127,17 +127,26 @@ function StrategyDialog({
     >
       <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
         <ul className='grid grid-cols-[minmax(0,1fr)] gap-1 rounded-xl bg-secondary p-3 text-sm'>
-          <li>Pagó {plural(impact.paidExpenses.length, 'gasto', 'gastos')}</li>
-          <li>
-            Participa en{' '}
-            {plural(impact.participatingExpenses.length, 'gasto', 'gastos')}
-          </li>
-          <li>
-            Tiene {plural(impact.payments.length, 'pago', 'pagos')}{' '}
-            {impact.payments.length === 1
-              ? 'enviado o recibido'
-              : 'enviados o recibidos'}
-          </li>
+          {/* Only what exists: "Tiene 0 pagos" said nothing useful. */}
+          {impact.paidExpenses.length > 0 && (
+            <li>
+              Pagó {plural(impact.paidExpenses.length, 'gasto', 'gastos')}
+            </li>
+          )}
+          {impact.participatingExpenses.length > 0 && (
+            <li>
+              Participa en{' '}
+              {plural(impact.participatingExpenses.length, 'gasto', 'gastos')}
+            </li>
+          )}
+          {impact.payments.length > 0 && (
+            <li>
+              Tiene {plural(impact.payments.length, 'pago', 'pagos')}{' '}
+              {impact.payments.length === 1
+                ? 'enviado o recibido'
+                : 'enviados o recibidos'}
+            </li>
+          )}
         </ul>
 
         <RadioGroup
