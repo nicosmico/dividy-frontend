@@ -10,8 +10,13 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 
 import { AppRoutes } from '@/app/router';
-import { InMemoryGroupRepository, type GroupRepository } from '@/data';
-import type { Group } from '@/domain';
+import {
+  InMemoryGroupRepository,
+  InMemorySnapshotRepository,
+  type GroupRepository,
+  type SnapshotRepository,
+} from '@/data';
+import type { Group, Snapshot } from '@/domain';
 import { createQueryClient } from '@/lib/query-client';
 import { TestProviders } from './test-providers';
 
@@ -34,6 +39,9 @@ export interface RenderWithProvidersOptions {
   /** Groups the repository starts with (ignored if `repository` is given). */
   groups?: Group[];
   repository?: GroupRepository;
+  /** Snapshots saved on the device (ignored if `snapshotRepository` is given). */
+  snapshots?: Snapshot[];
+  snapshotRepository?: SnapshotRepository;
   now?: () => string;
   newId?: () => string;
   queryClient?: QueryClient;
@@ -43,6 +51,9 @@ function resolve(options: RenderWithProvidersOptions) {
   return {
     repository:
       options.repository ?? new InMemoryGroupRepository(options.groups),
+    snapshotRepository:
+      options.snapshotRepository ??
+      new InMemorySnapshotRepository(options.snapshots),
     queryClient: options.queryClient ?? createQueryClient(),
     now: options.now ?? (() => TEST_NOW),
     newId: options.newId ?? createIdSequence(),
@@ -53,6 +64,7 @@ function resolve(options: RenderWithProvidersOptions) {
 export interface RenderWithProvidersResult extends RenderResult {
   user: UserEvent;
   repository: GroupRepository;
+  snapshotRepository: SnapshotRepository;
   queryClient: QueryClient;
 }
 
@@ -71,6 +83,7 @@ export function renderWithProviders(
     ...result,
     user: userEvent.setup(),
     repository: providers.repository,
+    snapshotRepository: providers.snapshotRepository,
     queryClient: providers.queryClient,
   };
 }
@@ -81,6 +94,7 @@ export function renderHookWithProviders<Result>(
   options: RenderWithProvidersOptions = {}
 ): RenderHookResult<Result, unknown> & {
   repository: GroupRepository;
+  snapshotRepository: SnapshotRepository;
   queryClient: QueryClient;
 } {
   const providers = resolve(options);
@@ -92,6 +106,7 @@ export function renderHookWithProviders<Result>(
   return {
     ...result,
     repository: providers.repository,
+    snapshotRepository: providers.snapshotRepository,
     queryClient: providers.queryClient,
   };
 }

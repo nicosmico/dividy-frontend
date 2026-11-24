@@ -2,12 +2,13 @@ import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { Toaster } from '@/components/ui/sonner';
-import type { GroupRepository } from '@/data';
+import type { GroupRepository, SnapshotRepository } from '@/data';
 import { RepositoryProvider } from '@/features/groups/data';
 import { createQueryClient } from '@/lib/query-client';
 
 interface AppProvidersProps {
   repository: GroupRepository;
+  snapshotRepository?: SnapshotRepository;
   now?: () => string;
   newId?: () => string;
   queryClient?: QueryClient;
@@ -17,6 +18,7 @@ interface AppProvidersProps {
 /** QueryClient + repository (with injectable clock and ids) + toaster. */
 export function AppProviders({
   repository,
+  snapshotRepository,
   now,
   newId,
   queryClient,
@@ -25,7 +27,12 @@ export function AppProviders({
   const [client] = useState(() => queryClient ?? createQueryClient());
   return (
     <QueryClientProvider client={client}>
-      <RepositoryProvider repository={repository} now={now} newId={newId}>
+      <RepositoryProvider
+        repository={repository}
+        snapshotRepository={snapshotRepository}
+        now={now}
+        newId={newId}
+      >
         {children}
         <Toaster />
       </RepositoryProvider>

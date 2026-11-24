@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import { PageDialog } from '@/components/page-dialog';
 import { Card } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import {
 } from '@/domain';
 import { LazyExplanationPlayer } from '@/features/explanation';
 import { useCurrentGroup } from '@/features/groups/data';
+import { useSnapshotView } from '@/hooks/use-snapshot-view';
 import { cn } from '@/lib/utils';
 import { ShareSummaryButton } from './ShareSummaryButton';
 import { MemberBalances } from './MemberBalances';
@@ -21,10 +22,13 @@ import { SuggestedTransfers } from './SuggestedTransfers';
 /**
  * Balances tab: the group status with "Compartir resumen", what to pay,
  * payments already made and, under "Detalle", the chart and the balance per
- * member (with proof).
+ * member (with proof). In the read-only view of a snapshot the same screen
+ * has no "Marcar como pagado" nor delete buttons.
  */
 export function BalancesTab() {
   const group = useCurrentGroup();
+  const snapshot = useSnapshotView();
+  const { hash } = useLocation();
   const [explaining, setExplaining] = useState(false);
 
   if (group.expenses.length === 0 && group.payments.length === 0) {
@@ -35,7 +39,8 @@ export function BalancesTab() {
           Los saldos aparecen cuando agregas gastos.
         </p>
         <Link
-          to='../expenses'
+          // A snapshot opened from a link keeps its data in the hash.
+          to={{ pathname: '../expenses', hash }}
           className='font-medium underline underline-offset-2'
         >
           Ir a Gastos
@@ -72,7 +77,7 @@ export function BalancesTab() {
               por saldar
             </h2>
           )}
-          <ShareSummaryButton group={group} />
+          <ShareSummaryButton group={group} snapshot={snapshot} />
         </Card>
       </section>
       {!settled && <SuggestedTransfers group={group} transfers={transfers} />}

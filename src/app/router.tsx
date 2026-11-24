@@ -24,6 +24,15 @@ const BalancesTab = lazy(() =>
 const MembersTab = lazy(() =>
   import('@/features/members').then((m) => ({ default: m.MembersTab }))
 );
+const LinkSnapshotPage = lazy(() =>
+  import('@/features/share').then((m) => ({ default: m.LinkSnapshotPage }))
+);
+const SavedSnapshotPage = lazy(() =>
+  import('@/features/share').then((m) => ({ default: m.SavedSnapshotPage }))
+);
+const RedirectToExpenses = lazy(() =>
+  import('@/features/share').then((m) => ({ default: m.RedirectToExpenses }))
+);
 
 /** Declarative route table. Tests render it inside a `MemoryRouter`. */
 export function AppRoutes() {
@@ -38,6 +47,17 @@ export function AppRoutes() {
             <Route path='expenses' element={<ExpensesTab />} />
             <Route path='balances' element={<BalancesTab />} />
             <Route path='members' element={<MembersTab />} />
+          </Route>
+          {/* Read-only snapshots (ADR 0006): reuse the Gastos and Saldos tabs. */}
+          <Route path='shared' element={<LinkSnapshotPage />}>
+            <Route index element={<RedirectToExpenses />} />
+            <Route path='expenses' element={<ExpensesTab />} />
+            <Route path='balances' element={<BalancesTab />} />
+          </Route>
+          <Route path='shared/:snapshotId' element={<SavedSnapshotPage />}>
+            <Route index element={<Navigate to='expenses' replace />} />
+            <Route path='expenses' element={<ExpensesTab />} />
+            <Route path='balances' element={<BalancesTab />} />
           </Route>
           <Route path='*' element={<NotFoundPage />} />
         </Route>

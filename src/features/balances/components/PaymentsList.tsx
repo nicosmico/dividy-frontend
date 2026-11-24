@@ -15,6 +15,7 @@ import {
   toastUndoable,
   useGroupOperation,
 } from '@/features/groups/data';
+import { useReadOnly } from '@/hooks/use-snapshot-view';
 import { formatDate } from '@/lib/dates';
 import { restoreFocusIfLost } from '@/lib/focus';
 
@@ -26,8 +27,9 @@ function sortPayments(payments: readonly Payment[]): Payment[] {
   );
 }
 
-/** Registered payments, each removable with an undo. */
+/** Registered payments, each removable with an undo (not in the read-only view of a snapshot). */
 export function PaymentsList({ group }: { group: Group }) {
+  const readOnly = useReadOnly();
   const operation = useGroupOperation(group.id);
   const removing = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -73,15 +75,17 @@ export function PaymentsList({ group }: { group: Group }) {
               <p className='shrink-0 font-semibold tabular-nums'>
                 {formatAmount(payment.amount)}
               </p>
-              <Button
-                variant='ghost'
-                size='icon'
-                aria-label={`Eliminar pago de ${nameOf(payment.fromId)} a ${nameOf(payment.toId)}`}
-                disabled={operation.isPending}
-                onClick={() => void remove(payment)}
-              >
-                <Trash2 />
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label={`Eliminar pago de ${nameOf(payment.fromId)} a ${nameOf(payment.toId)}`}
+                  disabled={operation.isPending}
+                  onClick={() => void remove(payment)}
+                >
+                  <Trash2 />
+                </Button>
+              )}
             </Card>
           </li>
         ))}
