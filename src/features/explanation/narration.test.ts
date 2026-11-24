@@ -33,7 +33,7 @@ describe('narrate, ejemplo de la bienvenida', () => {
 
   it('paso 3: la comparación', () => {
     expect(narrate(explanation, 2)).toBe(
-      'Se compara lo que pagó cada uno con su parte: a Ana le deben $5.000, a Beto le deben $12.500 y Carla debe $17.500.'
+      'Se compara lo que gastó cada uno con su parte: a Ana le deben $5.000, a Beto le deben $12.500 y Carla debe $17.500.'
     );
   });
 
@@ -62,7 +62,7 @@ describe('narrate, grupos reales', () => {
       'Cada gasto se divide entre quienes lo comparten. Sumando todos los gastos, sale la parte de cada uno.'
     );
     expect(narrate(e, 2)).toBe(
-      'Se compara lo que pagó cada uno con su parte: 1 persona tiene saldo a favor y 5 deben.'
+      'Se compara lo que gastó cada uno con su parte: 1 persona tiene saldo a favor y 5 deben.'
     );
   });
 

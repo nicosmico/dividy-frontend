@@ -43,7 +43,7 @@ export type OperationResult =
 export const UNDO_DURATION_MS = 6000;
 
 export const UNDO_FAILED_MESSAGE =
-  'No se pudo deshacer porque el grupo cambió.';
+  'No se pudo deshacer porque el grupo cambió. Revisa los cambios y corrígelos a mano.';
 
 const SAVE_FAILED: InfrastructureError = {
   code: 'save_failed',

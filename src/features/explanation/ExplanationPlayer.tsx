@@ -530,7 +530,7 @@ function Footer({
       {before.payments.length > 0 && (
         <div className='grid gap-1.5'>
           <p className='text-xs font-semibold text-muted-foreground'>
-            Pagos ya registrados
+            Pagos registrados
           </p>
           {before.payments.map((p) => (
             <TransferRow

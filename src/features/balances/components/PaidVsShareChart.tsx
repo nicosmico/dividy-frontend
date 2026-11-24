@@ -187,7 +187,7 @@ function TableAlternative({
         })}
         {group.payments.length > 0 && (
           <p className='text-muted-foreground'>
-            Los saldos incluyen los pagos ya registrados.
+            Los saldos incluyen los pagos registrados.
           </p>
         )}
       </div>

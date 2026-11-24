@@ -253,7 +253,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await openTab(page, 'Miembros');
   await page.getByRole('button', { name: 'Eliminar a Carla' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Carla' });
-  await dialog.getByText('Eliminar con sus gastos').click();
+  await dialog.getByText('Eliminar con sus gastos y pagos').click();
   await dialog.getByRole('button', { name: 'Eliminar a Carla' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText('2 miembros')).toBeVisible();

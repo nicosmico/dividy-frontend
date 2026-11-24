@@ -69,7 +69,7 @@ export function SuggestedTransfers({
                 </p>
                 <Button
                   variant='accent'
-                  aria-label={`Marcar como pagado: ${from.name} le paga ${formatAmount(t.amount)} a ${to.name}`}
+                  aria-label={`Marcar como pagado: ${from.name} le transfiere ${formatAmount(t.amount)} a ${to.name}`}
                   onClick={() => setPaying(t)}
                 >
                   Marcar como pagado
@@ -137,10 +137,12 @@ function ConfirmPayment({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            ¿{from.name} le pagó {formatAmount(transfer.amount)} a {to.name}?
+            ¿{from.name} le transfirió {formatAmount(transfer.amount)} a{' '}
+            {to.name}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             Se registrará un pago por ese monto y los saldos se actualizarán.
+            Podrás eliminarlo desde Pagos registrados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && (

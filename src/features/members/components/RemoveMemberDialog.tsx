@@ -167,7 +167,7 @@ function StrategyDialog({
                   </p>
                 )}
                 <Label htmlFor='remove-target' className='sr-only'>
-                  Miembro destino
+                  ¿A quién se los pasas?
                 </Label>
                 <Select value={targetId} onValueChange={setTargetId}>
                   <SelectTrigger id='remove-target'>
@@ -189,7 +189,7 @@ function StrategyDialog({
             <div className='flex items-center gap-3'>
               <RadioGroupItem value='cascade' id='remove-cascade' />
               <Label htmlFor='remove-cascade' className='flex-1 py-2'>
-                Eliminar con sus gastos
+                Eliminar con sus gastos y pagos
               </Label>
             </div>
             {choice === 'cascade' && (

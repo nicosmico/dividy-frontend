@@ -38,11 +38,14 @@ export function validateAvatar(avatar: MemberAvatar): Result<MemberAvatar> {
   if (!isValidAvatarColor(avatar.color)) {
     return fail(
       'invalid_avatar',
-      `El color del avatar debe ser un número entero entre 0 y ${AVATAR_COLOR_COUNT - 1}.`
+      `No se pudo cambiar la cara: el color debe ser un número entero entre 0 y ${AVATAR_COLOR_COUNT - 1}.`
     );
   }
   if (typeof avatar.seed !== 'string' || avatar.seed.trim().length === 0) {
-    return fail('invalid_avatar', 'El avatar necesita una semilla.');
+    return fail(
+      'invalid_avatar',
+      'No se pudo cambiar la cara. Inténtalo de nuevo.'
+    );
   }
   return ok({ color: avatar.color, seed: avatar.seed });
 }
@@ -59,7 +62,10 @@ export function regenerateMemberAvatar(
 ): Result<Group> {
   const member = group.members.find((m) => m.id === memberId);
   if (!member) {
-    return fail('member_not_found', 'Ese miembro no existe en el grupo.');
+    return fail(
+      'member_not_found',
+      'Ese miembro ya no está en el grupo. Vuelve a la lista de miembros.'
+    );
   }
   const avatar = validateAvatar({ color: member.avatar.color, seed });
   if (!avatar.ok) return avatar;

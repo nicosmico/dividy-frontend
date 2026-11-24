@@ -251,7 +251,9 @@ describe('Pestaña Miembros', () => {
     await user.click(screen.getByRole('button', { name: 'Deshacer' }));
 
     expect(
-      await screen.findByText('No se pudo deshacer porque el grupo cambió.')
+      await screen.findByText(
+        'No se pudo deshacer porque el grupo cambió. Revisa los cambios y corrígelos a mano.'
+      )
     ).toBeInTheDocument();
     expect((await repository.get('g1'))?.members).toHaveLength(3);
   });
@@ -333,7 +335,9 @@ describe('Pestaña Miembros', () => {
       name: 'Eliminar a Beto',
     });
     await user.click(
-      within(dialog).getByRole('radio', { name: 'Eliminar con sus gastos' })
+      within(dialog).getByRole('radio', {
+        name: 'Eliminar con sus gastos y pagos',
+      })
     );
     expect(
       within(dialog).getByText('Se borrarán 2 gastos:')

@@ -108,7 +108,7 @@ test('eliminar un gasto ya pagado advierte, se puede cancelar, confirmar y desha
   await page.getByRole('button', { name: /Supermercado/ }).click();
   await page.getByRole('button', { name: 'Eliminar gasto' }).click();
   const warning = page.getByRole('alertdialog', {
-    name: 'Este gasto ya se consideró en pagos registrados',
+    name: 'Ya hay pagos registrados después de este gasto',
   });
   await expect(warning).toBeVisible();
   await expect(warning).toContainText('Si lo eliminas, los saldos cambian:');

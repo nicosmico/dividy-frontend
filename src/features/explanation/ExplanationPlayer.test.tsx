@@ -285,7 +285,7 @@ describe('ExplanationPlayer con un grupo real', () => {
     expect(slot(container, 'paid-share-row')).toHaveLength(5);
     // 1 expense: frames are step 1, its sub-step, step 3 and step 4.
     await next(user, 3);
-    expect(screen.getByText('Pagos ya registrados')).toBeInTheDocument();
+    expect(screen.getByText('Pagos registrados')).toBeInTheDocument();
     expect(screen.getByText('Falta transferir')).toBeInTheDocument();
     expect(screen.getByText(/Ya se registró 1 pago/)).toBeInTheDocument();
   });

@@ -208,7 +208,8 @@ function ExpenseRow({
             />
           )}
           <span className='min-w-0 break-words'>
-            Pagó {payer?.name ?? 'alguien'} · entre {everyone ? 'todos' : n}
+            Pagó {payer?.name ?? 'alguien'} · dividido entre{' '}
+            {everyone ? 'todos' : plural(n, 'persona', 'personas')}
           </span>
         </span>
       </span>

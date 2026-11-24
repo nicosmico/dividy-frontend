@@ -76,7 +76,7 @@ export function createGroup(input: CreateGroupInput): Result<Group> {
     if (ids.has(member.id)) {
       return fail(
         'duplicate_member_id',
-        'Hay miembros con el mismo identificador.'
+        'No se pudo crear el grupo porque hay miembros repetidos. Inténtalo de nuevo.'
       );
     }
     ids.add(member.id);
@@ -117,7 +117,7 @@ export function addMember(group: Group, member: NewMemberInput): Result<Group> {
   if (group.members.some((m) => m.id === member.id)) {
     return fail(
       'duplicate_member_id',
-      'Ya existe un miembro con ese identificador.'
+      'No se pudo agregar al miembro porque ya existe. Inténtalo de nuevo.'
     );
   }
   const name = validateMemberName(group, member.name);
@@ -153,7 +153,10 @@ export function renameMember(
 }
 
 function memberNotFound<T>(): Result<T> {
-  return fail('member_not_found', 'Ese miembro no existe en el grupo.');
+  return fail(
+    'member_not_found',
+    'Ese miembro ya no está en el grupo. Vuelve a la lista de miembros.'
+  );
 }
 
 function participantsOf(expense: Expense): MemberId[] {
@@ -270,7 +273,10 @@ export function addExpense(
   input: NewExpenseInput
 ): Result<Group> {
   if (group.expenses.some((e) => e.id === input.id)) {
-    return fail('duplicate_id', 'Ya existe un gasto con ese identificador.');
+    return fail(
+      'duplicate_id',
+      'No se pudo guardar el gasto porque ya existe uno igual. Inténtalo de nuevo.'
+    );
   }
   const fields = validateExpenseFields(group, input);
   if (!fields.ok) return fields;
@@ -289,7 +295,10 @@ export function updateExpense(
 ): Result<Group> {
   const existing = group.expenses.find((e) => e.id === expenseId);
   if (!existing) {
-    return fail('expense_not_found', 'Ese gasto no existe.');
+    return fail(
+      'expense_not_found',
+      'Ese gasto ya no existe. Vuelve a la lista de gastos.'
+    );
   }
   const valid = validateExpenseFields(group, fields);
   if (!valid.ok) return valid;
@@ -308,7 +317,10 @@ export function removeExpense(
   expenseId: ExpenseId
 ): Result<Group> {
   if (!group.expenses.some((e) => e.id === expenseId)) {
-    return fail('expense_not_found', 'Ese gasto no existe.');
+    return fail(
+      'expense_not_found',
+      'Ese gasto ya no existe. Vuelve a la lista de gastos.'
+    );
   }
   return ok({
     ...group,
@@ -321,7 +333,10 @@ export function addPayment(
   input: NewPaymentInput
 ): Result<Group> {
   if (group.payments.some((p) => p.id === input.id)) {
-    return fail('duplicate_id', 'Ya existe un pago con ese identificador.');
+    return fail(
+      'duplicate_id',
+      'No se pudo registrar el pago porque ya existe uno igual. Inténtalo de nuevo.'
+    );
   }
   const fields = validatePaymentFields(group, input);
   if (!fields.ok) return fields;
@@ -338,7 +353,7 @@ export function removePayment(
   paymentId: PaymentId
 ): Result<Group> {
   if (!group.payments.some((p) => p.id === paymentId)) {
-    return fail('payment_not_found', 'Ese pago no existe.');
+    return fail('payment_not_found', 'Ese pago ya no existe. Vuelve a Saldos.');
   }
   return ok({
     ...group,

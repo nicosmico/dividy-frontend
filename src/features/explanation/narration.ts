@@ -84,7 +84,7 @@ function compareNarration(explanation: Explanation): string {
   if (members.length > MAX_NARRATED_MEMBERS) {
     const owed = members.filter((m) => m.balance > 0).length;
     const owing = members.filter((m) => m.balance < 0).length;
-    return `Se compara lo que pagó cada uno con su parte: ${owed} ${owed === 1 ? 'persona tiene' : 'personas tienen'} saldo a favor y ${owing} ${owing === 1 ? 'debe' : 'deben'}.${tail}`;
+    return `Se compara lo que gastó cada uno con su parte: ${owed} ${owed === 1 ? 'persona tiene' : 'personas tienen'} saldo a favor y ${owing} ${owing === 1 ? 'debe' : 'deben'}.${tail}`;
   }
   const describe = (m: MemberExplanation) =>
     m.balance > 0
@@ -92,7 +92,7 @@ function compareNarration(explanation: Explanation): string {
       : m.balance < 0
         ? `${m.member.name} debe ${formatAmount(-m.balance)}`
         : `${m.member.name} está al día`;
-  return `Se compara lo que pagó cada uno con su parte: ${joinList(members.map(describe))}.${tail}`;
+  return `Se compara lo que gastó cada uno con su parte: ${joinList(members.map(describe))}.${tail}`;
 }
 
 function transfersText(explanation: Explanation): string {

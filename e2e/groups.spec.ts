@@ -51,8 +51,8 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
     .getByRole('link', { name: 'Miembros' })
     .click();
   await expect(page).toHaveURL(/\/members$/);
-  await page.getByRole('button', { name: 'Renombrar a Beto' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Renombrar miembro' });
+  await page.getByRole('button', { name: 'Editar a Beto' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Editar miembro' });
   await dialog.getByLabel('Nombre').fill('Benjamín');
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();

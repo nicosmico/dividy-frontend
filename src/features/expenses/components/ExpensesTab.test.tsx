@@ -127,9 +127,11 @@ describe('Pestaña Gastos', () => {
     it('cada fila muestra quién pagó y entre cuántos', async () => {
       renderWithProviders(undefined, { route: ROUTE, groups: [twoExpenses()] });
       const asado = await screen.findByRole('button', { name: /Asado/ });
-      expect(asado).toHaveTextContent('Pagó Ana · entre todos');
+      expect(asado).toHaveTextContent('Pagó Ana · dividido entre todos');
       const bencina = screen.getByRole('button', { name: /Bencina/ });
-      expect(bencina).toHaveTextContent('Pagó Beto · entre 2');
+      expect(bencina).toHaveTextContent(
+        'Pagó Beto · dividido entre 2 personas'
+      );
     });
 
     it('con menos de 2 miembros deshabilita el botón y enlaza a Miembros', async () => {
@@ -474,7 +476,9 @@ describe('Pestaña Gastos', () => {
       await user.click(screen.getByRole('button', { name: 'Deshacer' }));
 
       expect(
-        await screen.findByText('No se pudo deshacer porque el grupo cambió.')
+        await screen.findByText(
+          'No se pudo deshacer porque el grupo cambió. Revisa los cambios y corrígelos a mano.'
+        )
       ).toBeInTheDocument();
       expect((await repository.get('g1'))?.expenses).toHaveLength(1);
     });
