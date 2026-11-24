@@ -78,7 +78,7 @@ export function BalancesTab() {
       {!settled && <SuggestedTransfers group={group} transfers={transfers} />}
       {group.payments.length > 0 && <PaymentsList group={group} />}
       <section aria-labelledby='detail-heading' className='grid gap-4'>
-        <h2 id='detail-heading' className='text-lg font-bold'>
+        <h2 id='detail-heading' className='text-sm font-semibold'>
           Detalle
         </h2>
         {group.expenses.length > 0 && (
