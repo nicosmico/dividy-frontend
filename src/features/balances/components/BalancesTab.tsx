@@ -4,13 +4,13 @@ import { Link, useLocation } from 'react-router';
 import { PageDialog } from '@/components/page-dialog';
 import { Card } from '@/components/ui/card';
 import {
+  describeViewerStatus,
   formatAmount,
-  getPendingAmount,
-  isSettled,
   suggestTransfers,
+  type ViewerStatus,
 } from '@/domain';
 import { LazyExplanationPlayer } from '@/features/explanation';
-import { useCurrentGroup } from '@/features/groups/data';
+import { useCurrentGroup, useViewer } from '@/features/groups/data';
 import { useSnapshotView } from '@/hooks/use-snapshot-view';
 import { cn } from '@/lib/utils';
 import { ShareSummaryButton } from './ShareSummaryButton';
@@ -28,6 +28,7 @@ import { SuggestedTransfers } from './SuggestedTransfers';
 export function BalancesTab() {
   const group = useCurrentGroup();
   const snapshot = useSnapshotView();
+  const { viewerId } = useViewer();
   const { hash } = useLocation();
   const [explaining, setExplaining] = useState(false);
 
@@ -50,7 +51,8 @@ export function BalancesTab() {
   }
 
   const transfers = suggestTransfers(group);
-  const settled = isSettled(group);
+  const status = describeViewerStatus(group, viewerId);
+  const settled = status.kind === 'group-settled';
 
   return (
     <div className='grid gap-5'>
@@ -61,22 +63,7 @@ export function BalancesTab() {
             settled && 'bg-accent text-accent-foreground'
           )}
         >
-          {settled ? (
-            <div className='grid gap-0.5'>
-              <h2 id='status-heading' className='text-xl font-bold'>
-                ¡Están al día! 🎉
-              </h2>
-              <p className='text-sm'>Nadie le debe nada a nadie.</p>
-            </div>
-          ) : (
-            <h2 id='status-heading' className='text-xl font-bold'>
-              Pendiente:{' '}
-              <span className='tabular-nums'>
-                {formatAmount(getPendingAmount(group))}
-              </span>{' '}
-              por saldar
-            </h2>
-          )}
+          <StatusHeadline status={status} />
           <ShareSummaryButton group={group} snapshot={snapshot} />
         </Card>
       </section>
@@ -108,4 +95,59 @@ export function BalancesTab() {
       </PageDialog>
     </div>
   );
+}
+
+const money = (amount: number) => (
+  <span className='tabular-nums'>{formatAmount(amount)}</span>
+);
+
+/** The card's headline: about the group, or about you when we know who you are. */
+function StatusHeadline({ status }: { status: ViewerStatus }) {
+  switch (status.kind) {
+    case 'group-settled':
+      return (
+        <div className='grid gap-0.5'>
+          <h2 id='status-heading' className='text-xl font-bold'>
+            ¡Están al día! 🎉
+          </h2>
+          <p className='text-sm'>Nadie le debe nada a nadie.</p>
+        </div>
+      );
+    case 'general':
+      return (
+        <h2 id='status-heading' className='text-xl font-bold'>
+          Pendiente: {money(status.pending)} por saldar
+        </h2>
+      );
+    case 'owes':
+      return (
+        <div className='grid gap-0.5'>
+          <h2 id='status-heading' className='text-xl font-bold'>
+            Debes {money(status.amount)}
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            {status.payTo.length === 1
+              ? `Transfiérele a ${status.payTo[0]}`
+              : `Transfiere a ${status.payTo.length} personas`}
+          </p>
+        </div>
+      );
+    case 'owed':
+      return (
+        <h2 id='status-heading' className='text-xl font-bold'>
+          Te deben {money(status.amount)}
+        </h2>
+      );
+    case 'even':
+      return (
+        <div className='grid gap-0.5'>
+          <h2 id='status-heading' className='text-xl font-bold'>
+            Estás al día 🎉
+          </h2>
+          <p className='text-sm text-muted-foreground'>
+            Al grupo le falta {money(status.groupPending)} por saldar
+          </p>
+        </div>
+      );
+  }
 }

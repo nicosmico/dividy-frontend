@@ -20,6 +20,10 @@ _Avoid_: User, participant (cuando se habla del grupo), friend
 La carita ilustrada de un miembro: un color de fondo (uno de 8 pasteles, índice 0 a 7) y una semilla que decide la cara. Se guardan en el miembro, así que nadie cambia de cara por sí solo. El color es el primer libre del grupo al crearse (si los 8 están ocupados, vuelve a empezar en orden) y no cambia si se elimina a otro; la semilla empieza siendo el id del miembro y "Cambiar avatar" genera otra. El humor (feliz o triste) no se guarda: sale del saldo.
 _Avoid_: Foto, imagen de perfil
 
+**Viewer** (tú):
+El miembro que es quien usa la app en este celular, en un grupo o en una captura. Es una preferencia del dispositivo, no un dato del grupo: ni el grupo ni el link compartido la llevan (quien abre un link elige por sí mismo). Puede ser también "nadie" (`none`: "No soy parte de este grupo" / "Solo estoy mirando"). Con ella la app muestra primero lo tuyo y escribe "(tú)" junto al nombre. Cuando haya backend pasará a ser la cuenta de ese miembro.
+_Avoid_: Owner, usuario, current user
+
 ### Gastos
 
 **Expense** (Gasto):

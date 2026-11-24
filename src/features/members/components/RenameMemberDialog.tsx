@@ -10,6 +10,8 @@ import {
 } from '@/components/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   MAX_MEMBER_NAME_LENGTH,
   regenerateMemberAvatar,
@@ -22,6 +24,7 @@ import {
   isInfrastructureError,
   useGroupOperation,
   useServices,
+  useViewer,
 } from '@/features/groups/data';
 import { useMemberMoods } from './member-moods';
 import { MemberAvatar } from './MemberAvatar';
@@ -68,6 +71,10 @@ function RenameMemberForm({
   const operation = useGroupOperation(group.id);
   const { newId } = useServices();
   const mood = useMemberMoods(group).get(member.id);
+  const viewer = useViewer();
+  const wasMe = viewer.viewerId === member.id;
+  // Like the new face: saved with "Guardar", dropped on cancel.
+  const [isMe, setIsMe] = useState(wasMe);
   // Preview only: the new face is saved with "Guardar" and dropped on cancel.
   const [previewSeed, setPreviewSeed] = useState<string | null>(null);
   const previewMember = previewSeed
@@ -89,6 +96,9 @@ function RenameMemberForm({
       return regenerateMemberAvatar(renamed.value, member.id, previewSeed);
     });
     if (result.ok) {
+      // Turning it on here moves the mark; turning it off on yourself saves "none".
+      if (isMe && !wasMe) await viewer.choose(member.id);
+      else if (!isMe && wasMe) await viewer.skip();
       toast.success('Miembro actualizado');
       onDone();
     } else if (!isInfrastructureError(result.error)) {
@@ -138,6 +148,16 @@ function RenameMemberForm({
           />
         )}
       </FormField>
+      <div className='flex min-h-11 items-center justify-between gap-3'>
+        <Label htmlFor='member-is-me' className='text-base'>
+          Soy yo
+        </Label>
+        {/* Radix adds a hidden checkbox inside a form and shifts it left by
+            its own width: `relative` keeps it inside the row, not off the sheet. */}
+        <span className='relative inline-flex'>
+          <Switch id='member-is-me' checked={isMe} onCheckedChange={setIsMe} />
+        </span>
+      </div>
       <ResponsiveDialogFooter>
         <Button type='button' variant='outline' onClick={onDone}>
           Cancelar

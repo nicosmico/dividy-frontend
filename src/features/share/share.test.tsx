@@ -14,6 +14,9 @@ import { formatDate, formatDateTime } from '@/lib/dates';
 import { currentPath, renderWithProviders } from '@/test/render-with-providers';
 import { encodeSnapshot } from './snapshot-codec';
 
+/** Links do not say who you are: start with "nobody to ask" so the sheet stays closed. */
+const QUIET = { 'snapshot:trip-1': { none: true as const } };
+
 const OLD = '2026-11-20T15:00:00.000Z';
 const TAKEN = '2026-11-24T15:00:00.000Z';
 const NEWER = '2026-11-25T15:00:00.000Z';
@@ -67,6 +70,7 @@ async function linkRoute(snapshot: Snapshot, tab = 'expenses') {
 describe('abrir un link de solo lectura', () => {
   it('abre directo la captura en la primera visita, sin la bienvenida', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: `/shared#${await encodeSnapshot(snapshotAt(TAKEN))}`,
     });
     expect(
@@ -81,6 +85,7 @@ describe('abrir un link de solo lectura', () => {
 
   it('muestra el aviso fijo con la fecha y la hora de la captura, como región (no alert)', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
     });
     const banner = await screen.findByRole('region', {
@@ -104,6 +109,7 @@ describe('abrir un link de solo lectura', () => {
 
   it('solo tiene las pestañas Gastos y Saldos', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
     });
     const nav = await screen.findByRole('navigation', {
@@ -118,6 +124,7 @@ describe('abrir un link de solo lectura', () => {
 
   it('Gastos: el total y la lista, sin Agregar gasto ni filas que se puedan editar ni menú del grupo', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
     });
     expect(await screen.findByText('Supermercado')).toBeInTheDocument();
@@ -155,6 +162,7 @@ describe('abrir un link de solo lectura', () => {
   describe('Saldos', () => {
     it('muestra los mismos saldos y transferencias, sin Marcar como pagado ni eliminar pagos', async () => {
       const { user } = renderWithProviders(undefined, {
+        viewers: QUIET,
         route: await linkRoute(snapshotAt(TAKEN)),
       });
       await user.click(await screen.findByRole('link', { name: 'Saldos' }));
@@ -181,6 +189,7 @@ describe('abrir un link de solo lectura', () => {
 
     it('permite Ver cómo se calculó y Ver como tabla', async () => {
       const { user } = renderWithProviders(undefined, {
+        viewers: QUIET,
         route: await linkRoute(snapshotAt(TAKEN), 'balances'),
       });
       await user.click(
@@ -193,6 +202,7 @@ describe('abrir un link de solo lectura', () => {
 
     it('las caritas siguen según el saldo', async () => {
       renderWithProviders(undefined, {
+        viewers: QUIET,
         route: await linkRoute(snapshotAt(TAKEN), 'balances'),
       });
       expect((await screen.findAllByAltText(/Ana/)).length).toBeGreaterThan(0);
@@ -208,6 +218,7 @@ describe('abrir un link de solo lectura', () => {
       const snapshot = snapshotAt(TAKEN);
       const token = await encodeSnapshot(snapshot);
       const { user } = renderWithProviders(undefined, {
+        viewers: QUIET,
         route: `/shared/balances#${token}`,
       });
       const writeText = vi
@@ -235,6 +246,7 @@ describe('abrir un link de solo lectura', () => {
         writable: true,
       });
       const { user } = renderWithProviders(undefined, {
+        viewers: QUIET,
         route: await linkRoute(snapshotAt(TAKEN), 'balances'),
       });
       await user.click(
@@ -250,6 +262,7 @@ describe('abrir un link de solo lectura', () => {
 
     it('lleva el aviso de privacidad bajo el botón', async () => {
       renderWithProviders(undefined, {
+        viewers: QUIET,
         route: await linkRoute(snapshotAt(TAKEN), 'balances'),
       });
       const notice = await screen.findByText(
@@ -268,6 +281,7 @@ describe('link inválido', () => {
     ['sin hash', ''],
   ])('%s: pantalla amable con salida a Mis grupos', async (_name, hash) => {
     const { user } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: `/shared${hash}`,
     });
     expect(
@@ -290,6 +304,7 @@ describe('link inválido', () => {
   it('un link truncado no muestra un grupo a medias', async () => {
     const token = await encodeSnapshot(snapshotAt(TAKEN));
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: `/shared#${token.slice(0, Math.floor(token.length / 2))}`,
     });
     expect(
@@ -302,6 +317,7 @@ describe('guardar la captura', () => {
   it('"Guardar en mi celular" la guarda y avisa', async () => {
     const snapshot = snapshotAt(TAKEN);
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshot),
     });
     await user.click(
@@ -321,6 +337,7 @@ describe('guardar la captura', () => {
 
   it('no mezcla la captura con los grupos propios', async () => {
     const { user, repository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
     });
     await user.click(
@@ -332,6 +349,7 @@ describe('guardar la captura', () => {
 
   it('un link más nuevo ofrece actualizar y reemplaza la captura guardada', async () => {
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(NEWER)),
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -349,6 +367,7 @@ describe('guardar la captura', () => {
 
   it('un link más viejo avisa y no reemplaza nada', async () => {
     const { snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(OLD)),
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -369,6 +388,7 @@ describe('guardar la captura', () => {
 
   it('"Ver la más nueva" abre la captura guardada', async () => {
     const { user } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(OLD)),
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -383,6 +403,7 @@ describe('guardar la captura', () => {
 
   it('la misma captura ya está guardada', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -393,6 +414,7 @@ describe('guardar la captura', () => {
 
   it('si no se puede guardar, avisa y deja el botón para reintentar', async () => {
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: await linkRoute(snapshotAt(TAKEN)),
     });
     vi.spyOn(snapshotRepository, 'save').mockRejectedValue(new Error('full'));
@@ -413,6 +435,7 @@ describe('captura guardada', () => {
 
   it('abre en /shared/:id con el mismo aviso y "Eliminar captura" en vez de "Guardar"', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/shared/trip-1',
       snapshots: [saved()],
     });
@@ -434,6 +457,7 @@ describe('captura guardada', () => {
 
   it('Saldos de una captura guardada no tiene controles de edición', async () => {
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/shared/trip-1/balances',
       snapshots: [saved()],
     });
@@ -448,6 +472,7 @@ describe('captura guardada', () => {
   it('el resumen de una captura guardada comparte la misma captura', async () => {
     const snapshot = saved();
     const { user } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/shared/trip-1/balances',
       snapshots: [snapshot],
     });
@@ -465,6 +490,7 @@ describe('captura guardada', () => {
 
   it('eliminar la captura vuelve a Mis grupos con un aviso para deshacer', async () => {
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/shared/trip-1/expenses',
       snapshots: [saved()],
     });
@@ -505,6 +531,7 @@ describe('Mis grupos: Compartidos conmigo', () => {
   it('aparece debajo de los grupos propios, con ojo y la fecha de cada captura', async () => {
     const own: Group = { ...tripGroup(), id: 'own-1', name: 'Mi casa' };
     renderWithProviders(undefined, {
+      viewers: QUIET,
       groups: [own],
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -550,6 +577,7 @@ describe('Mis grupos: Compartidos conmigo', () => {
 
   it('abre la captura al tocar la tarjeta', async () => {
     const { user } = renderWithProviders(undefined, {
+      viewers: QUIET,
       snapshots: [snapshotAt(TAKEN)],
     });
     await user.click(
@@ -561,6 +589,7 @@ describe('Mis grupos: Compartidos conmigo', () => {
   it('se elimina con un aviso para deshacer', async () => {
     const own: Group = { ...tripGroup(), id: 'own-1', name: 'Mi casa' };
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       groups: [own],
       snapshots: [snapshotAt(TAKEN)],
     });
@@ -586,6 +615,7 @@ describe('Mis grupos: Compartidos conmigo', () => {
 
   it('si ya guardaste otra captura de ese grupo, deshacer no la pisa', async () => {
     const { user, snapshotRepository } = renderWithProviders(undefined, {
+      viewers: QUIET,
       snapshots: [snapshotAt(TAKEN)],
     });
     await user.click(
@@ -606,6 +636,7 @@ describe('Mis grupos: Compartidos conmigo', () => {
     const snapshot = snapshotAt(TAKEN);
     expect(snapshotToGroup(snapshot).id).toBe('trip-1');
     renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/groups/trip-1/expenses',
       snapshots: [snapshot],
     });
@@ -619,6 +650,7 @@ describe('compartir un grupo propio', () => {
   it('el resumen termina con el link y debajo del botón va el aviso de privacidad', async () => {
     const group = tripGroup();
     const { user } = renderWithProviders(undefined, {
+      viewers: QUIET,
       route: '/groups/trip-1/balances',
       groups: [group],
     });

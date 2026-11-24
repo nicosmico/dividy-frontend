@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import { BalanceLabel } from '@/components/balance-label';
+import { ViewerName } from '@/components/viewer-name';
 import { formatAmount, type Member } from '@/domain';
 import { EntityIcon } from '@/features/icons';
 import { MemberAvatar, type AvatarMood } from '@/features/members';
@@ -62,6 +63,8 @@ export interface BarData {
 export interface PaidShareRowProps {
   member: Pick<Member, 'id' | 'name' | 'avatar'>;
   mood?: AvatarMood;
+  /** Writes "(tú)" next to the name (the Saldos chart; the animation never does). */
+  isViewer?: boolean;
   /** `paid - share + paymentsSent - paymentsReceived`. */
   balance: number;
   paid: BarData;
@@ -92,6 +95,7 @@ const STAGGER_MS = 140;
 export function PaidShareRow({
   member,
   mood,
+  isViewer = false,
   balance,
   paid,
   share,
@@ -111,7 +115,7 @@ export function PaidShareRow({
           className='size-8'
         />
         <span className='min-w-0 flex-1 text-sm font-bold break-words'>
-          {member.name}
+          <ViewerName name={member.name} isViewer={isViewer} />
         </span>
         <BalanceLabel
           balance={balance}

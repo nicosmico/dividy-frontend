@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { skipViewerSheet } from './viewer';
+
 /** Data exactly as the old app saved it (zustand/persist). */
 const membersStore = {
   state: {
@@ -50,6 +52,8 @@ test('migra los datos de la versión antigua a un grupo "Mi grupo"', async ({
   await expect(card).toContainText('$10.000');
 
   await card.click();
+  // The migrated group has a generated id: nobody was asked who they are yet.
+  await skipViewerSheet(page);
   await page
     .getByRole('navigation', { name: 'Secciones del grupo' })
     .getByRole('link', { name: 'Miembros' })

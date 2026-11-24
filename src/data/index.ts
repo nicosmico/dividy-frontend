@@ -16,3 +16,10 @@ export {
   LocalStorageStore,
   type LocalStorageStoreOptions,
 } from './local-storage-store';
+export { viewerScopeKey, type ViewerRepository } from './viewer-repository';
+export { InMemoryViewerRepository } from './in-memory-viewer-repository';
+export {
+  LocalStorageViewerRepository,
+  VIEWERS_STORAGE_KEY,
+  type LocalStorageViewerRepositoryOptions,
+} from './local-storage-viewer-repository';

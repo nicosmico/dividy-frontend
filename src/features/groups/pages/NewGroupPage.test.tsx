@@ -96,6 +96,13 @@ describe('Crear grupo', () => {
       updatedAt: TEST_NOW,
     });
     expect(group.members.map((m) => m.name)).toEqual(['Ana', 'Beto', 'Caro']);
+    // Right after creating it, the app asks who you are.
+    expect(
+      await screen.findByRole('dialog', { name: '¿Quién eres?' })
+    ).toBeVisible();
+    await user.click(
+      screen.getByRole('button', { name: 'No soy parte de este grupo' })
+    );
     expect(await screen.findByRole('heading', { name: 'Asado' })).toBeVisible();
   });
 

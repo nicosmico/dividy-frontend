@@ -3,7 +3,7 @@
 Dividy es una SPA (React + Vite) sin backend. La arquitectura separa tres capas para que la lógica de dinero sea pura y testeable, y para que cambiar `localStorage` por una API sea agregar una implementación y no reescribir la app.
 
 ```
-UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ──usa──▶  GroupRepository y SnapshotRepository (puertos)
+UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ──usa──▶  GroupRepository, SnapshotRepository y ViewerRepository (puertos)
         │                                                                         ▲
         └──────────────── usa funciones puras ──▶  domain  ◀── usa ── LocalStorageGroupRepository
 ```
@@ -16,6 +16,7 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 - Tipos: `Group`, `Member` (con `avatar`), `Expense`, `Payment`, `Amount`.
 - Avatares (`avatar.ts`): `nextAvatarColor` (primer color libre del grupo, ciclo desde el 9.º), `validateAvatar` y `regenerateMemberAvatar(group, memberId, seed)`; la semilla nueva la inyecta la UI con `newId()`. `createGroup` y `addMember` asignan el color y la semilla inicial (el id, o `avatarSeed` si la UI ya la cambió).
 - Capturas (`snapshot.ts`, ADR 0006): `Snapshot` (copia fija de un grupo con ids por posición), `createSnapshot`, `snapshotToGroup` (una captura como `Group`, para reutilizar cálculos y pantallas), `getSnapshotIssues`, `decideSnapshotSave` (guardar, reemplazar, misma o más vieja, por `takenAt`) y la forma compacta del link v1 (`toCompactSnapshotV1` / `fromCompactSnapshotV1`, posiciones en vez de ids). El esquema de bytes (compresión, base64url) no vive aquí: es una API web y está en `src/features/share`.
+- Viewer (`viewer.ts`, ADR 0007): `ViewerChoice` (`{ memberId }` o `{ none: true }`), `ViewerScope` (`{ kind: 'group' | 'snapshot', id }`), `resolveViewer` / `isStaleViewerChoice` (una elección que apunta a un miembro que ya no existe cuenta como "aún no se preguntó"), `viewerFirst(items, viewerId, involvesViewer)` (partición estable: lo del viewer primero, sin perder ni repetir elementos) y `describeViewerStatus(group, viewerId)` (el titular de Saldos: `general`, `group-settled`, `owes`, `owed` o `even`, con montos del mismo cálculo de saldos).
 - Funciones: división con resto (`computeShares`), saldos (`computeBalances`, con desglose por miembro), transferencias sugeridas (`suggestTransfers`), operaciones inmutables sobre un grupo (`addExpense`, `removeMember`…) que validan invariantes y devuelven un grupo nuevo o un error tipado, y el texto del resumen.
 - Es la capa con más tests: tablas de casos y tests de propiedades.
 
@@ -28,6 +29,7 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 - `SnapshotRepository`: segundo puerto asíncrono (`list`, `get`, `save`, `delete`, clave `sourceGroupId`) para las capturas guardadas desde un link; mismas reglas que `GroupRepository` (no tiene reglas de negocio: qué captura gana lo decide el dominio). Implementaciones `LocalStorageSnapshotRepository` e `InMemorySnapshotRepository`, con su propia suite de contrato.
   - **Documento v4** (`CURRENT_VERSION = 4`): `{ version, groups, snapshots }`. La migración `v3 → v4` (`migrations[3]`) agrega `snapshots: []` y no toca nada más. Cada captura se valida por separado (`snapshotSchema`, con `getSnapshotIssues`, y una sola por `sourceGroupId`); las inválidas van a cuarentena (`dividy.corrupted.<ISO>`, con `{ reason, snapshot }`) igual que los grupos. Un documento v4 sin la lista se lee como vacía.
   - `LocalStorageStore`: dueño del documento (leer, escribir, migración desde el formato antiguo y cuarentena). `LocalStorageGroupRepository` y `LocalStorageSnapshotRepository` comparten una sola instancia (se arma en `App.tsx`), así leen y escriben el mismo documento sin pisarse y la migración antigua y los respaldos ocurren una vez.
+- `ViewerRepository`: tercer puerto asíncrono (`get`, `set`, `clear`, por `ViewerScope`) con "quién soy" en este dispositivo (ADR 0007). `LocalStorageViewerRepository` lo guarda en su **propia clave** (`dividy.viewers`, `{ version: 1, choices: { 'group:<id>' | 'snapshot:<id>': choice } }`), fuera del documento de grupos (que sigue en v4) y por tanto sin pasar por `LocalStorageStore`; un valor ilegible cuenta como "nadie preguntó". `InMemoryViewerRepository` para tests, con su suite de contrato.
 - `InMemoryGroupRepository`: para tests.
 - Tests de contrato compartidos: la misma suite corre contra cada implementación de cada puerto (y correrá contra una futura `HttpGroupRepository`).
 
@@ -44,7 +46,7 @@ src/
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
     groups/            data/ (hooks y contexto), components/ (Welcome: bienvenida animada sin grupos), pages/ (GroupsPage, NewGroupPage, GroupLayout)
-    members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), useMemberMoods (carita según el saldo, a partir de `computeBalances`), diálogos de
+    members/           ViewerSheet ("¿Quién eres?": caritas del grupo o captura, lee todo de `useViewer()`), MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), useMemberMoods (carita según el saldo, a partir de `computeBalances`), diálogos de
                        renombrar y eliminar miembro (el de eliminar solo para miembros con movimientos)
     expenses/          ExpensesTab (lista por fecha), ExpenseDialog + ExpenseForm (crear/editar/eliminar),
                        AmountInput (pesos con separador de miles), expense-form.ts (validación con el
@@ -74,8 +76,9 @@ Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `
 
 #### Hooks de datos (`@/features/groups/data`)
 
-- `RepositoryProvider({ repository, snapshotRepository?, now?, newId? })` y `useServices()`: inyectan el `GroupRepository`, el `SnapshotRepository` (`services.snapshots`; vacío en memoria si no se pasa), el reloj (`now(): string` ISO) y el generador de ids. En producción, `LocalStorageGroupRepository`; en tests, `InMemoryGroupRepository` con `now` y `newId` fijos.
+- `RepositoryProvider({ repository, snapshotRepository?, viewerRepository?, now?, newId? })` y `useServices()`: inyectan el `GroupRepository`, el `SnapshotRepository` (`services.snapshots`; vacío en memoria si no se pasa), el `ViewerRepository` (`services.viewers`; vacío en memoria si no se pasa), el reloj (`now(): string` ISO) y el generador de ids. En producción, `LocalStorageGroupRepository`; en tests, `InMemoryGroupRepository` con `now` y `newId` fijos.
 - `useGroups()` y `useGroup(groupId)` (`data: Group | null`): queries de TanStack Query.
+- `useViewer()` y `ViewerProvider({ scope, members })` (`viewer.tsx` y `viewer-context.ts`): cargan la elección del ámbito, la resuelven contra los miembros (y limpian una que apunta a un miembro que ya no existe) y la entregan por contexto: `{ viewerId, sheetOpen, openSheet, closeSheet, choose(memberId), skip() }`. Fuera de un proveedor no hay viewer (`viewerId: null`). `GroupLayout` y `SnapshotView` lo montan con `key` por grupo; al cargar la elección por primera vez, si nadie preguntó, abren la hoja (una vez por visita; cerrarla sin elegir no guarda nada). `BalancesTab`, `SuggestedTransfers`, `PaidVsShareChart`, `MemberBalances` y `MembersTab` usan `useViewer()` para el titular, el orden y "(tú)" (`ViewerName`); la animación "Ver cómo se calculó" no.
 - `useCurrentGroup(): Group`: el grupo de la ruta, dentro de una pestaña de `GroupLayout`.
 - `useGroupOperation(groupId)` → `{ run(operation), isPending }`. `operation` es una función del dominio `(group) => Result<Group>`, p. ej. `(g) => addExpense(g, input)`. `run` lee el grupo del repositorio, aplica la operación y: si el dominio falla devuelve `{ ok: false, error }` sin guardar; si funciona hace `touch(group, now())`, `repository.save` e invalida las queries (`{ ok: true, value, previous, undo }`). Si el guardado falla (por ejemplo, cuota llena) muestra un toast de error y devuelve `code: 'save_failed'`; `isInfrastructureError(error)` distingue estos casos de los errores de dominio, que el formulario muestra en línea.
 - **Deshacer.** El resultado exitoso trae `previous` (el grupo antes de la operación) y `undo()`. `undo` vuelve a leer el grupo; si su `updatedAt` sigue siendo el que guardó la operación, guarda `previous`, invalida las queries y muestra "Cambio deshecho"; si cambió (o el grupo ya no existe), no toca nada y muestra "No se pudo deshacer porque el grupo cambió." Devuelve `true` o `false` y muestra sus propios toasts. `toastUndoable(mensaje, result)` muestra el toast de éxito con el botón **Deshacer** durante 6 s (`UNDO_DURATION_MS`). Se usa al eliminar un gasto, un pago o un miembro; sirve para cualquier operación. Como la comparación es por `updatedAt`, cualquier cambio posterior (de otra pestaña, por ejemplo) bloquea el deshacer en vez de pisarlo.

@@ -4,6 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
 import { seedDocument, seedGroups } from './seed';
+import { skipViewerSheet } from './viewer';
 
 const NAMES = [
   'Ana',
@@ -138,6 +139,7 @@ test('Crear grupo: tocar la carita da otra cara antes de crear', async ({
   await button.click();
   await expect(button.locator('img')).not.toHaveAttribute('src', before ?? '');
   await page.getByRole('button', { name: 'Crear grupo' }).click();
+  await skipViewerSheet(page);
   await expect(page).toHaveURL(/\/expenses$/);
   const { members } = await storedMembers(page);
   expect(members.map((m) => m.avatar.color)).toEqual([0, 1]);

@@ -1,42 +1,12 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
+import { expectNoSeriousViolations } from './axe';
 import { createSnapshot } from '../src/domain';
 import { sampleGroups, seedDocument, seedGroups } from './seed';
 import { snapshotPath } from './snapshot-link';
+import { skipViewerSheet } from './viewer';
 
 const TAKEN = '2026-11-24T13:42:00.000Z';
-
-/** Fails on any `serious` or `critical` violation and prints what to fix. */
-async function expectNoSeriousViolations(page: Page) {
-  // Avatars are generated on demand; wait until they replace the placeholders.
-  await expect(page.locator('span[role="img"]')).toHaveCount(0);
-  // Wait for enter/exit animations (dialogs fade in): mid-fade colors are
-  // blended and axe would measure a contrast the user never sees at rest.
-  // Infinite animations (skeletons, pulses) are ignored.
-  await page.waitForFunction(() =>
-    document
-      .getAnimations()
-      .every(
-        (a) =>
-          a.playState !== 'running' ||
-          a.effect?.getTiming().iterations === Infinity
-      )
-  );
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
-    .analyze();
-  const serious = violations.filter(
-    (v) => v.impact === 'serious' || v.impact === 'critical'
-  );
-  expect(
-    serious.map((v) => ({
-      rule: v.id,
-      impact: v.impact,
-      nodes: v.nodes.map((n) => n.target.join(' ')),
-    }))
-  ).toEqual([]);
-}
 
 for (const colorScheme of ['light', 'dark'] as const) {
   test.describe(`accesibilidad (axe, sin violaciones serious ni critical), modo ${colorScheme}`, () => {
@@ -110,6 +80,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
     test('Captura de solo lectura: Gastos y Saldos', async ({ page }) => {
       await page.goto(snapshotPath(sampleGroups()[0], TAKEN));
+      await skipViewerSheet(page);
       await expect(
         page.getByRole('region', { name: 'Captura de solo lectura' })
       ).toBeVisible();
@@ -132,6 +103,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
     test('Captura abierta con "Ver cómo se calculó"', async ({ page }) => {
       await page.goto(snapshotPath(sampleGroups()[0], TAKEN));
+      await skipViewerSheet(page);
       await page
         .getByRole('navigation', { name: 'Secciones del grupo' })
         .getByRole('link', { name: 'Saldos' })

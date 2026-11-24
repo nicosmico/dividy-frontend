@@ -3,13 +3,16 @@ import { Collapsible } from 'radix-ui';
 
 import { BalanceLabel } from '@/components/balance-label';
 import { Card } from '@/components/ui/card';
+import { ViewerName } from '@/components/viewer-name';
 import {
   formatAmount,
   getMemberBreakdown,
+  viewerFirst,
   type Group,
   type Member,
   type MemberBreakdown,
 } from '@/domain';
+import { useViewer } from '@/features/groups/data';
 import {
   MemberAvatar,
   useMemberMoods,
@@ -20,13 +23,19 @@ import { formatDate } from '@/lib/dates';
 /** Balance of every member; each row expands to show where the number comes from. */
 export function MemberBalances({ group }: { group: Group }) {
   const moods = useMemberMoods(group);
+  const { viewerId } = useViewer();
+  const members = viewerFirst(
+    group.members,
+    viewerId,
+    (member) => member.id === viewerId
+  );
   return (
     <section aria-labelledby='member-balances-heading' className='grid gap-2'>
       <h3 id='member-balances-heading' className='text-sm font-semibold'>
         Saldo por miembro
       </h3>
       <ul className='grid gap-2'>
-        {group.members.map((member) => {
+        {members.map((member) => {
           const breakdown = getMemberBreakdown(group, member.id);
           return (
             <li key={member.id}>
@@ -34,6 +43,7 @@ export function MemberBalances({ group }: { group: Group }) {
                 <MemberRow
                   group={group}
                   member={member}
+                  isViewer={member.id === viewerId}
                   mood={moods.get(member.id)}
                   breakdown={breakdown}
                 />
@@ -49,11 +59,13 @@ export function MemberBalances({ group }: { group: Group }) {
 function MemberRow({
   group,
   member,
+  isViewer,
   mood,
   breakdown,
 }: {
   group: Group;
   member: Member;
+  isViewer: boolean;
   mood?: AvatarMood;
   breakdown: MemberBreakdown;
 }) {
@@ -67,7 +79,9 @@ function MemberRow({
         <Collapsible.Trigger className='group flex w-full items-center gap-3 rounded-tile p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'>
           <MemberAvatar member={member} decorative mood={mood} />
           <span className='min-w-0 flex-1'>
-            <span className='block font-medium break-words'>{member.name}</span>
+            <span className='block font-medium break-words'>
+              <ViewerName name={member.name} isViewer={isViewer} />
+            </span>
             <BalanceLabel balance={balance.balance} className='text-sm' />
           </span>
           <ChevronDown className='size-5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180' />

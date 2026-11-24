@@ -13,10 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EntityIcon } from '@/features/icons';
+import { ViewerSheet } from '@/features/members';
 import { DeleteGroupDialog } from '../components/DeleteGroupDialog';
 import { GroupNotFound } from '../components/GroupNotFound';
 import { RenameGroupDialog } from '../components/RenameGroupDialog';
-import { useGroup } from '../data';
+import { useGroup, ViewerProvider } from '../data';
 
 const TABS = [
   { to: 'expenses', label: 'Gastos' },
@@ -43,55 +44,62 @@ export function GroupLayout() {
   if (!group) return <GroupNotFound />;
 
   return (
-    <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
-      <div className='flex items-center justify-between gap-2'>
-        <div className='flex min-w-0 items-center gap-3'>
-          <EntityIcon text={group.name} kind='group' size='header' />
-          <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
-            {group.name}
-          </h1>
+    <ViewerProvider
+      key={group.id}
+      scope={{ kind: 'group', id: group.id }}
+      members={group.members}
+    >
+      <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
+        <div className='flex items-center justify-between gap-2'>
+          <div className='flex min-w-0 items-center gap-3'>
+            <EntityIcon text={group.name} kind='group' size='header' />
+            <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
+              {group.name}
+            </h1>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label='Opciones del grupo'
+                className='-mr-2 shrink-0'
+              >
+                <EllipsisVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                <Pencil /> Renombrar grupo
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant='destructive'
+                onSelect={() => setDeleting(true)}
+              >
+                <Trash2 /> Eliminar grupo
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='ghost'
-              size='icon'
-              aria-label='Opciones del grupo'
-              className='-mr-2 shrink-0'
-            >
-              <EllipsisVertical />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem onSelect={() => setRenaming(true)}>
-              <Pencil /> Renombrar grupo
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant='destructive'
-              onSelect={() => setDeleting(true)}
-            >
-              <Trash2 /> Eliminar grupo
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        <TabNav tabs={TABS} />
+
+        <Suspense fallback={<PageFallback />}>
+          <Outlet context={group} />
+        </Suspense>
+
+        <RenameGroupDialog
+          group={group}
+          open={renaming}
+          onOpenChange={setRenaming}
+        />
+        <DeleteGroupDialog
+          group={group}
+          open={deleting}
+          onOpenChange={setDeleting}
+        />
+        <ViewerSheet />
       </div>
-
-      <TabNav tabs={TABS} />
-
-      <Suspense fallback={<PageFallback />}>
-        <Outlet context={group} />
-      </Suspense>
-
-      <RenameGroupDialog
-        group={group}
-        open={renaming}
-        onOpenChange={setRenaming}
-      />
-      <DeleteGroupDialog
-        group={group}
-        open={deleting}
-        onOpenChange={setDeleting}
-      />
-    </div>
+    </ViewerProvider>
   );
 }

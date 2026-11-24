@@ -8,3 +8,4 @@ export {
   moodForBalance,
   useMemberMoods,
 } from './components/member-moods';
+export { ViewerSheet } from './components/ViewerSheet';

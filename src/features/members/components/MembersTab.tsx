@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ViewerName } from '@/components/viewer-name';
 import {
   getMemberRemovalImpact,
   regenerateMemberAvatar,
@@ -16,6 +17,7 @@ import {
   useCurrentGroup,
   useGroupOperation,
   useServices,
+  useViewer,
 } from '@/features/groups/data';
 import { restoreFocusIfLost } from '@/lib/focus';
 import { AddMemberForm } from './AddMemberForm';
@@ -32,6 +34,7 @@ export function MembersTab() {
   const operation = useGroupOperation(group.id);
   const heading = useRef<HTMLHeadingElement>(null);
   const moods = useMemberMoods(group);
+  const { viewerId } = useViewer();
   const { newId } = useServices();
 
   /** New face (same color) right away, with "Deshacer". */
@@ -96,7 +99,10 @@ export function MembersTab() {
                   onRegenerate={() => void regenerateAvatar(member)}
                 />
                 <span className='min-w-0 flex-1 font-medium break-words'>
-                  {member.name}
+                  <ViewerName
+                    name={member.name}
+                    isViewer={member.id === viewerId}
+                  />
                 </span>
                 <Button
                   variant='ghost'
