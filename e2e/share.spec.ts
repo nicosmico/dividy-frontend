@@ -202,7 +202,16 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   await expect(
     other.getByRole('heading', { name: 'Pagos registrados' })
   ).toBeVisible();
+  // Scrolled down, the full notice is gone but a one-line bar stays on top.
+  await other.mouse.wheel(0, 2000);
+  await expect(banner).not.toBeInViewport();
+  const compact = other.getByTestId('snapshot-compact-banner');
+  await expect(compact).toBeVisible();
+  await expect(compact).toContainText(/Captura del .+ · solo lectura/);
+  await expect(compact).toBeInViewport();
+  await other.mouse.wheel(0, -4000);
   await expect(banner).toBeInViewport();
+  await expect(compact).toBeHidden();
   await expectNoHorizontalScroll(other);
 
   // "Ver cómo se calculó" and "Ver como tabla" still work.
@@ -229,9 +238,10 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   // Save it: it goes to "Compartidos conmigo" and survives a reload.
   await other.getByRole('button', { name: 'Guardar en mi celular' }).click();
   await expect(other.getByText('Captura guardada en Mis grupos')).toBeVisible();
+  await expect(other.getByText('Ya está guardada en Mis grupos')).toBeVisible();
   await expect(
-    other.getByRole('button', { name: 'Ya está guardada' })
-  ).toBeDisabled();
+    other.getByRole('button', { name: /Guardar en mi celular/ })
+  ).toHaveCount(0);
   await other.getByRole('link', { name: 'Dividy' }).click();
   await expect(
     other.getByRole('heading', { name: 'Mis grupos' })
@@ -265,9 +275,10 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
     .getByRole('button', { name: 'Actualizar captura guardada' })
     .click();
   await expect(other.getByText('Captura actualizada')).toBeVisible();
+  await expect(other.getByText('Ya está guardada en Mis grupos')).toBeVisible();
   await expect(
-    other.getByRole('button', { name: 'Ya está guardada' })
-  ).toBeDisabled();
+    other.getByRole('button', { name: /Guardar en mi celular/ })
+  ).toHaveCount(0);
 
   // An older link does not replace it: it warns and leads to the newer one.
   await other.goto(first.link);

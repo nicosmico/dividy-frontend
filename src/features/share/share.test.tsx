@@ -94,8 +94,12 @@ describe('abrir un link de solo lectura', () => {
       TAKEN
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    // Fixed at the top while scrolling.
-    expect(banner.parentElement).toHaveClass('sticky', 'top-0');
+    // Once scrolled past, a one-line bar repeats it (hidden from screen readers).
+    const compact = screen.getByTestId('snapshot-compact-banner');
+    expect(compact).toHaveAttribute('aria-hidden', 'true');
+    expect(compact).toHaveTextContent(
+      `Captura del ${formatDateTime(TAKEN)} · solo lectura`
+    );
   });
 
   it('solo tiene las pestañas Gastos y Saldos', async () => {
@@ -307,10 +311,12 @@ describe('guardar la captura', () => {
       await screen.findByText('Captura guardada en Mis grupos')
     ).toBeInTheDocument();
     expect(await snapshotRepository.get('trip-1')).toEqual(snapshot);
-    const done = await screen.findByRole('button', {
-      name: 'Ya está guardada',
-    });
-    expect(done).toBeDisabled();
+    expect(
+      await screen.findByText('Ya está guardada en Mis grupos')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Guardar en mi celular' })
+    ).toBeNull();
   });
 
   it('no mezcla la captura con los grupos propios', async () => {
@@ -381,8 +387,8 @@ describe('guardar la captura', () => {
       snapshots: [snapshotAt(TAKEN)],
     });
     expect(
-      await screen.findByRole('button', { name: 'Ya está guardada' })
-    ).toBeDisabled();
+      await screen.findByText('Ya está guardada en Mis grupos')
+    ).toBeInTheDocument();
   });
 
   it('si no se puede guardar, avisa y deja el botón para reintentar', async () => {

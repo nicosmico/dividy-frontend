@@ -11,7 +11,8 @@ import { useSaveSnapshot, useSnapshot } from '../data/snapshot-queries';
 /**
  * "Guardar en mi celular" for a snapshot opened from a link. What it offers
  * depends on what is already saved for the same group (`decideSnapshotSave`):
- * save it, update an older capture, "Ya está guardada" for the same one, or a
+ * save it, update an older capture, a "Ya está guardada en Mis grupos" note
+ * for the same one, or a
  * warning with a way to the newer capture that is already saved.
  */
 export function SaveSnapshotControls({ snapshot }: { snapshot: Snapshot }) {
@@ -52,9 +53,13 @@ export function SaveSnapshotControls({ snapshot }: { snapshot: Snapshot }) {
 
   if (decision === 'same') {
     return (
-      <Button disabled>
-        <Check aria-hidden='true' /> Ya está guardada
-      </Button>
+      <p
+        role='status'
+        className='flex items-center justify-center gap-2 rounded-card border bg-card px-3 py-2.5 text-sm font-medium'
+      >
+        <Check aria-hidden='true' className='size-4 text-positive' />
+        Ya está guardada en Mis grupos
+      </p>
     );
   }
 

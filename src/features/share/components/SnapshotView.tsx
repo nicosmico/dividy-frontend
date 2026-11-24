@@ -29,7 +29,6 @@ export function SnapshotView({
 
   return (
     <SnapshotViewProvider snapshot={snapshot}>
-      {/* Not a grid: `position: sticky` only works inside its own grid area. */}
       <div className='flex flex-col gap-4'>
         <SnapshotBanner takenAt={snapshot.takenAt} />
         <div className='flex min-w-0 items-center gap-3'>
