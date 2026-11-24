@@ -365,6 +365,154 @@ describe('Pestaña Miembros', () => {
     expect(group?.payments).toEqual([]);
   });
 
+  describe('con divisiones personalizadas', () => {
+    type Specs = NonNullable<Parameters<typeof makeGroup>[0]['expenses']>;
+    const custom = (n: 1 | 2) =>
+      makeGroup({
+        members: ['Ana', 'Beto', 'Caro'],
+        expenses: (
+          [
+            {
+              id: 'e1',
+              description: 'Cabaña',
+              amount: 150_000,
+              payer: 'Ana',
+              among: ['Ana', 'Beto', 'Caro'],
+              split: {
+                type: 'shares',
+                participantIds: ['Ana', 'Beto', 'Caro'],
+                parts: { Ana: 2, Beto: 1, Caro: 1 },
+              },
+            },
+            {
+              id: 'e2',
+              description: 'Cena',
+              amount: 90_000,
+              payer: 'Ana',
+              among: ['Ana', 'Beto'],
+              split: {
+                type: 'exact',
+                participantIds: ['Ana', 'Beto'],
+                amounts: { Ana: 50_000, Beto: 40_000 },
+              },
+            },
+          ] satisfies Specs
+        ).slice(0, n),
+      });
+
+    async function openCascade(
+      user: ReturnType<typeof renderWithProviders>['user']
+    ) {
+      await user.click(
+        await screen.findByRole('button', { name: 'Eliminar a Beto' })
+      );
+      const dialog = await screen.findByRole('dialog', {
+        name: 'Eliminar a Beto',
+      });
+      await user.click(
+        within(dialog).getByRole('radio', {
+          name: 'Eliminar con sus gastos y pagos',
+        })
+      );
+      return dialog;
+    }
+
+    it('avisa cuántos gastos con división personalizada pasarán a partes iguales', async () => {
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [custom(2)],
+      });
+      const dialog = await openCascade(user);
+      expect(
+        within(dialog).getByText(
+          '2 gastos con división personalizada pasarán a partes iguales.'
+        )
+      ).toBeInTheDocument();
+
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
+      );
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      );
+      const group = await repository.get('g1');
+      expect(group?.expenses.map((e) => e.split)).toEqual([
+        { type: 'equal', participantIds: ['Ana', 'Caro'] },
+        { type: 'equal', participantIds: ['Ana'] },
+      ]);
+    });
+
+    it('en singular dice "1 gasto … pasará"', async () => {
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [custom(1)],
+      });
+      const dialog = await openCascade(user);
+      expect(
+        within(dialog).getByText(
+          '1 gasto con división personalizada pasará a partes iguales.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('sin divisiones personalizadas no avisa nada', async () => {
+      const { user } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithActivity()],
+      });
+      await user.click(
+        await screen.findByRole('button', { name: 'Eliminar a Beto' })
+      );
+      const dialog = await screen.findByRole('dialog', {
+        name: 'Eliminar a Beto',
+      });
+      await user.click(
+        within(dialog).getByRole('radio', {
+          name: 'Eliminar con sus gastos y pagos',
+        })
+      );
+      expect(within(dialog).queryByText(/división personalizada/)).toBeNull();
+    });
+
+    it('reasignar suma su valor al de quien recibe', async () => {
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [custom(2)],
+      });
+      await user.click(
+        await screen.findByRole('button', { name: 'Eliminar a Beto' })
+      );
+      const dialog = await screen.findByRole('dialog', {
+        name: 'Eliminar a Beto',
+      });
+      await user.click(
+        within(dialog).getByRole('radio', { name: 'Reasignar a…' })
+      );
+      await user.click(within(dialog).getByLabelText('¿A quién se los pasas?'));
+      await user.click(await screen.findByRole('option', { name: 'Caro' }));
+      expect(within(dialog).queryByText(/división personalizada/)).toBeNull();
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
+      );
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      );
+      const group = await repository.get('g1');
+      expect(group?.expenses.map((e) => e.split)).toEqual([
+        {
+          type: 'shares',
+          participantIds: ['Ana', 'Caro'],
+          parts: { Ana: 2, Caro: 2 },
+        },
+        {
+          type: 'exact',
+          participantIds: ['Ana', 'Caro'],
+          amounts: { Ana: 50_000, Caro: 40_000 },
+        },
+      ]);
+    });
+  });
+
   it('muestra el error del dominio si la eliminación no es válida y no guarda', async () => {
     // The screen thinks Beto has no activity, but he got an expense meanwhile.
     const { user, repository } = renderWithProviders(undefined, {

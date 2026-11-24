@@ -1,5 +1,12 @@
-import { useRef, useState } from 'react';
-import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Controller,
+  useController,
+  useForm,
+  useWatch,
+  type Resolver,
+} from 'react-hook-form';
+import { Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FormField } from '@/components/form-field';
@@ -8,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import {
   Select,
   SelectContent,
@@ -28,6 +36,8 @@ import {
   type Expense,
   type ExpenseFields,
   type Group,
+  type SplitType,
+  validateSplit,
 } from '@/domain';
 import {
   isInfrastructureError,
@@ -38,16 +48,26 @@ import {
 import { EntityIcon } from '@/features/icons';
 import { MemberAvatar, useMemberMoods } from '@/features/members';
 import { todayLocal } from '@/lib/dates';
+import { plural } from '@/lib/plural';
+import { cn } from '@/lib/utils';
 import { AmountInput } from './AmountInput';
 import {
   ConfirmCoveredChange,
   type CoveredChangeKind,
 } from './ConfirmCoveredChange';
 import {
+  describeSplitStatus,
   parseAmount,
+  parseSplitValue,
+  presetValues,
+  readSplit,
+  splitToValues,
+  startingValue,
   validateExpenseForm,
+  type CustomSplitType,
   type ExpenseFormValues,
 } from './expense-form';
+import { SplitValueInput } from './SplitValueInput';
 
 interface ExpenseFormProps {
   group: Group;
@@ -65,6 +85,8 @@ function initialValues(group: Group, expense?: Expense): ExpenseFormValues {
       payerId: expense.payerId,
       participantIds: [...expense.split.participantIds],
       date: expense.date,
+      splitType: expense.split.type,
+      splitValues: splitToValues(expense.split),
     };
   }
   return {
@@ -73,8 +95,17 @@ function initialValues(group: Group, expense?: Expense): ExpenseFormValues {
     payerId: group.members[0]?.id ?? '',
     participantIds: group.members.map((m) => m.id),
     date: todayLocal(),
+    splitType: 'equal',
+    splitValues: {},
   };
 }
+
+const SPLIT_OPTIONS: { value: SplitType; label: string }[] = [
+  { value: 'equal', label: 'Iguales' },
+  { value: 'exact', label: 'Montos' },
+  { value: 'percent', label: '%' },
+  { value: 'shares', label: 'Partes' },
+];
 
 /**
  * Create / edit form. Mount it with `key={expense?.id ?? 'new'}` so it never
@@ -114,6 +145,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     control,
     handleSubmit,
     setValue,
+    trigger,
     formState: { errors, isSubmitted },
   } = useForm<ExpenseFormValues>({
     defaultValues: initialValues(group, expense),
@@ -121,23 +153,92 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
   });
 
   const values = useWatch({ control });
+  const splitTypeField = useController({ control, name: 'splitType' }).field;
+  const splitValuesField = useController({
+    control,
+    name: 'splitValues',
+  }).field;
   const moods = useMemberMoods(group);
   const amount = parseAmount(values.amount ?? '');
+  const splitType = (values.splitType ?? 'equal') as SplitType;
+  const custom = splitType !== 'equal';
+  const typed = (values.splitValues ?? {}) as Record<string, string>;
+  const chosenIds = (values.participantIds ?? []) as string[];
+
+  // What each participant owes, live. Equal always; a custom split only once
+  // it adds up (otherwise the numbers would be a guess).
+  const read = readSplit(group.members, {
+    participantIds: chosenIds,
+    splitType,
+    splitValues: typed,
+  });
+  const liveSplit = 'split' in read ? read.split : null;
   const shares =
-    Number.isInteger(amount) && amount > 0
-      ? computeShares(
-          {
-            amount,
-            split: {
-              type: 'equal',
-              participantIds: (values.participantIds ?? []) as string[],
-            },
-          },
-          group.members
-        )
+    liveSplit &&
+    Number.isInteger(amount) &&
+    amount > 0 &&
+    (!custom || validateSplit(amount, liveSplit, group.members).ok)
+      ? computeShares({ amount, split: liveSplit }, group.members)
       : new Map<string, number>();
-  const base = shares.size > 0 ? Math.floor(amount / shares.size) : Number.NaN;
-  const roundedUp = group.members.filter((m) => (shares.get(m.id) ?? 0) > base);
+  const base =
+    !custom && shares.size > 0 ? Math.floor(amount / shares.size) : Number.NaN;
+  const roundedUp = custom
+    ? []
+    : group.members.filter((m) => (shares.get(m.id) ?? 0) > base);
+  const chosenMembers = group.members.filter((m) => chosenIds.includes(m.id));
+  const status = custom
+    ? describeSplitStatus(
+        splitType as CustomSplitType,
+        amount,
+        chosenMembers.map((m) => parseSplitValue(splitType, typed[m.id] ?? ''))
+      )
+    : null;
+
+  // Whether the split adds up depends on the amount, who takes part and every
+  // field, but its message hangs on "Dividir entre": once the user has tried
+  // to save, keep that message in step with all of them.
+  const splitKey = JSON.stringify([
+    values.amount,
+    values.splitType,
+    values.splitValues,
+    values.participantIds,
+  ]);
+  useEffect(() => {
+    if (isSubmitted) void trigger('participantIds');
+  }, [splitKey, isSubmitted, trigger]);
+
+  function changeSplitType(next: SplitType) {
+    splitTypeField.onChange(next);
+    splitValuesField.onChange(
+      presetValues(next, amount, chosenIds, group.members)
+    );
+  }
+
+  function toggleParticipant(
+    onChange: (ids: string[]) => void,
+    memberId: string,
+    on: boolean
+  ) {
+    onChange(
+      on ? [...chosenIds, memberId] : chosenIds.filter((x) => x !== memberId)
+    );
+    if (!custom) return;
+    const next = { ...typed };
+    if (on) next[memberId] = startingValue(splitType);
+    else delete next[memberId];
+    splitValuesField.onChange(next);
+  }
+
+  /** "Todos" / "Ninguno": the new participants start empty, as when checked one by one. */
+  function setParticipants(ids: string[]) {
+    setValue('participantIds', ids, { shouldValidate: isSubmitted });
+    if (!custom) return;
+    splitValuesField.onChange(
+      Object.fromEntries(
+        ids.map((id) => [id, typed[id] ?? startingValue(splitType)])
+      )
+    );
+  }
 
   /**
    * Balance changes the user should confirm first: only when the expense was
@@ -300,13 +401,7 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 variant='ghost'
                 size='sm'
                 className='-my-1 h-9 text-primary'
-                onClick={() =>
-                  setValue(
-                    'participantIds',
-                    group.members.map((m) => m.id),
-                    { shouldValidate: isSubmitted }
-                  )
-                }
+                onClick={() => setParticipants(group.members.map((m) => m.id))}
               >
                 Todos
               </Button>
@@ -315,16 +410,18 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                 variant='ghost'
                 size='sm'
                 className='-my-1 h-9 text-primary'
-                onClick={() =>
-                  setValue('participantIds', [], {
-                    shouldValidate: isSubmitted,
-                  })
-                }
+                onClick={() => setParticipants([])}
               >
                 Ninguno
               </Button>
             </div>
           </div>
+          <SegmentedControl
+            label='Cómo se divide'
+            value={splitType}
+            onValueChange={changeSplitType}
+            options={SPLIT_OPTIONS}
+          />
           <Controller
             control={control}
             name='participantIds'
@@ -334,6 +431,8 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                   const checked = field.value.includes(member.id);
                   const share = shares.get(member.id);
                   const id = `participant-${member.id}`;
+                  const text = typed[member.id] ?? '';
+                  const parts = parseSplitValue(splitType, text);
                   return (
                     <li
                       key={member.id}
@@ -343,10 +442,10 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                         id={id}
                         checked={checked}
                         onCheckedChange={(next) =>
-                          field.onChange(
-                            next
-                              ? [...field.value, member.id]
-                              : field.value.filter((x) => x !== member.id)
+                          toggleParticipant(
+                            field.onChange,
+                            member.id,
+                            next === true
                           )
                         }
                       />
@@ -355,16 +454,45 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
                         mood={moods.get(member.id)}
                         className='size-7'
                       />
-                      <Label
-                        htmlFor={id}
-                        className='min-w-0 flex-1 cursor-pointer py-2 [overflow-wrap:anywhere]'
-                      >
-                        {member.name}
-                      </Label>
-                      {checked && share !== undefined && (
+                      <div className='min-w-0 flex-1'>
+                        <Label
+                          htmlFor={id}
+                          className='block cursor-pointer py-2 [overflow-wrap:anywhere]'
+                        >
+                          {member.name}
+                        </Label>
+                        {checked && splitType === 'shares' && parts >= 1 && (
+                          <p className='-mt-1.5 pb-1.5 text-xs text-muted-foreground tabular-nums'>
+                            {plural(parts, 'parte', 'partes')}
+                            {share !== undefined && ` · ${formatAmount(share)}`}
+                          </p>
+                        )}
+                        {checked &&
+                          splitType === 'percent' &&
+                          share !== undefined && (
+                            <p className='-mt-1.5 pb-1.5 text-xs text-muted-foreground tabular-nums'>
+                              {formatAmount(share)}
+                            </p>
+                          )}
+                      </div>
+                      {checked && !custom && share !== undefined && (
                         <span className='shrink-0 text-sm font-medium tabular-nums'>
                           {formatAmount(share)}
                         </span>
+                      )}
+                      {checked && custom && (
+                        <SplitValueInput
+                          type={splitType as CustomSplitType}
+                          memberName={member.name}
+                          value={text}
+                          invalid={Number.isNaN(parts)}
+                          onValueChange={(next) =>
+                            splitValuesField.onChange({
+                              ...typed,
+                              [member.id]: next,
+                            })
+                          }
+                        />
                       )}
                     </li>
                   );
@@ -372,6 +500,29 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
               </ul>
             )}
           />
+          {status && (
+            <p
+              aria-live='polite'
+              className={cn(
+                'text-sm',
+                status.tone === 'ok'
+                  ? 'text-positive'
+                  : status.tone === 'warn'
+                    ? 'text-negative'
+                    : 'text-muted-foreground'
+              )}
+            >
+              {status.tone === 'ok' && (
+                <Check
+                  aria-hidden='true'
+                  className='mr-1 inline size-4 align-text-bottom'
+                />
+              )}
+              {status.lead}
+              {status.lead && status.tail && ' · '}
+              {status.tail}
+            </p>
+          )}
           {roundedUp.length > 0 && (
             <p className='text-sm text-muted-foreground'>
               Por redondeo, a {joinNames(roundedUp.map((m) => m.name))}{' '}

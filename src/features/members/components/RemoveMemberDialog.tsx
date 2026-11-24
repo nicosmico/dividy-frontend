@@ -92,6 +92,7 @@ function StrategyDialog({
       ).length
     : 0;
   const deleted = impact.expensesDeletedByCascade;
+  const converted = impact.expensesConvertedByCascade.length;
   const deletedIds = new Set(deleted.map((e) => e.id));
   const changedShares = impact.participatingExpenses.filter(
     (e) => !deletedIds.has(e.id)
@@ -224,6 +225,13 @@ function StrategyDialog({
                     Se quitará de{' '}
                     {plural(changedShares.length, 'gasto', 'gastos')} donde
                     participa, así que las partes de los demás cambian.
+                  </p>
+                )}
+                {converted > 0 && (
+                  <p>
+                    {plural(converted, 'gasto', 'gastos')} con división
+                    personalizada {converted === 1 ? 'pasará' : 'pasarán'} a
+                    partes iguales.
                   </p>
                 )}
               </div>

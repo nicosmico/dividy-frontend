@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import {
   formatAmount,
   getTotalSpent,
+  splitTypeLabel,
   type Expense,
   type Group,
 } from '@/domain';
@@ -204,6 +205,10 @@ function ExpenseRow({
   const payer = group.members.find((m) => m.id === expense.payerId);
   const n = expense.split.participantIds.length;
   const everyone = n === group.members.length;
+  const division =
+    expense.split.type === 'equal'
+      ? `dividido entre ${everyone ? 'todos' : plural(n, 'persona', 'personas')}`
+      : `dividido ${splitTypeLabel(expense.split.type)}`;
   const content = (
     <>
       <EntityIcon text={expense.description} kind='expense' size='list' />
@@ -225,8 +230,7 @@ function ExpenseRow({
             />
           )}
           <span className='min-w-0 break-words'>
-            Pagó {payer?.name ?? 'alguien'} · dividido entre{' '}
-            {everyone ? 'todos' : plural(n, 'persona', 'personas')}
+            Pagó {payer?.name ?? 'alguien'} · {division}
           </span>
         </span>
       </span>
