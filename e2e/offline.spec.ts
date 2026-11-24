@@ -71,7 +71,9 @@ test('tras cargar una vez, la app abre y funciona sin conexión', async ({
   // ...a deep link (its route chunk and the lazy avatar generator are in the precache)...
   await page.goto('/groups/g1/members');
   await expect(page.getByText('3 miembros')).toBeVisible();
-  await expect(page.locator('img[alt="Ana"]')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Cambiar avatar de Ana' }).locator('img')
+  ).toBeVisible();
 
   // ...and writing still works, because the data lives in the browser.
   await page.getByLabel('Nombre', { exact: true }).fill('Dani');

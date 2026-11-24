@@ -122,7 +122,8 @@ test('sin grupos se ve la bienvenida animada, avanza con Siguiente y lleva a cre
   await expect(live).toContainText(
     'Beto pagó Alojamiento ($45.000). Se divide entre 3: $15.000 cada uno.'
   );
-  await expect(example.locator('[data-slot="pieces"] > span')).toHaveCount(3);
+  // Alojamiento is split among 3: its "Gastó" segment gets 2 cuts.
+  await expect(example.locator('[data-slot="cut"]')).toHaveCount(2);
   await next.click();
   await expect(example).toContainText('Gasto 2 de 3');
   await expect(live).toContainText('Ana pagó Carne ($30.000)');
