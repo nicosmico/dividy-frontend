@@ -74,11 +74,11 @@ describe('Pestaña Saldos', () => {
         'Para quedar al día',
         'Pagos registrados',
         'Detalle',
-        'Pagó vs. su parte',
+        'Gastó vs. su parte',
       ]);
       expect(order.at(-1)).toBe('Saldo por miembro');
       expect(
-        screen.getByRole('heading', { name: 'Pagó vs. su parte' }).tagName
+        screen.getByRole('heading', { name: 'Gastó vs. su parte' }).tagName
       ).toBe('H3');
     });
 

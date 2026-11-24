@@ -45,7 +45,7 @@ function payNarration(explanation: Explanation): string {
     );
     return `${joinList(parts)}.`;
   }
-  return `Se registraron ${expenses.length} gastos por ${formatAmount(explanation.totalSpent)} en total. La barra "Pagó" muestra cuánto puso cada uno, dividido por gasto.`;
+  return `Se registraron ${expenses.length} gastos por ${formatAmount(explanation.totalSpent)} en total. La barra "Gastó" muestra cuánto gastó cada uno, dividido por gasto.`;
 }
 
 function shareNarration(explanation: Explanation): string {

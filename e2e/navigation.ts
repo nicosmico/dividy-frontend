@@ -31,6 +31,6 @@ export async function openTab(page: Page, name: Tab): Promise<void> {
   }
   if (name !== 'Saldos') {
     await expect(main.getByText('Saldo por miembro')).toHaveCount(0);
-    await expect(main.getByText('Pagó vs. su parte')).toHaveCount(0);
+    await expect(main.getByText('Gastó vs. su parte')).toHaveCount(0);
   }
 }

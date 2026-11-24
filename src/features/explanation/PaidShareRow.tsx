@@ -10,16 +10,20 @@ import { BalanceLabel } from '@/components/balance-label';
 import { formatAmount, type Member } from '@/domain';
 import { EntityIcon } from '@/features/icons';
 import { MemberAvatar, type AvatarMood } from '@/features/members';
+import { useElementWidth } from '@/hooks/use-element-width';
 import { cn } from '@/lib/utils';
 import type { ExplainedExpense, Slice } from './build-explanation';
 import { fillStyle, type ColorMap } from './colors';
+import { computeCuts, describeDivision } from './cuts';
 
 /** Room kept at the end of each bar for the total amount. */
-export const AMOUNT_ROOM = '5.25rem';
+const AMOUNT_ROOM_REM = 5.25;
+export const AMOUNT_ROOM = `${AMOUNT_ROOM_REM}rem`;
+/** Gap between the segments of a bar (`gap-[2px]`). */
+const SEGMENT_GAP_PX = 2;
 
 /** Opens the tooltip of one segment at a time; used by the real chart. */
 export interface SegmentTooltips {
-  expenseById: ReadonlyMap<string, ExplainedExpense>;
   /** Key of the segment whose tooltip is open. */
   active: string | null;
   setActive: (key: string | null) => void;
@@ -32,13 +36,14 @@ export interface SegmentTooltips {
 export interface RowMotion {
   /** Position of the member in the group: staggers the arrival of its pieces. */
   index: number;
-  /** `false` until the "Pagó" bar has grown from nothing. */
+  /** `false` until the "Gastó" bar has grown from nothing. */
   paidGrown: boolean;
-  /** Expenses being split now: the other "Pagó" segments are dimmed. */
+  /** Expenses being split now: the other "Gastó" segments are dimmed. */
   focus: ReadonlySet<string> | null;
-  /** The focused segment, cut into one piece per participant. */
-  split: { expenseId: string; amounts: number[] } | null;
-  /** Expenses whose segment of "Su parte" is already on screen. */
+  /**
+   * Expenses already split (step 2 on): their "Gastó" segment is cut into one
+   * part per participant and their segment of "Su parte" is on screen.
+   */
   shareShown: ReadonlySet<string>;
   /** `false` hides the amount after the "Su parte" bar. */
   shareAmountVisible: boolean;
@@ -64,6 +69,8 @@ export interface PaidShareRowProps {
   /** The tallest bar of the whole chart: the common scale. */
   scaleMax: number;
   colors: ColorMap;
+  /** Every expense by id: "Gastó" segments are cut into one part per participant. */
+  expenseById: ReadonlyMap<string, ExplainedExpense>;
   /** Segments become buttons with a tooltip (the real chart). */
   tooltips?: SegmentTooltips;
   /** Present only in the animation. */
@@ -76,9 +83,11 @@ const FADE = 'transition-opacity duration-300 motion-reduce:transition-none';
 const STAGGER_MS = 140;
 
 /**
- * One member of "Pagó vs. su parte": face, name and balance in words, then the
- * "Pagó" and "Su parte" bars split by expense. The Saldos chart and the
- * step-by-step animation both draw this component, so they look the same.
+ * One member of "Gastó vs. su parte": face, name and balance in words, then
+ * the "Gastó" and "Su parte" bars split by expense. In "Gastó" every expense
+ * is also cut into one part per participant (when the parts are wide enough).
+ * The Saldos chart and the step-by-step animation both draw this component,
+ * so they look the same.
  */
 export function PaidShareRow({
   member,
@@ -88,6 +97,7 @@ export function PaidShareRow({
   share,
   scaleMax,
   colors,
+  expenseById,
   tooltips,
   motion,
 }: PaidShareRowProps) {
@@ -116,19 +126,20 @@ export function PaidShareRow({
       <Bar
         rowKey={member.id}
         kind='paid'
-        label='Pagó'
+        label='Gastó'
         owner={member.name}
         data={paid}
         scaleMax={scaleMax}
         colors={colors}
+        expenseById={expenseById}
         tooltips={tooltips}
         motion={
           motion && {
             index: motion.index,
             grown: motion.paidGrown,
             focus: motion.focus,
-            split: motion.split,
             shown: null,
+            cutShown: motion.shareShown,
             amountVisible: motion.paidGrown,
           }
         }
@@ -141,14 +152,15 @@ export function PaidShareRow({
         data={share}
         scaleMax={scaleMax}
         colors={colors}
+        expenseById={expenseById}
         tooltips={tooltips}
         motion={
           motion && {
             index: motion.index,
             grown: true,
             focus: null,
-            split: null,
             shown: motion.shareShown,
+            cutShown: null,
             amountVisible: motion.shareAmountVisible,
           }
         }
@@ -165,6 +177,7 @@ interface BarProps {
   data: BarData;
   scaleMax: number;
   colors: ColorMap;
+  expenseById: ReadonlyMap<string, ExplainedExpense>;
   tooltips?: SegmentTooltips;
   motion?: BarMotion;
 }
@@ -173,9 +186,10 @@ interface BarMotion {
   index: number;
   grown: boolean;
   focus: ReadonlySet<string> | null;
-  split: { expenseId: string; amounts: number[] } | null;
   /** Segments on screen; `null` shows them all. */
   shown: ReadonlySet<string> | null;
+  /** Segments that are cut into parts (only "Gastó"); `null` cuts every one. */
+  cutShown: ReadonlySet<string> | null;
   /** Whether the amount after the bar is on screen. */
   amountVisible: boolean;
 }
@@ -183,7 +197,8 @@ interface BarMotion {
 /**
  * One bar. In the chart its segments are buttons (a single tab stop; arrows
  * move between them) that open a tooltip with the expense's icon, name and
- * amount. In the animation they are plain boxes that fade in one by one.
+ * amount (and, in "Gastó", how it is divided). In the animation they are
+ * plain boxes that fade in one by one.
  */
 function Bar({
   rowKey,
@@ -193,14 +208,26 @@ function Bar({
   data,
   scaleMax,
   colors,
+  expenseById,
   tooltips,
   motion,
 }: BarProps) {
   const [tabStop, setTabStop] = useState(0);
   const group = useRef<HTMLDivElement>(null);
+  const area = useRef<HTMLDivElement>(null);
+  const areaPx = useElementWidth(area);
   const { slices, total } = data;
   const ratio = scaleMax > 0 ? total / scaleMax : 0;
-  // In the animation "Pagó" grows from nothing; "Su parte" keeps its final
+  // Final width of the bar in px (not the animated one, so the cuts do not
+  // pop in while it grows). Unknown (0): assume there is room.
+  const rootPx =
+    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const barPx =
+    areaPx > 0
+      ? ratio * Math.max(0, areaPx - AMOUNT_ROOM_REM * rootPx)
+      : Number.POSITIVE_INFINITY;
+  const gapsPx = SEGMENT_GAP_PX * Math.max(0, slices.length - 1);
+  // In the animation "Gastó" grows from nothing; "Su parte" keeps its final
   // width and its segments appear in it.
   const widthRatio = motion && !motion.grown ? 0 : ratio;
   const barStyle: CSSProperties = {
@@ -234,38 +261,55 @@ function Bar({
     const color = colors.get(slice.expenseId);
     if (!color) return null;
     const key = `${rowKey}:${kind}:${slice.expenseId}`;
-    const pieces =
-      motion?.split?.expenseId === slice.expenseId
-        ? motion.split.amounts
-        : null;
-    const swatch = pieces ? (
+    const expense = expenseById.get(slice.expenseId);
+    // Only a segment that is the whole expense is cut by its participants
+    // (not the welcome example's last step, where "Gastó" shows shares).
+    const cuttable =
+      kind === 'paid' &&
+      !!expense &&
+      slice.amount === expense.amount &&
+      (!motion?.cutShown || motion.cutShown.has(slice.expenseId));
+    const cuts =
+      cuttable && total > 0
+        ? computeCuts(
+            expense,
+            Math.max(0, barPx - gapsPx) * (slice.amount / total)
+          )
+        : [];
+    const swatch = (
       <span
-        data-slot='pieces'
-        className='flex h-3.5 w-full gap-[2px] bg-card transition-[gap] duration-500 motion-reduce:transition-none starting:gap-0'
-      >
-        {pieces.map((amount, i) => (
-          <span
-            key={i}
-            className='block h-3.5 min-w-px rounded-[3px] ring-1 ring-foreground/15 ring-inset'
-            style={{ ...fillStyle(color), flex: `${amount} 1 0%` }}
-          />
-        ))}
-      </span>
-    ) : (
-      <span
-        className='block h-3.5 w-full rounded-[4px] ring-1 ring-foreground/15 ring-inset'
+        className='relative block h-3.5 w-full rounded-[4px] ring-1 ring-foreground/15 ring-inset'
         style={fillStyle(color)}
-      />
+      >
+        {cuts.length > 0 && (
+          <span
+            aria-hidden='true'
+            data-slot='cuts'
+            className='pointer-events-none absolute inset-0 overflow-hidden rounded-[4px]'
+          >
+            {cuts.map((position, i) => (
+              <span
+                key={i}
+                data-slot='cut'
+                className='absolute inset-y-0 w-[2px] -translate-x-1/2 bg-card transition-[opacity,transform] duration-500 motion-reduce:transition-none starting:scale-y-0 starting:opacity-0'
+                style={{ left: `${position * 100}%` }}
+              />
+            ))}
+          </span>
+        )}
+      </span>
     );
     const shown = !motion?.shown || motion.shown.has(slice.expenseId);
     const dimmed = !!motion?.focus && !motion.focus.has(slice.expenseId);
-    const expense = tooltips?.expenseById.get(slice.expenseId);
     if (tooltips && expense) {
       return (
         <Segment
           key={key}
           expense={expense}
           amount={slice.amount}
+          division={
+            kind === 'paid' && cuttable ? describeDivision(expense) : null
+          }
           swatch={swatch}
           open={tooltips.active === key}
           tabStop={index === tabStop}
@@ -309,6 +353,7 @@ function Bar({
         {label}
       </span>
       <div
+        ref={area}
         className={cn(
           'flex min-w-0 flex-1 items-center gap-2',
           motion && 'relative'
@@ -370,6 +415,7 @@ function Bar({
 function Segment({
   expense,
   amount,
+  division,
   swatch,
   open,
   tabStop,
@@ -379,6 +425,8 @@ function Segment({
 }: {
   expense: ExplainedExpense;
   amount: number;
+  /** How the expense is divided ("entre 5: $30.000 c/u"), in "Gastó" only. */
+  division: string | null;
   swatch: React.ReactNode;
   open: boolean;
   tabStop: boolean;
@@ -386,7 +434,7 @@ function Segment({
   onClose: () => void;
   onFocusSegment: () => void;
 }) {
-  const name = `${expense.description}: ${formatAmount(amount)}`;
+  const name = `${expense.description}: ${formatAmount(amount)}${division ? ` · ${division}` : ''}`;
   return (
     <Popover.Root
       open={open}
@@ -431,7 +479,10 @@ function Segment({
             <span className='block font-semibold break-words'>
               {expense.description}
             </span>
-            <span className='block tabular-nums'>{formatAmount(amount)}</span>
+            <span className='block tabular-nums'>
+              {formatAmount(amount)}
+              {division && ` · ${division}`}
+            </span>
           </span>
         </Popover.Content>
       </Popover.Portal>

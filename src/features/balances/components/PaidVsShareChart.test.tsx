@@ -1,5 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { makeGroup } from '@/domain/test-utils/fixtures';
 import { ExplanationPlayer } from '@/features/explanation/ExplanationPlayer';
@@ -29,19 +29,19 @@ function tripGroup() {
 
 async function chart() {
   const heading = await screen.findByRole('heading', {
-    name: 'Pagó vs. su parte',
+    name: 'Gastó vs. su parte',
   });
   return heading.closest('section')!;
 }
 
-describe('Gráfico "Pagó vs. su parte"', () => {
+describe('Gráfico "Gastó vs. su parte"', () => {
   it('no aparece sin gastos', async () => {
     renderWithProviders(undefined, {
       route: ROUTE,
       groups: [makeGroup({ members: ['Ana', 'Beto'] })],
     });
     await screen.findByText('Aún no hay saldos');
-    expect(screen.queryByText('Pagó vs. su parte')).toBeNull();
+    expect(screen.queryByText('Gastó vs. su parte')).toBeNull();
   });
 
   it('va en el detalle, después de las transferencias, con una fila por miembro con saldo y totales', async () => {
@@ -74,7 +74,9 @@ describe('Gráfico "Pagó vs. su parte"', () => {
     renderWithProviders(undefined, { route: ROUTE, groups: [tripGroup()] });
     const section = await chart();
     expect(
-      within(section).getAllByRole('button', { name: 'Cabaña: $30.000' })
+      within(section).getAllByRole('button', {
+        name: 'Cabaña: $30.000 · entre 3: $10.000 c/u',
+      })
     ).toHaveLength(1);
     expect(
       within(section).getAllByRole('button', { name: 'Cabaña: $10.000' })
@@ -82,6 +84,55 @@ describe('Gráfico "Pagó vs. su parte"', () => {
     expect(
       within(section).getAllByRole('button', { name: 'Bebidas: $3.000' })
     ).toHaveLength(2);
+    expect(
+      within(section).getAllByRole('button', {
+        name: 'Bebidas: $6.000 · entre 2: $3.000 c/u',
+      })
+    ).toHaveLength(1);
+  });
+
+  it('los tramos de "Gastó" llevan un corte por participante y los de "Su parte" ninguno', async () => {
+    renderWithProviders(undefined, { route: ROUTE, groups: [tripGroup()] });
+    const section = await chart();
+    const rows = within(within(section).getAllByRole('list')[0]).getAllByRole(
+      'listitem'
+    );
+    const bars = (row: HTMLElement) =>
+      row.querySelectorAll('[data-slot="bar"]');
+    // Ana: Cabaña ($30.000) among 3 -> 2 cuts at 1/3 and 2/3.
+    const [paid, share] = [...bars(rows[0])];
+    const cuts = [...paid.querySelectorAll<HTMLElement>('[data-slot="cut"]')];
+    expect(cuts).toHaveLength(2);
+    expect(cuts.map((c) => parseFloat(c.style.left))).toEqual([
+      expect.closeTo(100 / 3, 3),
+      expect.closeTo(200 / 3, 3),
+    ]);
+    expect(paid.querySelector('[data-slot="cuts"]')).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
+    expect(share.querySelectorAll('[data-slot="cut"]')).toHaveLength(0);
+    // Beto: Bebidas ($6.000) among 2 -> 1 cut at 50%.
+    expect(bars(rows[1])[0].querySelectorAll('[data-slot="cut"]')).toHaveLength(
+      1
+    );
+    expect(bars(rows[1])[1].querySelectorAll('[data-slot="cut"]')).toHaveLength(
+      0
+    );
+  });
+
+  it('sin espacio (partes de menos de ~6 px) no dibuja los cortes', async () => {
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ width: 100 } as DOMRect);
+    try {
+      renderWithProviders(undefined, { route: ROUTE, groups: [tripGroup()] });
+      const section = await chart();
+      // 100 px minus the room for the amount leaves 16 px: 3 parts of ~5 px.
+      expect(section.querySelectorAll('[data-slot="cuts"]').length).toBe(0);
+    } finally {
+      rect.mockRestore();
+    }
   });
 
   it('la leyenda lista ícono, nombre y monto total de cada gasto', async () => {
@@ -123,12 +174,16 @@ describe('Gráfico "Pagó vs. su parte"', () => {
     });
     const section = await chart();
     const segment = within(section).getByRole('button', {
-      name: 'Cabaña: $30.000',
+      name: 'Cabaña: $30.000 · entre 3: $10.000 c/u',
     });
     segment.focus();
-    const tip = await screen.findByRole('dialog', { name: 'Cabaña: $30.000' });
+    const tip = await screen.findByRole('dialog', {
+      name: 'Cabaña: $30.000 · entre 3: $10.000 c/u',
+    });
     expect(within(tip).getByText('Cabaña')).toBeInTheDocument();
-    expect(within(tip).getByText('$30.000')).toBeInTheDocument();
+    expect(
+      within(tip).getByText('$30.000 · entre 3: $10.000 c/u')
+    ).toBeInTheDocument();
     expect(tip.querySelector('[data-slot="entity-icon"]')).not.toBeNull();
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());

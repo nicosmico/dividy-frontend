@@ -56,7 +56,7 @@ describe('narrate, grupos reales', () => {
     });
     const e = buildExplanation(group);
     expect(narrate(e, 0)).toBe(
-      'Se registraron 6 gastos por $21.000 en total. La barra "Pagó" muestra cuánto puso cada uno, dividido por gasto.'
+      'Se registraron 6 gastos por $21.000 en total. La barra "Gastó" muestra cuánto gastó cada uno, dividido por gasto.'
     );
     expect(narrate(e, 1)).toBe(
       'Cada gasto se divide entre quienes lo comparten. Sumando todos los gastos, sale la parte de cada uno.'
