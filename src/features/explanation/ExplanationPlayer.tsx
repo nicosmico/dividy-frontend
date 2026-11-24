@@ -49,7 +49,8 @@ interface ExplanationPlayerProps {
   settleAtEnd?: boolean;
   /**
    * `card` (welcome): the card never changes height, so the legend and the
-   * step 4 content share one reserved cell. `page` (the "Ver cómo se
+   * step 4 content share one reserved cell. Same order as `page`: the
+   * narration goes right under the step title, above the bars. `page` (the "Ver cómo se
    * calculó" dialog): fills its parent (a flex column) with a scrolling body
    * (title, narration, rows, legend; step 4 content only from step 4 on) and
    * a footer that holds only the controls.
@@ -289,7 +290,10 @@ export function ExplanationPlayer({
       aria-atomic='true'
       className={cn(
         'text-[0.9375rem] leading-relaxed',
-        page ? 'min-h-[4lh]' : 'min-h-[5lh]'
+        // Reserved lines, so the bars do not move between steps (and, in
+        // the card, so the card keeps one height): at 360 px or more every
+        // narration fits in 3 lines; narrower phones need 4.
+        page ? 'min-h-[4lh]' : 'min-h-[3lh] max-[359px]:min-h-[4lh]'
       )}
     >
       <span className='sr-only'>
@@ -381,10 +385,10 @@ export function ExplanationPlayer({
       ) : (
         <>
           {stepTitle}
+          {narration}
           {shareProgress}
           {rowList}
           {below}
-          {narration}
           {controls}
         </>
       )}
