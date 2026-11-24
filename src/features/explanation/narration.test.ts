@@ -4,6 +4,7 @@ import { makeGroup } from '@/domain/test-utils/fixtures';
 import { buildExplanation } from './build-explanation';
 import { buildExampleGroup } from './example-group';
 import { joinList, narrate } from './narration';
+import { buildShareSteps } from './share-steps';
 
 describe('joinList', () => {
   it.each([
@@ -93,5 +94,99 @@ describe('narrate, grupos reales', () => {
   it('sin gastos', () => {
     const e = buildExplanation(makeGroup({ members: ['Ana'] }));
     expect(narrate(e, 0)).toBe('Todavía no hay gastos.');
+  });
+});
+
+describe('narrate, gastos con división personalizada', () => {
+  const members = ['Ana', 'Beto', 'Carla'];
+  const explain = (split: unknown, amount = 150_000) =>
+    buildExplanation(
+      makeGroup({
+        members,
+        expenses: [
+          {
+            id: 'e1',
+            description: 'Cabaña',
+            amount,
+            payer: 'Ana',
+            among: members,
+            split: { participantIds: members, ...(split as object) } as never,
+          },
+          {
+            id: 'e2',
+            description: 'Pan',
+            amount: 3000,
+            payer: 'Beto',
+            among: ['Ana', 'Beto'],
+          },
+        ],
+      })
+    );
+  const stepText = (e: ReturnType<typeof explain>) =>
+    narrate(e, 1, false, buildShareSteps(e)[0]);
+
+  it('partes: "Ana pone 2 partes y los demás 1"', () => {
+    expect(
+      stepText(
+        explain({ type: 'shares', parts: { Ana: 2, Beto: 1, Carla: 1 } })
+      )
+    ).toBe(
+      'Ana pagó Cabaña ($150.000). Cabaña se divide por partes: Ana pone 2 partes y los demás 1.'
+    );
+  });
+
+  it('partes todas distintas se nombran una por una', () => {
+    expect(
+      stepText(
+        explain({ type: 'shares', parts: { Ana: 3, Beto: 1, Carla: 2 } })
+      )
+    ).toBe(
+      'Ana pagó Cabaña ($150.000). Cabaña se divide por partes: Ana pone 3 partes, Beto 1 y Carla 2.'
+    );
+  });
+
+  it('montos', () => {
+    expect(
+      stepText(
+        explain({
+          type: 'exact',
+          amounts: { Ana: 50_000, Beto: 40_000, Carla: 60_000 },
+        })
+      )
+    ).toBe(
+      'Ana pagó Cabaña ($150.000). Cabaña se divide por montos: Ana pone $50.000, Beto $40.000 y Carla $60.000.'
+    );
+  });
+
+  it('porcentaje', () => {
+    expect(
+      stepText(
+        explain({
+          type: 'percent',
+          basisPoints: { Ana: 5000, Beto: 2500, Carla: 2500 },
+        })
+      )
+    ).toBe(
+      'Ana pagó Cabaña ($150.000). Cabaña se divide por porcentaje: Ana pone 50 % y los demás 25 %.'
+    );
+  });
+
+  it('el resumen del paso 2 dice cuáles gastos no son iguales', () => {
+    const e = explain({ type: 'shares', parts: { Ana: 2, Beto: 1, Carla: 1 } });
+    expect(narrate(e, 1)).toBe(
+      'Cada gasto se divide entre quienes lo comparten: Cabaña entre los 3, por partes; Pan solo entre Ana y Beto. Sumando, sale la parte de cada uno.'
+    );
+  });
+
+  it('los gastos iguales siguen igual', () => {
+    const e = buildExplanation(
+      makeGroup({
+        members,
+        expenses: [{ id: 'e1', amount: 9000, payer: 'Ana', among: members }],
+      })
+    );
+    expect(narrate(e, 1, false, buildShareSteps(e)[0])).toBe(
+      'Ana pagó Gasto 1 ($9.000). Se divide entre 3: $3.000 cada uno.'
+    );
   });
 });

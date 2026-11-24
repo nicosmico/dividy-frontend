@@ -58,6 +58,30 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectNoSeriousViolations(page);
     });
 
+    test('Formulario de gasto en modo Montos y Partes', async ({ page }) => {
+      await seedGroups(page, sampleGroups());
+      await page.goto('/groups/g1/expenses');
+      await page.getByRole('button', { name: /Agregar gasto/ }).click();
+      const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
+      await dialog.getByLabel('Monto en pesos').fill('100000');
+      await dialog.getByRole('radio', { name: 'Montos' }).click();
+      await expect(dialog.getByLabel('Monto de Ana')).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      // With the "faltan" line and the error shown.
+      await dialog.getByLabel('Monto de Ana').fill('1');
+      await dialog.getByRole('button', { name: 'Guardar' }).click();
+      await expect(dialog.getByRole('alert').first()).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      await dialog.getByRole('radio', { name: 'Partes' }).click();
+      await expect(dialog.getByLabel('Partes de Ana')).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      await dialog.getByRole('radio', { name: '%' }).click();
+      await expect(dialog.getByLabel('Porcentaje de Ana')).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
     test('Saldos con el desglose abierto', async ({ page }) => {
       await seedGroups(page, sampleGroups());
       await page.goto('/groups/g1/balances');

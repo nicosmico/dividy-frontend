@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { AVATAR_COLOR_COUNT } from '../avatar';
 import { MAX_AMOUNT } from '../money';
-import type { Expense, Group, Member, Payment } from '../types';
+import type { Expense, Group, Member, Payment, Split } from '../types';
 
 const BASE_TIME = '2026-01-01T12:00:00.000Z';
 
@@ -34,27 +34,103 @@ export function membersArb(min = 1, max = 8): fc.Arbitrary<Member[]> {
   );
 }
 
-function expenseArb(members: Member[], index: number): fc.Arbitrary<Expense> {
+/** `count` whole numbers >= 1 that add up to exactly `total` (needs `total >= count`). */
+function compositionArb(total: number, count: number): fc.Arbitrary<number[]> {
+  if (count === 1) return fc.constant([total]);
+  return fc
+    .uniqueArray(fc.integer({ min: 1, max: total - 1 }), {
+      minLength: count - 1,
+      maxLength: count - 1,
+    })
+    .map((cuts) => {
+      const points = [0, ...cuts.sort((a, b) => a - b), total];
+      return points.slice(1).map((point, i) => point - points[i]);
+    });
+}
+
+/**
+ * A valid split of `amount` among (a subset of) `ids`, of any of the four
+ * kinds: exact amounts that add up, percentages in basis points that add up
+ * to 10000 (each at least 1) and parts of at least 1. `kinds` restricts them.
+ */
+export function splitArb(
+  amount: number,
+  ids: string[],
+  kinds: Split['type'][] = ['equal', 'exact', 'percent', 'shares']
+): fc.Arbitrary<Split> {
+  const participants = (limit: number) =>
+    fc.uniqueArray(fc.constantFrom(...ids), {
+      minLength: 1,
+      maxLength: Math.max(1, Math.min(ids.length, limit)),
+    });
+  const withValues = (
+    total: number,
+    build: (participantIds: string[], byId: Record<string, number>) => Split
+  ) =>
+    participants(total).chain((participantIds) =>
+      compositionArb(total, participantIds.length).map((values) =>
+        build(
+          participantIds,
+          Object.fromEntries(participantIds.map((id, i) => [id, values[i]]))
+        )
+      )
+    );
+  const byKind: Record<Split['type'], fc.Arbitrary<Split>> = {
+    equal: participants(ids.length).map((participantIds) => ({
+      type: 'equal',
+      participantIds,
+    })),
+    exact: withValues(amount, (participantIds, amounts) => ({
+      type: 'exact',
+      participantIds,
+      amounts,
+    })),
+    percent: withValues(10_000, (participantIds, basisPoints) => ({
+      type: 'percent',
+      participantIds,
+      basisPoints,
+    })),
+    shares: participants(ids.length).chain((participantIds) =>
+      fc
+        .array(fc.integer({ min: 1, max: 20 }), {
+          minLength: participantIds.length,
+          maxLength: participantIds.length,
+        })
+        .map((values) => ({
+          type: 'shares' as const,
+          participantIds,
+          parts: Object.fromEntries(
+            participantIds.map((id, i) => [id, values[i]])
+          ),
+        }))
+    ),
+  };
+  return fc.oneof(...kinds.map((kind) => byKind[kind]));
+}
+
+function expenseArb(
+  members: Member[],
+  index: number,
+  splits: Split['type'][]
+): fc.Arbitrary<Expense> {
   const ids = members.map((m) => m.id);
   return fc
     .record({
       amount: amountArb,
       payerId: fc.constantFrom(...ids),
-      participantIds: fc.uniqueArray(fc.constantFrom(...ids), {
-        minLength: 1,
-        maxLength: ids.length,
-      }),
       date: dateArb,
     })
-    .map(({ amount, payerId, participantIds, date }) => ({
-      id: `e${index}`,
-      description: `Gasto ${index}`,
-      amount,
-      payerId,
-      split: { type: 'equal' as const, participantIds },
-      date,
-      createdAt: BASE_TIME,
-    }));
+    .chain((base) =>
+      splitArb(base.amount, ids, splits).map((split): Expense => ({
+        id: `e${index}`,
+        description: `Gasto ${index}`,
+        amount: base.amount,
+        payerId: base.payerId,
+        split,
+        date: base.date,
+        createdAt: BASE_TIME,
+      }))
+    );
 }
 
 function paymentArb(members: Member[], index: number): fc.Arbitrary<Payment> {
@@ -87,6 +163,8 @@ export function groupArb(
     maxMembers?: number;
     maxExpenses?: number;
     maxPayments?: number;
+    /** Kinds of split the expenses may have (equal only by default). */
+    splits?: Split['type'][];
   } = {}
 ): fc.Arbitrary<Group> {
   const {
@@ -94,6 +172,7 @@ export function groupArb(
     maxMembers = 8,
     maxExpenses = 10,
     maxPayments = 5,
+    splits = ['equal'],
   } = options;
   return membersArb(minMembers, maxMembers).chain((members) =>
     fc
@@ -102,7 +181,9 @@ export function groupArb(
           .integer({ min: 0, max: maxExpenses })
           .chain((n) =>
             fc.tuple(
-              ...Array.from({ length: n }, (_, i) => expenseArb(members, i))
+              ...Array.from({ length: n }, (_, i) =>
+                expenseArb(members, i, splits)
+              )
             )
           ),
         payments: fc

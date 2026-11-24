@@ -483,7 +483,7 @@ function Segment({
             <span className='block font-semibold break-words'>
               {expense.description}
             </span>
-            <span className='block tabular-nums'>
+            <span className='block [overflow-wrap:anywhere] tabular-nums'>
               {formatAmount(amount)}
               {division && ` · ${division}`}
             </span>

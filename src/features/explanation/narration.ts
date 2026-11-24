@@ -1,5 +1,9 @@
-import { formatAmount } from '@/domain';
-import type { Explanation, MemberExplanation } from './build-explanation';
+import { formatAmount, formatPercent, splitTypeLabel } from '@/domain';
+import type {
+  Explanation,
+  ExplainedExpense,
+  MemberExplanation,
+} from './build-explanation';
 import type { ShareStep } from './share-steps';
 
 export const STEP_TITLES = [
@@ -51,29 +55,41 @@ function payNarration(explanation: Explanation): string {
 function shareNarration(explanation: Explanation): string {
   const { expenses, members } = explanation;
   const everyone = members.length;
-  const sets = new Map<string, { ids: string[]; names: string[] }>();
+  const sets = new Map<
+    string,
+    { ids: string[]; names: string[]; how: string }
+  >();
   for (const expense of expenses) {
-    const key = [...expense.participantIds].sort().join('|');
-    const entry = sets.get(key) ?? { ids: expense.participantIds, names: [] };
+    const how =
+      expense.split.type === 'equal' ? '' : splitTypeLabel(expense.split.type);
+    const key = `${how}|${[...expense.participantIds].sort().join('|')}`;
+    const entry = sets.get(key) ?? {
+      ids: expense.participantIds,
+      names: [],
+      how,
+    };
     entry.names.push(expense.description);
     sets.set(key, entry);
   }
   const base = 'Cada gasto se divide entre quienes lo comparten';
+  const hasCustom = expenses.some((e) => e.split.type !== 'equal');
   if (
     expenses.length === 0 ||
     expenses.length > MAX_NARRATED_EXPENSES + 1 ||
     sets.size > 3
   ) {
-    return `${base}. Sumando todos los gastos, sale la parte de cada uno.`;
+    return hasCustom
+      ? `${base}, en partes iguales o como se indicó en cada gasto (montos, porcentajes o partes). Sumando todos los gastos, sale la parte de cada uno.`
+      : `${base}. Sumando todos los gastos, sale la parte de cada uno.`;
   }
-  const parts = [...sets.values()].map(({ ids, names }) => {
+  const parts = [...sets.values()].map(({ ids, names, how }) => {
     const who =
       ids.length === everyone && everyone > 1
         ? `entre los ${everyone}`
         : ids.length === 1
           ? `solo para ${nameOf(explanation, ids[0])}`
           : `solo entre ${joinList(ids.map((id) => nameOf(explanation, id)))}`;
-    return `${joinList(names)} ${who}`;
+    return `${joinList(names)} ${who}${how ? `, ${how}` : ''}`;
   });
   return `${base}: ${parts.join('; ')}. Sumando, sale la parte de cada uno.`;
 }
@@ -128,6 +144,66 @@ function settleNarration(
     : `${paid}Para quedar al día: ${text}. Con eso, cada uno habrá pagado exactamente su parte.`;
 }
 
+/** What each one puts in a value, as said in the narration ("2 partes", "$50.000", "50 %"). */
+function entryText(expense: ExplainedExpense, value: number): string {
+  return expense.split.type === 'exact'
+    ? formatAmount(value)
+    : expense.split.type === 'percent'
+      ? formatPercent(value)
+      : `${value} ${value === 1 ? 'parte' : 'partes'}`;
+}
+
+/**
+ * How a custom split is told, from its data: "Cabaña se divide por partes:
+ * Ana pone 2 partes y los demás 1." The most common value is "los demás"
+ * (when two or more people share it), and everyone else is named.
+ */
+function customDivisionText(
+  explanation: Explanation,
+  expense: ExplainedExpense
+): string {
+  const { split } = expense;
+  if (split.type === 'equal') return '';
+  const values: Record<string, number> =
+    split.type === 'exact'
+      ? split.amounts
+      : split.type === 'percent'
+        ? split.basisPoints
+        : split.type === 'shares'
+          ? split.parts
+          : {};
+  // In group order, so the text follows the columns.
+  const entries = explanation.members
+    .filter((m) => expense.participantIds.includes(m.member.id))
+    .map((m) => ({ name: m.member.name, value: values[m.member.id] ?? 0 }));
+  const head = `${expense.description} se divide ${splitTypeLabel(split.type)}`;
+  if (entries.length === 1) {
+    return `${head}: solo ${entries[0].name}, con ${entryText(expense, entries[0].value)}.`;
+  }
+  const counts = new Map<number, number>();
+  for (const { value } of entries)
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  const [common, count] = [...counts.entries()].reduce((best, entry) =>
+    entry[1] > best[1] ? entry : best
+  );
+  if (counts.size === 1) {
+    return `${head}: cada uno pone ${entryText(expense, common)}.`;
+  }
+  const named =
+    count >= 2 ? entries.filter((e) => e.value !== common) : entries;
+  const told = named.map((e, i) =>
+    i === 0
+      ? `${e.name} pone ${entryText(expense, e.value)}`
+      : `${e.name} ${split.type === 'shares' ? e.value : entryText(expense, e.value)}`
+  );
+  if (count >= 2) {
+    told.push(
+      `los demás ${split.type === 'shares' ? common : entryText(expense, common)}`
+    );
+  }
+  return `${head}: ${joinList(told)}.`;
+}
+
 /**
  * Text of one sub-step of step 2: who paid the expense and how it is split.
  * With a remainder, says who gets the extra peso. Generated from the data.
@@ -141,9 +217,12 @@ export function narrateShareStep(
       step.expenseIds.includes(e.id)
     );
     const total = rest.reduce((sum, e) => sum + e.amount, 0);
+    const how = rest.every((e) => e.split.type === 'equal')
+      ? 'igual'
+      : 'según su división';
     return rest.length === 1
-      ? `El otro gasto (${formatAmount(total)}) se divide igual entre quienes lo comparten. Con eso, la parte de cada uno queda completa.`
-      : `Los otros ${rest.length} gastos (${formatAmount(total)} en total) se dividen igual entre quienes los comparten. Con eso, la parte de cada uno queda completa.`;
+      ? `El otro gasto (${formatAmount(total)}) se divide ${how} entre quienes lo comparten. Con eso, la parte de cada uno queda completa.`
+      : `Los otros ${rest.length} gastos (${formatAmount(total)} en total) se dividen ${how} entre quienes los comparten. Con eso, la parte de cada uno queda completa.`;
   }
   const expense = explanation.expenses.find((e) => e.id === step.expenseIds[0]);
   if (!expense) return '';
@@ -151,6 +230,9 @@ export function narrateShareStep(
   const people = expense.participantIds.length;
   const paid = `${nameOf(explanation, expense.payerId)} pagó ${expense.description} (${formatAmount(expense.amount)}).`;
   if (shares.length === 0) return paid;
+  if (expense.split.type !== 'equal') {
+    return `${paid} ${customDivisionText(explanation, expense)}`;
+  }
   const base =
     shares.length < people ? 0 : Math.min(...shares.map((s) => s.amount));
   const extra = shares.filter((s) => s.amount > base);

@@ -110,6 +110,44 @@ test('nuevo gasto con descripción larga y monto máximo no se desborda', async 
   );
 });
 
+test('nuevo gasto con montos, % y partes y un nombre largo no se desborda', async ({
+  page,
+}) => {
+  await page.goto('/groups/g1/expenses');
+  await page.getByRole('button', { name: 'Agregar gasto' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Nuevo gasto' });
+  await sheet.getByLabel('Descripción').fill(LONG_DESCRIPTION);
+  await sheet.getByLabel('Monto en pesos').fill('999999999');
+
+  await sheet.getByRole('radio', { name: 'Montos' }).click();
+  const field = sheet.getByLabel(`Monto de ${LONG_NAME}`);
+  await expect(field).toBeVisible();
+  await field.fill('999999999');
+  await field.blur();
+  await expect(field).toHaveValue('999.999.999');
+  // The status line ("Asignado … de … · te pasaste por …") wraps, never widens.
+  await expectNoHorizontalOverflow(page, sheet);
+
+  await sheet.getByRole('radio', { name: '%' }).click();
+  await sheet.getByLabel(`Porcentaje de ${LONG_NAME}`).fill('100,00');
+  await expectNoHorizontalOverflow(page, sheet);
+
+  await sheet.getByRole('radio', { name: 'Partes' }).click();
+  await sheet.getByLabel(`Partes de ${LONG_NAME}`).fill('999999');
+  await expectNoHorizontalOverflow(page, sheet);
+
+  // The field and the status line stay inside the sheet's width.
+  const status = sheet.locator('p[aria-live="polite"]');
+  await expect(status).toBeVisible();
+  const [statusBox, sheetBox] = [
+    await status.boundingBox(),
+    await sheet.boundingBox(),
+  ];
+  expect(statusBox!.x + statusBox!.width).toBeLessThanOrEqual(
+    sheetBox!.x + sheetBox!.width
+  );
+});
+
 test('editar un gasto con datos largos no se desborda', async ({ page }) => {
   await page.goto('/groups/g1/expenses');
   await page

@@ -106,6 +106,22 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await shot(page, `new-expense-${colorScheme}`);
     });
 
+    test('Nuevo gasto por partes', async ({ page }) => {
+      await seedGroups(page, sampleGroups());
+      await page.goto('/groups/g1/expenses');
+      await page.getByRole('button', { name: /Agregar gasto/ }).click();
+      const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel('Descripción').fill('Cabaña');
+      await dialog.getByLabel('Monto en pesos').fill('150000');
+      await dialog.getByRole('radio', { name: 'Partes' }).click();
+      await dialog.getByLabel('Partes de Ana').fill('2');
+      await expect(dialog.getByText('2 partes · $75.000')).toBeVisible();
+      // Leave the field so the caret and focus ring do not show.
+      await dialog.getByLabel('Partes de Ana').blur();
+      await shot(page, `new-expense-shares-${colorScheme}`);
+    });
+
     test('Saldos', async ({ page }) => {
       await seedGroups(page, sampleGroups());
       await page.goto('/groups/g1/balances');

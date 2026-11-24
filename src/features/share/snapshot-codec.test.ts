@@ -7,8 +7,10 @@ import {
   createSnapshot,
   snapshotToGroup,
   toCompactSnapshotV1,
+  toCompactSnapshotV2,
   type Group,
   type Snapshot,
+  type Split,
 } from '@/domain';
 import { groupArb } from '@/domain/test-utils/arbitraries';
 import { makeGroup } from '@/domain/test-utils/fixtures';
@@ -73,7 +75,7 @@ describe('encodeSnapshot / decodeSnapshot', () => {
 
   it('el link lleva el prefijo de versión y solo caracteres seguros para una URL', async () => {
     const token = await encodeSnapshot(sampleSnapshot());
-    expect(token).toMatch(/^v1\.[A-Za-z0-9_-]+$/);
+    expect(token).toMatch(/^v2\.[A-Za-z0-9_-]+$/);
   });
 
   it('no deja a la vista nombres ni montos (van comprimidos)', async () => {
@@ -125,6 +127,139 @@ describe('encodeSnapshot / decodeSnapshot', () => {
   });
 });
 
+/** A group with one expense of each kind of split. */
+const customGroup = (): Group => ({
+  ...makeGroup({
+    name: 'Cabaña',
+    members: ['Ana', 'Beto', 'Carla'],
+    expenses: [
+      {
+        description: 'Por partes',
+        amount: 150_000,
+        payer: 'Ana',
+        among: ['Ana', 'Beto', 'Carla'],
+        split: {
+          type: 'shares',
+          participantIds: ['Ana', 'Beto', 'Carla'],
+          parts: { Ana: 2, Beto: 1, Carla: 1 },
+        },
+      },
+      {
+        description: 'Por montos',
+        amount: 90_000,
+        payer: 'Beto',
+        among: ['Beto', 'Carla'],
+        split: {
+          type: 'exact',
+          participantIds: ['Beto', 'Carla'],
+          amounts: { Beto: 50_000, Carla: 40_000 },
+        },
+      },
+      {
+        description: 'Por porcentaje',
+        amount: 10_001,
+        payer: 'Carla',
+        among: ['Ana', 'Carla'],
+        split: {
+          type: 'percent',
+          participantIds: ['Ana', 'Carla'],
+          basisPoints: { Ana: 1250, Carla: 8750 },
+        },
+      },
+      {
+        description: 'Iguales',
+        amount: 3_000,
+        payer: 'Ana',
+        among: ['Ana', 'Beto'],
+      },
+    ],
+  }),
+  id: 'group-custom',
+});
+
+describe('divisiones personalizadas en el link (v2)', () => {
+  it('ida y vuelta conserva los cuatro tipos y los mismos saldos', async () => {
+    const group = customGroup();
+    const snapshot = createSnapshot(group, TAKEN);
+    const result = await decodeSnapshot(await encodeSnapshot(snapshot));
+    expect(result).toEqual({ ok: true, value: snapshot });
+    if (!result.ok) return;
+    expect(result.value.expenses.map((e) => e.split.type)).toEqual([
+      'shares',
+      'exact',
+      'percent',
+      'equal',
+    ]);
+    expect(
+      computeBalances(snapshotToGroup(result.value)).map((b) => b.balance)
+    ).toEqual(computeBalances(group).map((b) => b.balance));
+  });
+
+  it('un gasto igual no gasta bytes extra: su forma compacta es la de v1', () => {
+    const compact = toCompactSnapshotV2(createSnapshot(customGroup(), TAKEN));
+    expect(compact[4][3]).toHaveLength(6);
+    expect(compact[4][0]).toHaveLength(8);
+    expect(compact[4][0].slice(6)).toEqual([3, [2, 1, 1]]);
+  });
+
+  it('ida y vuelta con cualquier tipo de división (propiedad)', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        groupArb({
+          maxMembers: 8,
+          maxExpenses: 12,
+          splits: ['equal', 'exact', 'percent', 'shares'],
+        }),
+        async (group) => {
+          const snapshot = createSnapshot(group, TAKEN);
+          const result = await decodeSnapshot(await encodeSnapshot(snapshot));
+          expect(result).toEqual({ ok: true, value: snapshot });
+          if (!result.ok) return;
+          expect(
+            computeBalances(snapshotToGroup(result.value)).map((b) => b.balance)
+          ).toEqual(computeBalances(group).map((b) => b.balance));
+        }
+      ),
+      { numRuns: 80 }
+    );
+  });
+
+  it('los links v1 de antes siguen abriendo', async () => {
+    const snapshot = sampleSnapshot();
+    const v1 = await tokenFromJson(toCompactSnapshotV1(snapshot), 1);
+    expect(await decodeSnapshot(v1)).toEqual({ ok: true, value: snapshot });
+  });
+
+  it('un link v1 de un grupo con divisiones personalizadas no se inventa nada: el v1 solo conoce partes iguales', async () => {
+    const snapshot = createSnapshot(customGroup(), TAKEN);
+    const result = await decodeSnapshot(
+      await tokenFromJson(toCompactSnapshotV1(snapshot), 1)
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.expenses.every((e) => e.split.type === 'equal')).toBe(
+        true
+      );
+    }
+  });
+
+  it.each([
+    ['tipo de división desconocido', (e: unknown[]) => e.splice(6, 2, 9, [1])],
+    ['valores de menos', (e: unknown[]) => e.splice(6, 2, 3, [2])],
+    ['partes en cero', (e: unknown[]) => e.splice(6, 2, 3, [0, 1, 1])],
+    ['montos que no suman', (e: unknown[]) => e.splice(6, 2, 1, [1, 1, 1])],
+    ['tipo sin valores', (e: unknown[]) => e.splice(6, 2, 3)],
+  ])('un payload v2 con %s → error', async (_name, tamper) => {
+    const compact = toCompactSnapshotV2(createSnapshot(customGroup(), TAKEN));
+    tamper(compact[4][0] as unknown[]);
+    const result = await decodeSnapshot(await tokenFromJson(compact, 2));
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: 'invalid_snapshot' },
+    });
+  });
+});
+
 describe('links dañados (decodificar nunca lanza)', () => {
   it.each([
     ['vacío', ''],
@@ -164,7 +299,7 @@ describe('links dañados (decodificar nunca lanza)', () => {
   });
 
   it('versión desconocida → error propio y amable', async () => {
-    for (const token of ['v2.abc', 'v99.abc', await tokenFromJson([], 7)]) {
+    for (const token of ['v3.abc', 'v99.abc', await tokenFromJson([], 7)]) {
       const result = await decodeSnapshot(token);
       expect(result).toMatchObject({
         ok: false,
@@ -278,6 +413,37 @@ describe('tamaño del link', () => {
   const ALPHABET =
     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-';
 
+  /** A valid custom split of `amount` among `ids`: exact, percent or shares by turns. */
+  function customSplit(turn: number, amount: number, ids: string[]): Split {
+    const k = ids.length;
+    const kind = ['exact', 'percent', 'shares'][Math.floor(turn / 4) % 3];
+    // 1, 2, 3... weights: the last participant takes what is left over.
+    const weights = ids.map((_, j) => j + 1);
+    const total = weights.reduce((a, b) => a + b, 0);
+    const spread = (sum: number) => {
+      const values = weights.map((w) =>
+        Math.max(1, Math.floor((sum * w) / total))
+      );
+      values[k - 1] += sum - values.reduce((a, b) => a + b, 0);
+      return Object.fromEntries(ids.map((id, j) => [id, values[j]]));
+    };
+    if (kind === 'exact') {
+      return { type: 'exact', participantIds: ids, amounts: spread(amount) };
+    }
+    if (kind === 'percent') {
+      return {
+        type: 'percent',
+        participantIds: ids,
+        basisPoints: spread(10_000),
+      };
+    }
+    return {
+      type: 'shares',
+      participantIds: ids,
+      parts: Object.fromEntries(ids.map((id, j) => [id, weights[j]])),
+    };
+  }
+
   /** A busy, realistic group: 8 members with nanoid-like seeds, 60 expenses, 6 payments. */
   function busyGroup(): Group {
     const random = rng(2026);
@@ -301,14 +467,17 @@ describe('tamaño del link', () => {
       const payer = names[Math.floor(random() * names.length)];
       const among = names.filter(() => random() < 0.7);
       const day = 1 + Math.floor(i / 4);
+      const amount =
+        (1 + Math.floor(random() * 120)) * 500 + Math.floor(random() * 3) * 100;
+      const participants = among.length > 0 ? among : [payer];
       return {
         id: `e${i}`,
         description: `${DESCRIPTIONS[Math.floor(random() * DESCRIPTIONS.length)]}`,
-        amount:
-          (1 + Math.floor(random() * 120)) * 500 +
-          Math.floor(random() * 3) * 100,
+        amount,
         payer,
-        among: among.length > 0 ? among : [payer],
+        among: participants,
+        // One in four expenses has a custom split, rotating through the kinds.
+        split: i % 4 === 3 ? customSplit(i, amount, participants) : undefined,
         date: `2026-03-${String(day).padStart(2, '0')}`,
         createdAt: new Date(
           base + i * 3_600_000 + Math.floor(random() * 3_600_000)
@@ -340,12 +509,15 @@ describe('tamaño del link', () => {
   it('un grupo de 8 miembros y 60 gastos queda bajo 4.000 caracteres', async () => {
     const snapshot = createSnapshot(busyGroup(), TAKEN);
     expect(snapshot.expenses).toHaveLength(60);
+    expect(
+      snapshot.expenses.filter((e) => e.split.type !== 'equal')
+    ).toHaveLength(15);
     expect(snapshot.members).toHaveLength(8);
     const token = await encodeSnapshot(snapshot);
     const url = buildSnapshotUrl('https://dividy.netlify.app', token);
-    // Measured: 1.897 characters of token, 1.931 with the URL (ADR 0006).
+    // Measured (ADR 0006): v1 1.897 characters; v2 with 15 custom splits, 2.161 (2.195 with the URL).
     expect(url.length).toBeLessThan(4_000);
-    expect(token.length).toBeLessThan(2_200);
+    expect(token.length).toBeLessThan(2_400);
     expect(await decodeSnapshot(token)).toEqual({ ok: true, value: snapshot });
   });
 });

@@ -3,8 +3,10 @@ import { z } from 'zod';
 import {
   fail,
   fromCompactSnapshotV1,
-  toCompactSnapshotV1,
+  fromCompactSnapshotV2,
+  toCompactSnapshotV2,
   type CompactSnapshotV1,
+  type CompactSnapshotV2,
   type Result,
   type Snapshot,
 } from '@/domain';
@@ -12,34 +14,52 @@ import {
 /**
  * Link format (ADR 0006): `v<version>.<payload>` in the URL hash.
  *
- * v1 payload: compact snapshot (`toCompactSnapshotV1`) -> JSON -> UTF-8 ->
- * deflate-raw -> base64url. Each version has its own decoder in `DECODERS`, so
- * links shared with an older version keep opening after the format changes.
+ * Payload: compact snapshot -> JSON -> UTF-8 -> deflate-raw -> base64url.
+ * v1 (`toCompactSnapshotV1`) only knew equal splits; v2
+ * (`toCompactSnapshotV2`) adds the kind and values of custom splits to each
+ * expense. New links are always v2. Each version has its own decoder in
+ * `DECODERS`, so links shared with an older version keep opening after the
+ * format changes.
  */
-export const LINK_VERSION = 1;
+export const LINK_VERSION = 2;
 
 /** The decompressed text of a link can never be larger than this (guards against zip bombs). */
 const MAX_DECOMPRESSED_BYTES = 1_000_000;
 
-const compactV1Schema = z.tuple([
+const expenseBase = [
   z.string(),
   z.number(),
+  z.number(),
+  z.array(z.number()),
   z.string(),
-  z.array(z.tuple([z.string(), z.number(), z.string()])),
-  z.array(
+  z.number(),
+] as const;
+
+const compactSchema = (expense: z.ZodType) =>
+  z.tuple([
+    z.string(),
+    z.number(),
+    z.string(),
+    z.array(z.tuple([z.string(), z.number(), z.string()])),
+    z.array(expense),
+    z.array(
+      z.tuple([z.number(), z.number(), z.number(), z.string(), z.number()])
+    ),
+  ]);
+
+const compactV1Schema = compactSchema(z.tuple(expenseBase));
+
+/** An expense of v2 is a v1 expense, plus the split kind and its values when the split is custom. */
+const compactV2Schema = compactSchema(
+  z.union([
+    z.tuple(expenseBase),
     z.tuple([
-      z.string(),
-      z.number(),
-      z.number(),
+      ...expenseBase,
+      z.union([z.literal(1), z.literal(2), z.literal(3)]),
       z.array(z.number()),
-      z.string(),
-      z.number(),
-    ])
-  ),
-  z.array(
-    z.tuple([z.number(), z.number(), z.number(), z.string(), z.number()])
-  ),
-]);
+    ]),
+  ])
+);
 
 // --- base64url ------------------------------------------------------------
 
@@ -104,37 +124,44 @@ export function isSnapshotLinkSupported(): boolean {
 
 // --- public API -------------------------------------------------------------
 
-/** Link token of a snapshot, e.g. `v1.eJy...` (what goes after `#`). */
+/** Link token of a snapshot, e.g. `v2.eJy...` (what goes after `#`). */
 export async function encodeSnapshot(snapshot: Snapshot): Promise<string> {
-  const json = JSON.stringify(toCompactSnapshotV1(snapshot));
+  const json = JSON.stringify(toCompactSnapshotV2(snapshot));
   const bytes = new TextEncoder().encode(json);
   const deflated = await pipe(bytes, new CompressionStream('deflate-raw'));
   return `v${LINK_VERSION}.${toBase64Url(deflated)}`;
 }
 
-async function decodeV1(payload: string): Promise<Result<Snapshot>> {
+async function inflateJson(payload: string): Promise<unknown> {
   const inflated = await pipe(
     fromBase64Url(payload),
     new DecompressionStream('deflate-raw'),
     MAX_DECOMPRESSED_BYTES
   );
-  const json: unknown = JSON.parse(
-    new TextDecoder('utf-8', { fatal: true }).decode(inflated)
-  );
-  const parsed = compactV1Schema.safeParse(json);
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(inflated));
+}
+
+async function decodeV1(payload: string): Promise<Result<Snapshot>> {
+  const parsed = compactV1Schema.safeParse(await inflateJson(payload));
   if (!parsed.success) return fail('invalid_snapshot', BROKEN);
   return fromCompactSnapshotV1(parsed.data as CompactSnapshotV1);
 }
 
+async function decodeV2(payload: string): Promise<Result<Snapshot>> {
+  const parsed = compactV2Schema.safeParse(await inflateJson(payload));
+  if (!parsed.success) return fail('invalid_snapshot', BROKEN);
+  return fromCompactSnapshotV2(parsed.data as CompactSnapshotV2);
+}
+
 const DECODERS: Record<number, (payload: string) => Promise<Result<Snapshot>>> =
-  { 1: decodeV1 };
+  { 1: decodeV1, 2: decodeV2 };
 
 const BROKEN =
   'Este link está incompleto o dañado. Pide que te lo compartan de nuevo.';
 const UNSUPPORTED =
   'Este link es de una versión de Dividy que no conocemos. Pide que te lo compartan de nuevo.';
 
-/** Accepts `#v1.xxx`, `v1.xxx` and surrounding whitespace. */
+/** Accepts `#v2.xxx`, `v2.xxx` and surrounding whitespace. */
 const TOKEN = /^v(\d{1,4})\.([A-Za-z0-9_-]+)$/;
 
 /**

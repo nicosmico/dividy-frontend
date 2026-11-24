@@ -1,5 +1,5 @@
 import { AVATAR_COLOR_COUNT } from '../avatar';
-import type { Expense, Group, Member, Payment } from '../types';
+import type { Expense, Group, Member, Payment, Split } from '../types';
 
 export const NOW = '2026-01-01T12:00:00.000Z';
 export const TODAY = '2026-01-01';
@@ -19,6 +19,8 @@ interface ExpenseSpec {
   amount: number;
   payer: string;
   among: string[];
+  /** A custom split (its `participantIds` must match `among`); equal when omitted. */
+  split?: Split;
   date?: string;
   createdAt?: string;
 }
@@ -38,7 +40,7 @@ export function makeExpense(spec: ExpenseSpec, index = 0): Expense {
     description: spec.description ?? `Gasto ${index + 1}`,
     amount: spec.amount,
     payerId: spec.payer,
-    split: { type: 'equal', participantIds: spec.among },
+    split: spec.split ?? { type: 'equal', participantIds: spec.among },
     date: spec.date ?? TODAY,
     createdAt: spec.createdAt ?? NOW,
   };

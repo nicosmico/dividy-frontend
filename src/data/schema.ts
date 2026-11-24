@@ -23,15 +23,40 @@ const memberSchema = z.object({
   avatar: z.object({ color: z.number(), seed: z.string() }),
 });
 
+const participantIds = z.array(z.string());
+const perParticipant = z.record(z.string(), z.number());
+
+/**
+ * The four kinds of split (ADR 0008). Adding the three custom kinds only
+ * widens what is accepted, so documents written before them stay valid and
+ * the document version does not change; what each value means (and that they
+ * add up) is checked by `getGroupIssues`.
+ */
+const splitSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('equal'), participantIds }),
+  z.object({
+    type: z.literal('exact'),
+    participantIds,
+    amounts: perParticipant,
+  }),
+  z.object({
+    type: z.literal('percent'),
+    participantIds,
+    basisPoints: perParticipant,
+  }),
+  z.object({
+    type: z.literal('shares'),
+    participantIds,
+    parts: perParticipant,
+  }),
+]);
+
 const expenseSchema = z.object({
   id: z.string().min(1),
   description: z.string(),
   amount: z.number(),
   payerId: z.string(),
-  split: z.object({
-    type: z.literal('equal'),
-    participantIds: z.array(z.string()),
-  }),
+  split: splitSchema,
   date: dateString,
   createdAt: isoTimestamp,
 });

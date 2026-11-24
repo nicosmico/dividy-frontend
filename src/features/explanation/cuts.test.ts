@@ -98,3 +98,84 @@ describe('describeDivision', () => {
     );
   });
 });
+
+describe('divisiones personalizadas', () => {
+  const names = ['A', 'B', 'C'];
+  const group = (
+    amount: number,
+    split:
+      | { type: 'shares'; parts: Record<string, number> }
+      | { type: 'exact'; amounts: Record<string, number> }
+      | { type: 'percent'; basisPoints: Record<string, number> }
+  ) =>
+    buildExplanation(
+      makeGroup({
+        members: names,
+        expenses: [
+          {
+            id: 'e1',
+            description: 'Cabaña',
+            amount,
+            payer: 'A',
+            among: names,
+            split: { ...split, participantIds: names },
+          },
+        ],
+      })
+    ).expenses[0];
+
+  it('los cortes siguen las partes reales: partes 2/1/1 cortan en 50 % y 75 %', () => {
+    const e = group(150_000, { type: 'shares', parts: { A: 2, B: 1, C: 1 } });
+    expect(computeCuts(e, 300)).toEqual([0.5, 0.75]);
+  });
+
+  it('por montos y por porcentaje también', () => {
+    expect(
+      computeCuts(
+        group(100_000, {
+          type: 'exact',
+          amounts: { A: 10_000, B: 30_000, C: 60_000 },
+        }),
+        300
+      )
+    ).toEqual([0.1, 0.4]);
+    expect(
+      computeCuts(
+        group(100_000, {
+          type: 'percent',
+          basisPoints: { A: 2500, B: 2500, C: 5000 },
+        }),
+        300
+      )
+    ).toEqual([0.25, 0.5]);
+  });
+
+  it('si una parte queda muy angosta no hay cortes', () => {
+    const e = group(100_000, { type: 'shares', parts: { A: 1, B: 1, C: 98 } });
+    expect(computeCuts(e, 300)).toEqual([]);
+  });
+
+  it('describeDivision dice cómo se dividió', () => {
+    expect(
+      describeDivision(
+        group(150_000, { type: 'shares', parts: { A: 2, B: 1, C: 1 } })
+      )
+    ).toBe('por partes: A 2, B 1, C 1');
+    expect(
+      describeDivision(
+        group(100_000, {
+          type: 'exact',
+          amounts: { A: 50_000, B: 30_000, C: 20_000 },
+        })
+      )
+    ).toBe('por montos: A $50.000, B $30.000, C $20.000');
+    expect(
+      describeDivision(
+        group(100_000, {
+          type: 'percent',
+          basisPoints: { A: 5000, B: 3350, C: 1650 },
+        })
+      )
+    ).toBe('por porcentaje: A 50 %, B 33,5 %, C 16,5 %');
+  });
+});

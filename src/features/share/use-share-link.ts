@@ -9,7 +9,7 @@ import {
 } from './snapshot-codec';
 
 export interface ShareLink {
-  /** The full read-only link, e.g. `https://dividy.app/shared#v1...`. */
+  /** The full read-only link, e.g. `https://dividy.app/shared#v2...`. */
   url: string;
   /** The moment of the capture the link opens. */
   takenAt: string;

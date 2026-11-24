@@ -666,7 +666,7 @@ describe('compartir un grupo propio', () => {
     const text = writeText.mock.calls[0][0];
     expect(text).not.toContain('Cuentas al');
     const [, link] = text.split('\n\nVer el detalle: ');
-    expect(link.startsWith(`${window.location.origin}/shared#v1.`)).toBe(true);
+    expect(link.startsWith(`${window.location.origin}/shared#v2.`)).toBe(true);
     const url = new URL(link);
     expect(url.search).toBe('');
     // The link opens a capture with the same numbers as the group.
