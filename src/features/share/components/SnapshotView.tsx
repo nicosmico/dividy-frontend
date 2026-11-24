@@ -4,9 +4,12 @@ import { Outlet, useLocation } from 'react-router';
 import { PageFallback } from '@/components/page-fallback';
 import { TabNav } from '@/components/tab-nav';
 import { snapshotToGroup, type Snapshot } from '@/domain';
+import { ViewerProvider } from '@/features/groups/data';
 import { EntityIcon } from '@/features/icons';
+import { ViewerSheet } from '@/features/members';
 import { SnapshotViewProvider } from '@/hooks/snapshot-view-provider';
 import { SnapshotBanner } from './SnapshotBanner';
+import { ViewingAs } from './ViewingAs';
 
 /**
  * Read-only view of a snapshot: the banner, the title, the actions of this
@@ -29,25 +32,33 @@ export function SnapshotView({
 
   return (
     <SnapshotViewProvider snapshot={snapshot}>
-      <div className='flex flex-col gap-4'>
-        <SnapshotBanner takenAt={snapshot.takenAt} />
-        <div className='flex min-w-0 items-center gap-3'>
-          <EntityIcon text={snapshot.name} kind='group' size='header' />
-          <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
-            {snapshot.name}
-          </h1>
+      <ViewerProvider
+        key={snapshot.sourceGroupId}
+        scope={{ kind: 'snapshot', id: snapshot.sourceGroupId }}
+        members={group.members}
+      >
+        <div className='flex flex-col gap-4'>
+          <SnapshotBanner takenAt={snapshot.takenAt} />
+          <div className='flex min-w-0 items-center gap-3'>
+            <EntityIcon text={snapshot.name} kind='group' size='header' />
+            <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
+              {snapshot.name}
+            </h1>
+          </div>
+          <ViewingAs />
+          {actions}
+          <TabNav
+            tabs={[
+              { to: { pathname: 'expenses', hash }, label: 'Gastos' },
+              { to: { pathname: 'balances', hash }, label: 'Saldos' },
+            ]}
+          />
+          <Suspense fallback={<PageFallback />}>
+            <Outlet context={group} />
+          </Suspense>
+          <ViewerSheet />
         </div>
-        {actions}
-        <TabNav
-          tabs={[
-            { to: { pathname: 'expenses', hash }, label: 'Gastos' },
-            { to: { pathname: 'balances', hash }, label: 'Saldos' },
-          ]}
-        />
-        <Suspense fallback={<PageFallback />}>
-          <Outlet context={group} />
-        </Suspense>
-      </div>
+      </ViewerProvider>
     </SnapshotViewProvider>
   );
 }

@@ -10,7 +10,7 @@ import {
   type NewMemberInput,
   type Result,
 } from '@/domain';
-import { groupKeys } from './query-keys';
+import { groupKeys, viewerKeys } from './query-keys';
 import { useServices } from './services';
 
 /** Failures that are not the user's fault. The hook already showed a toast. */
@@ -192,7 +192,7 @@ export function useCreateGroup() {
 
 /** `remove(groupId)` resolves `true` when deleted, `false` after an error toast. */
 export function useDeleteGroup() {
-  const { repository } = useServices();
+  const { repository, viewers } = useServices();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -203,6 +203,11 @@ export function useDeleteGroup() {
         toast.error('No pudimos eliminar el grupo. Inténtalo de nuevo.');
         return false;
       }
+      // The choice of who you were in it goes with it (best effort).
+      await viewers
+        .clear({ kind: 'group', id: groupId })
+        .catch(() => undefined);
+      queryClient.removeQueries({ queryKey: viewerKeys.all });
       queryClient.removeQueries({ queryKey: groupKeys.detail(groupId) });
       await queryClient.invalidateQueries({ queryKey: groupKeys.list() });
       return true;

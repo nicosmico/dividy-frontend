@@ -14,9 +14,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ViewerName } from '@/components/viewer-name';
 import {
   addPayment,
   formatAmount,
+  viewerFirst,
   type Group,
   type SuggestedTransfer,
 } from '@/domain';
@@ -24,6 +26,7 @@ import {
   isInfrastructureError,
   useGroupOperation,
   useServices,
+  useViewer,
 } from '@/features/groups/data';
 import { MemberAvatar, useMemberMoods } from '@/features/members';
 import { useReadOnly } from '@/hooks/use-snapshot-view';
@@ -43,7 +46,14 @@ export function SuggestedTransfers({
   const readOnly = useReadOnly();
   const [paying, setPaying] = useState<SuggestedTransfer | null>(null);
   const moods = useMemberMoods(group);
+  const { viewerId } = useViewer();
   const nameOf = (id: string) => group.members.find((m) => m.id === id);
+  // Yours first, whether you pay or receive; the rest keep their order.
+  const ordered = viewerFirst(
+    transfers,
+    viewerId,
+    (t) => t.fromId === viewerId || t.toId === viewerId
+  );
 
   return (
     <section aria-labelledby='transfers-heading' className='grid gap-2'>
@@ -51,7 +61,7 @@ export function SuggestedTransfers({
         Para quedar al día
       </h2>
       <ul className='grid gap-2'>
-        {transfers.map((t) => {
+        {ordered.map((t) => {
           const from = nameOf(t.fromId);
           const to = nameOf(t.toId);
           if (!from || !to) return null;
@@ -70,7 +80,11 @@ export function SuggestedTransfers({
                   </p>
                 </div>
                 <p className='font-medium break-words'>
-                  {from.name} → {to.name}
+                  <ViewerName
+                    name={from.name}
+                    isViewer={from.id === viewerId}
+                  />{' '}
+                  → <ViewerName name={to.name} isViewer={to.id === viewerId} />
                 </p>
                 {!readOnly && (
                   <Button

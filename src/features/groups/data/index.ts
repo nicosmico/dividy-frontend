@@ -16,5 +16,7 @@ export {
 } from './mutations';
 export { RepositoryProvider } from './RepositoryProvider';
 export { useServices, type Services } from './services';
-export { groupKeys } from './query-keys';
+export { groupKeys, viewerKeys } from './query-keys';
+export { useViewer, type ViewerContextValue } from './viewer-context';
+export { ViewerProvider } from './viewer';
 export { useCurrentGroup } from './current-group';

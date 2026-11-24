@@ -13,10 +13,12 @@ import { AppRoutes } from '@/app/router';
 import {
   InMemoryGroupRepository,
   InMemorySnapshotRepository,
+  InMemoryViewerRepository,
   type GroupRepository,
   type SnapshotRepository,
+  type ViewerRepository,
 } from '@/data';
-import type { Group, Snapshot } from '@/domain';
+import type { Group, Snapshot, ViewerChoice } from '@/domain';
 import { createQueryClient } from '@/lib/query-client';
 import { TestProviders } from './test-providers';
 
@@ -42,13 +44,39 @@ export interface RenderWithProvidersOptions {
   /** Snapshots saved on the device (ignored if `snapshotRepository` is given). */
   snapshots?: Snapshot[];
   snapshotRepository?: SnapshotRepository;
+  /**
+   * Saved "who am I" choices, by `group:<id>` / `snapshot:<id>`. Unless
+   * `askViewer` is set, every group and snapshot given above also starts with
+   * `{ none: true }`, so "¿Quién eres?" does not cover the screen being tested.
+   */
+  viewers?: Record<string, ViewerChoice>;
+  /** Leave the groups and snapshots without a saved choice: the sheet opens. */
+  askViewer?: boolean;
+  viewerRepository?: ViewerRepository;
   now?: () => string;
   newId?: () => string;
   queryClient?: QueryClient;
 }
 
+function seededViewers(
+  options: RenderWithProvidersOptions
+): Record<string, ViewerChoice> {
+  const seeded: Record<string, ViewerChoice> = {};
+  if (!options.askViewer) {
+    for (const g of options.groups ?? [])
+      seeded[`group:${g.id}`] = { none: true };
+    for (const s of options.snapshots ?? []) {
+      seeded[`snapshot:${s.sourceGroupId}`] = { none: true };
+    }
+  }
+  return { ...seeded, ...options.viewers };
+}
+
 function resolve(options: RenderWithProvidersOptions) {
   return {
+    viewerRepository:
+      options.viewerRepository ??
+      new InMemoryViewerRepository(seededViewers(options)),
     repository:
       options.repository ?? new InMemoryGroupRepository(options.groups),
     snapshotRepository:
@@ -65,6 +93,7 @@ export interface RenderWithProvidersResult extends RenderResult {
   user: UserEvent;
   repository: GroupRepository;
   snapshotRepository: SnapshotRepository;
+  viewerRepository: ViewerRepository;
   queryClient: QueryClient;
 }
 
@@ -84,6 +113,7 @@ export function renderWithProviders(
     user: userEvent.setup(),
     repository: providers.repository,
     snapshotRepository: providers.snapshotRepository,
+    viewerRepository: providers.viewerRepository,
     queryClient: providers.queryClient,
   };
 }

@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { BalanceLabel } from '@/components/balance-label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatAmount, type Group } from '@/domain';
+import { ViewerName } from '@/components/viewer-name';
+import { formatAmount, viewerFirst, type Group } from '@/domain';
 import {
   buildExplanation,
   buildLegend,
@@ -12,6 +13,7 @@ import {
   PaidShareRow,
   type Explanation,
 } from '@/features/explanation';
+import { useViewer } from '@/features/groups/data';
 import { EntityIcon } from '@/features/icons';
 import { useMemberMoods } from '@/features/members';
 
@@ -29,6 +31,17 @@ interface PaidVsShareChartProps {
 export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
   const explanation = useMemo(() => buildExplanation(group), [group]);
   const moods = useMemberMoods(group);
+  const { viewerId } = useViewer();
+  // Your row first (also in the table); "Ver cómo se calculó" keeps the group's order.
+  const members = useMemo(
+    () =>
+      viewerFirst(
+        explanation.members,
+        viewerId,
+        (m) => m.member.id === viewerId
+      ),
+    [explanation, viewerId]
+  );
   // Key of the segment whose tooltip is open: one at a time.
   const [active, setActive] = useState<string | null>(null);
   const expenseById = useMemo(
@@ -51,10 +64,11 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
         </div>
 
         <ul className='grid gap-4'>
-          {explanation.members.map((m) => (
+          {members.map((m) => (
             <PaidShareRow
               key={m.member.id}
               member={m.member}
+              isViewer={m.member.id === viewerId}
               mood={moods.get(m.member.id)}
               balance={m.balance}
               paid={{ slices: m.paidSlices, total: m.paid }}
@@ -68,7 +82,12 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
         </ul>
 
         <Legend explanation={explanation} />
-        <TableAlternative group={group} explanation={explanation} />
+        <TableAlternative
+          group={group}
+          members={members}
+          explanation={explanation}
+          viewerId={viewerId}
+        />
       </Card>
     </section>
   );
@@ -110,10 +129,14 @@ function Legend({ explanation }: { explanation: Explanation }) {
 /** The same numbers as the chart, as tables (one per member). */
 function TableAlternative({
   group,
+  members,
   explanation,
+  viewerId,
 }: {
   group: Group;
+  members: Explanation['members'];
   explanation: Explanation;
+  viewerId: string | null;
 }) {
   return (
     <details className='group/table border-t pt-3 text-sm'>
@@ -121,7 +144,7 @@ function TableAlternative({
         Ver como tabla
       </summary>
       <div className='grid gap-4 pt-2'>
-        {explanation.members.map((m) => {
+        {members.map((m) => {
           const rows = explanation.expenses
             .map((expense) => ({
               expense,
@@ -136,7 +159,11 @@ function TableAlternative({
           return (
             <table key={m.member.id} className='w-full text-left'>
               <caption className='pb-1 text-left font-semibold'>
-                {m.member.name} · <BalanceLabel balance={m.balance} />
+                <ViewerName
+                  name={m.member.name}
+                  isViewer={m.member.id === viewerId}
+                />{' '}
+                · <BalanceLabel balance={m.balance} />
               </caption>
               <thead className='text-xs text-muted-foreground'>
                 <tr>
