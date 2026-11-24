@@ -7,6 +7,18 @@ import { sampleGroups, seedGroups } from './seed';
 async function expectNoSeriousViolations(page: Page) {
   // Avatars are generated on demand; wait until they replace the placeholders.
   await expect(page.locator('span[role="img"]')).toHaveCount(0);
+  // Wait for enter/exit animations (dialogs fade in): mid-fade colors are
+  // blended and axe would measure a contrast the user never sees at rest.
+  // Infinite animations (skeletons, pulses) are ignored.
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (a) =>
+          a.playState !== 'running' ||
+          a.effect?.getTiming().iterations === Infinity
+      )
+  );
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
     .analyze();
@@ -30,11 +42,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('Mis grupos vacío y Crear grupo', async ({ page }) => {
       await page.goto('/');
       await expect(
-        page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+        page.getByRole('heading', { name: 'Divide gastos sin enredos' })
       ).toBeVisible();
       await expectNoSeriousViolations(page);
 
-      await page.getByRole('link', { name: 'Crear grupo' }).click();
+      await page.getByRole('link', { name: 'Crear mi primer grupo' }).click();
       await expect(
         page.getByRole('heading', { name: 'Crear grupo' })
       ).toBeVisible();
@@ -81,7 +93,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page
         .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
         .click();
-      await expect(page.getByText('Pagó en gastos')).toBeVisible();
+      await expect(page.getByText('Saldo = pagó − su parte')).toBeVisible();
       await expectNoSeriousViolations(page);
 
       await page

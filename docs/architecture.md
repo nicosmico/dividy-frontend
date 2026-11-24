@@ -21,6 +21,7 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 
 - `GroupRepository`: interfaz **asíncrona** (`list`, `get`, `save`, `delete`). Solo guarda y recupera grupos completos; no tiene reglas de negocio.
 - `LocalStorageGroupRepository`: documento `{ version, groups }` en una sola clave, con migraciones por versión y migración desde el formato antiguo.
+  - **Documento v2** (`CURRENT_VERSION = 2`): igual que la v1, pero los nombres de grupos y miembros y las descripciones de gastos empiezan con mayúscula. La migración `v1 → v2` (`migrations[1]` en `src/data/migrations.ts`) aplica `capitalizeFirst` a esos textos. Si capitalizar un nombre de miembro chocara (sin distinguir mayúsculas) con otro del mismo grupo, conserva el valor original para no perder datos; con datos v1 válidos no ocurre, porque la unicidad ya ignoraba mayúsculas. Un documento v2 se lee tal cual; uno con versión mayor se rechaza.
 - `InMemoryGroupRepository`: para tests.
 - Tests de contrato compartidos: la misma suite corre contra cada implementación (y correrá contra una futura `HttpGroupRepository`).
 
@@ -32,17 +33,21 @@ src/
                        (QueryClient + RepositoryProvider + Toaster), router.tsx (AppRoutes),
                        AppLayout (enlace "Saltar al contenido", header + columna max-w-lg),
                        ErrorBoundary, NotFoundPage, pwa.ts (registro del service worker)
-  components/          dividy-logo, theme-toggle, form-field, responsive-dialog, page-fallback
+  components/          dividy-logo, balance-label (saldo en palabras y color), theme-toggle, form-field, responsive-dialog, page-dialog, page-fallback
     ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
-    groups/            data/ (hooks y contexto), components/, pages/ (GroupsPage, NewGroupPage, GroupLayout)
-    members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), diálogos de
+    groups/            data/ (hooks y contexto), components/ (Welcome: bienvenida animada sin grupos), pages/ (GroupsPage, NewGroupPage, GroupLayout)
+    members/           MembersTab, MemberAvatar (placeholder + carga diferida de dicebear), useMemberMoods (carita según el saldo, a partir de `computeBalances`), diálogos de
                        renombrar y eliminar miembro (el de eliminar solo para miembros con movimientos)
     expenses/          ExpensesTab (lista por fecha), ExpenseDialog + ExpenseForm (crear/editar/eliminar),
                        AmountInput (pesos con separador de miles), expense-form.ts (validación con el
                        dominio), expense-list.ts (orden y agrupación por fecha)
-    balances/          BalancesTab: SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
+    icons/             suggestIcon (función pura) + keywords.ts (diccionario) + ENTITY_ICONS (clave → Lucide)
+                       + EntityIcon (tile). Calculado al mostrar; nada se guarda (decisión 89)
+    explanation/       buildExplanation(group) (pura: tramos por gasto de lo que pagó cada uno y de su parte, saldos, transferencias sugeridas y color por gasto, con `computeShares`, `computeBalances` y `suggestTransfers`), buildLegend, narrate (texto de cada paso), buildExampleGroup / settleGroup (el ejemplo de la bienvenida, en memoria), buildShareSteps (pura: los sub-pasos del paso 2, un gasto cada uno) y narrateShareStep,
+                       PaidShareRow (la fila "Pagó / Su parte" que dibujan el gráfico de Saldos y la animación; con `motion` se anima, con `tooltips` sus tramos son botones), ExplanationPlayer (`layout: 'card' | 'page'`; en `page` cuerpo con scroll y pie solo con controles; animación de 4 pasos sobre esas filas horizontales para cualquier cantidad de miembros; el paso 2 va gasto por gasto; CSS transitions) y LazyExplanationPlayer (su propio chunk)
+    balances/          BalancesTab: PaidVsShareChart ("Pagó vs. su parte" con `PaidShareRow` de explanation, tramos con tooltip, leyenda, tabla y botón "Ver cómo se calculó" que abre la animación en un PageDialog a pantalla completa en móvil), BalancesTab ordena: estado con "Compartir resumen", transferencias, pagos y "Detalle", SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
                        PaymentsList, ShareSummaryButton (compartir o copiar el resumen)
   hooks/               use-media-query, use-theme (tema claro/oscuro; ver docs/design-system.md)
   lib/                 utils (cn), dates (todayLocal, formatDate), plural, id, query-client,
@@ -74,7 +79,8 @@ Regla de dependencias: `domain` no importa nada del resto; `data` importa solo `
 - `MemberAvatar({ member, mood?: 'happy' | 'sad', decorative? })`: avatar `lorelei` generado localmente con `@dicebear/core` + `@dicebear/lorelei`, semilla = id del miembro. Dicebear solo lo importa `avatar-generator.ts`, que `avatar-uri.ts` carga con `import()` la primera vez que hace falta; mientras tanto (o si falla) se muestra un círculo del mismo tamaño con la inicial. El resultado se guarda en caché por semilla y ánimo, así que los avatares ya vistos se pintan sin parpadeo. `decorative` oculta el avatar a los lectores de pantalla cuando el nombre ya está al lado.
 - `FormField({ label, error?, hint?, counter?: { length, max }, children })`: `counter` muestra "12/80" junto a la etiqueta (rojo si se pasa del máximo).
 - `restoreFocusIfLost(fallback?)` (`@/lib/focus`): tras borrar algo que tenía el foco, lo mueve a `fallback` (o a `<main id="main-content">`) solo si se perdió en `<body>`.
-- `ResponsiveDialog` recuerda el elemento que lo abrió y le devuelve el foco al cerrarse (Radix no puede, porque estos diálogos se abren por estado y no con un trigger); el Drawer mueve el foco al panel al abrirse (sin abrir el teclado del celular).
+- `PageDialog({ open, onOpenChange, title, description, children })`: página completa (`100dvh`, safe areas) bajo 768 px y diálogo centrado de alto fijo desde 768 px, con encabezado fijo y ✕; el contenido trae su cuerpo con scroll y su pie. Lo usa "Ver cómo se calculó".
+- `ResponsiveDialog` y `PageDialog` (con el hook `useReturnFocus`) recuerdan el elemento que lo abrió y le devuelve el foco al cerrarse (Radix no puede, porque estos diálogos se abren por estado y no con un trigger); el Drawer mueve el foco al panel al abrirse (sin abrir el teclado del celular).
 - `ConfirmCoveredChange` (expenses): `AlertDialog` que avisa que un gasto cubierto cambiará saldos, con antes y después por miembro (`describeBalance` de `@/lib/balance-text`) y botón destructivo; el foco inicial es Cancelar y al cerrar vuelve a quien lo abrió.
 - Toasts: abajo y centrados; `--toast-bottom` (index.css) respeta `env(safe-area-inset-bottom)` y sube sobre el botón fijo "Agregar gasto" en móvil (`data-floating-action` en `<html>`, lo pone `ExpensesTab`).
 - `formatAmount` (dominio), `todayLocal()` y `formatDate(value)` (`@/lib/dates`), `plural(n, 'gasto', 'gastos')` (`@/lib/plural`).
@@ -129,7 +135,8 @@ Todo se importa desde `@/domain`. Las operaciones devuelven `Result<T>` (`{ ok: 
 
 **Validación (para los formularios)**
 
-- `validateGroupName`, `validateMemberName(group, name, exceptId?)`, `validateDescription`, `validateAmount`, `validateDate`: devuelven el valor normalizado o el error.
+- `validateGroupName`, `validateMemberName(group, name, exceptId?)`, `validateDescription`, `validateAmount`, `validateDate`: devuelven el valor normalizado (recortado y, en nombres y descripción, con mayúscula inicial vía `capitalizeFirst`) o el error.
+- `capitalizeFirst(text)`: fuente única de la regla de mayúscula inicial; pura e idempotente.
 - `validateExpenseFields(group, fields)`, `validatePaymentFields(group, fields)`: validan un gasto o pago completo.
 - `getGroupIssues(group)`: lista de invariantes rotas (vacía si el grupo es válido).
 

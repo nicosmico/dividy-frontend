@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EntityIcon } from '@/features/icons';
 import { cn } from '@/lib/utils';
 import { DeleteGroupDialog } from '../components/DeleteGroupDialog';
 import { GroupNotFound } from '../components/GroupNotFound';
@@ -44,9 +45,12 @@ export function GroupLayout() {
   return (
     <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
       <div className='flex items-center justify-between gap-2'>
-        <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
-          {group.name}
-        </h1>
+        <div className='flex min-w-0 items-center gap-3'>
+          <EntityIcon text={group.name} kind='group' size='header' />
+          <h1 className='min-w-0 text-2xl font-bold tracking-tight break-words'>
+            {group.name}
+          </h1>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

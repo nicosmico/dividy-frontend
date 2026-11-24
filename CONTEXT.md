@@ -34,7 +34,7 @@ _Avoid_: Debtor, member (para este rol)
 La regla que dice cuánto le corresponde a cada participante de un gasto. Por ahora solo existe la división en partes iguales.
 _Avoid_: Distribution, prorrateo
 
-**Share** (Parte):
+**Share** (Parte; en Saldos, "Su parte"):
 El monto, en pesos enteros, que le corresponde a un participante en un gasto. La suma de las partes de un gasto es exactamente su monto.
 _Avoid_: Portion, cuota, splitAmount
 
@@ -44,7 +44,7 @@ Los pesos que sobran cuando un monto no se divide exacto entre los participantes
 ### Saldos y pagos
 
 **Balance** (Saldo):
-Lo que un miembro ha puesto menos lo que le corresponde, considerando gastos y pagos. Positivo: le deben. Negativo: debe. La suma de los saldos de un grupo siempre es cero.
+Lo que un miembro ha puesto ("Pagó") menos su parte ("Su parte"), considerando gastos y pagos. Positivo: le deben. Negativo: debe. La suma de los saldos de un grupo siempre es cero.
 _Avoid_: Debt (para el saldo neto), total
 
 **Suggested Transfer** (Transferencia sugerida):

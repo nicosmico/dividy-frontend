@@ -1,17 +1,67 @@
-import type { Group } from '@/domain';
+import { capitalizeFirst, type Group } from '@/domain';
 import {
   CURRENT_VERSION,
-  documentEnvelopeV1,
+  documentEnvelope,
   groupSchema,
   type StoredDocument,
 } from './schema';
 
+type Json = Record<string, unknown>;
+
+function isObject(value: unknown): value is Json {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function capitalizeField(item: unknown, field: string): unknown {
+  if (!isObject(item) || typeof item[field] !== 'string') return item;
+  return { ...item, [field]: capitalizeFirst(item[field]) };
+}
+
+/**
+ * Capitalizes member names of one group. A name whose capitalized form would
+ * clash (ignoring case) with a name already kept keeps its original value, so
+ * no data is lost. v1 compared names ignoring case, so this should never
+ * happen with valid data.
+ */
+function capitalizeMembers(members: unknown): unknown {
+  if (!Array.isArray(members)) return members;
+  const taken = new Set<string>();
+  return members.map((member: unknown) => {
+    if (!isObject(member) || typeof member.name !== 'string') return member;
+    const capitalized = capitalizeFirst(member.name);
+    const key = capitalized.trim().toLowerCase();
+    const name = taken.has(key) ? member.name : capitalized;
+    taken.add(name.trim().toLowerCase());
+    return { ...member, name };
+  });
+}
+
+/** v1 -> v2: capitalizes group names, member names and expense descriptions. */
+function migrateV1toV2(doc: unknown): unknown {
+  if (!isObject(doc) || !Array.isArray(doc.groups))
+    return { ...(doc as Json), version: 2 };
+  const groups = doc.groups.map((group: unknown) => {
+    if (!isObject(group)) return group;
+    const named = capitalizeField(group, 'name') as Json;
+    return {
+      ...named,
+      members: capitalizeMembers(named.members),
+      expenses: Array.isArray(named.expenses)
+        ? named.expenses.map((e: unknown) => capitalizeField(e, 'description'))
+        : named.expenses,
+    };
+  });
+  return { ...doc, version: 2, groups };
+}
+
 /**
  * Migrations by source version: `migrations[n]` turns a version `n` document
- * into version `n + 1`. Empty today because v1 is the first version; add an
- * entry (and a new schema) when the format changes.
+ * into version `n + 1`. Add an entry (and bump `CURRENT_VERSION`) when the
+ * format changes.
  */
-export const migrations: Record<number, (doc: unknown) => unknown> = {};
+export const migrations: Record<number, (doc: unknown) => unknown> = {
+  1: migrateV1toV2,
+};
 
 /** Applies `table[version]`, `table[version + 1]`... until `target`. */
 export function runMigrations(
@@ -74,7 +124,7 @@ export function parseDocument(text: string): ParseResult {
   const migrated = runMigrations(raw, version, CURRENT_VERSION);
   if (!migrated.ok) return migrated;
   raw = migrated.value;
-  const envelope = documentEnvelopeV1.safeParse(raw);
+  const envelope = documentEnvelope.safeParse(raw);
   if (!envelope.success) {
     return {
       ok: false,

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useReturnFocus } from '@/hooks/use-return-focus';
 import { cn } from '@/lib/utils';
 
 interface ResponsiveDialogProps {
@@ -22,6 +23,19 @@ interface ResponsiveDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  /**
+   * `dialog` puts the initial focus on the dialog itself instead of its first
+   * control. Use it when the first control is pinned at the bottom of a
+   * scrolling body: focusing it would scroll the content to the end.
+   */
+  initialFocus?: 'first' | 'dialog';
+  /**
+   * The scrolling area has no padding of its own: the content brings its own
+   * horizontal padding (`px-4`, `md:px-6`) and bottom padding. Needed to pin a
+   * footer with `sticky bottom-0` flush to the bottom edge, because browsers
+   * disagree on whether sticky offsets skip the scroller's padding.
+   */
+  flush?: boolean;
   children: ReactNode;
 }
 
@@ -35,24 +49,14 @@ export function ResponsiveDialog({
   onOpenChange,
   title,
   description,
+  initialFocus = 'first',
+  flush = false,
   children,
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  // These dialogs are opened by state, not by a Radix trigger, so Radix does
-  // not know where to send focus when they close. Remember the opener and give
-  // focus back to it (if it still exists; otherwise the caller picks a place).
-  const opener = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    if (open) opener.current = document.activeElement as HTMLElement | null;
-  }, [open]);
-  const returnFocus = (event: Event) => {
-    const el = opener.current;
-    if (el && el.isConnected && el !== document.body) {
-      event.preventDefault();
-      el.focus();
-    }
-  };
+  // Opened by state, not by a Radix trigger: see `useReturnFocus`.
+  const returnFocus = useReturnFocus(open);
 
   // A tap on a toast ("Deshacer") is outside the dialog for Radix and would
   // close it, losing what the user was typing. Toasts are not "outside".
@@ -64,14 +68,24 @@ export function ResponsiveDialog({
       event.preventDefault();
   };
 
+  // `preventScroll`: focusing must never move a scrolled body.
+  const focusDialog = (event: Event) => {
+    event.preventDefault();
+    (event.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
+  };
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           onCloseAutoFocus={returnFocus}
           onInteractOutside={keepOpenOnToast}
+          onOpenAutoFocus={initialFocus === 'dialog' ? focusDialog : undefined}
+          className={
+            flush ? 'flex flex-col gap-0 overflow-hidden p-0' : undefined
+          }
         >
-          <DialogHeader>
+          <DialogHeader className={flush ? 'shrink-0 p-6 pb-4' : undefined}>
             <DialogTitle>{title}</DialogTitle>
             {description ? (
               <DialogDescription>{description}</DialogDescription>
@@ -79,7 +93,13 @@ export function ResponsiveDialog({
               <DialogDescription className='sr-only'>{title}</DialogDescription>
             )}
           </DialogHeader>
-          {children}
+          {flush ? (
+            <div className='min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain'>
+              {children}
+            </div>
+          ) : (
+            children
+          )}
         </DialogContent>
       </Dialog>
     );
@@ -98,10 +118,7 @@ export function ResponsiveDialog({
         onInteractOutside={keepOpenOnToast}
         // The drawer does not move focus in by itself: put it on the drawer
         // (not on the first field, so the on-screen keyboard stays closed).
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          (event.currentTarget as HTMLElement | null)?.focus();
-        }}
+        onOpenAutoFocus={focusDialog}
       >
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>
@@ -114,7 +131,12 @@ export function ResponsiveDialog({
         {/* overflow-x-hidden + overscroll-contain: safety net so no sheet can
             scroll sideways (iOS) or chain its scroll to the page. The 3px focus
             rings fit inside the px-4 (16px) gutter, so they are not clipped. */}
-        <div className='overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'>
+        <div
+          className={cn(
+            'overflow-x-hidden overflow-y-auto overscroll-contain',
+            !flush && 'px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+          )}
+        >
           {children}
         </div>
       </DrawerContent>

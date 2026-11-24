@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import { Collapsible } from 'radix-ui';
 
+import { BalanceLabel } from '@/components/balance-label';
 import { Card } from '@/components/ui/card';
 import {
   formatAmount,
@@ -9,37 +10,21 @@ import {
   type Member,
   type MemberBreakdown,
 } from '@/domain';
-import { MemberAvatar } from '@/features/members';
-import { describeBalance } from '@/lib/balance-text';
+import {
+  MemberAvatar,
+  useMemberMoods,
+  type AvatarMood,
+} from '@/features/members';
 import { formatDate } from '@/lib/dates';
-import { cn } from '@/lib/utils';
-
-/** Balance as text and color (never color alone). */
-export function BalanceLabel({
-  balance,
-  className,
-}: {
-  balance: number;
-  className?: string;
-}) {
-  const tone =
-    balance > 0
-      ? 'font-semibold text-positive'
-      : balance < 0
-        ? 'font-semibold text-negative'
-        : 'font-medium text-muted-foreground';
-  return (
-    <span className={cn(tone, className)}>{describeBalance(balance)}</span>
-  );
-}
 
 /** Balance of every member; each row expands to show where the number comes from. */
 export function MemberBalances({ group }: { group: Group }) {
+  const moods = useMemberMoods(group);
   return (
     <section aria-labelledby='member-balances-heading' className='grid gap-2'>
-      <h2 id='member-balances-heading' className='text-sm font-semibold'>
+      <h3 id='member-balances-heading' className='text-sm font-semibold'>
         Saldo por miembro
-      </h2>
+      </h3>
       <ul className='grid gap-2'>
         {group.members.map((member) => {
           const breakdown = getMemberBreakdown(group, member.id);
@@ -49,6 +34,7 @@ export function MemberBalances({ group }: { group: Group }) {
                 <MemberRow
                   group={group}
                   member={member}
+                  mood={moods.get(member.id)}
                   breakdown={breakdown}
                 />
               )}
@@ -63,10 +49,12 @@ export function MemberBalances({ group }: { group: Group }) {
 function MemberRow({
   group,
   member,
+  mood,
   breakdown,
 }: {
   group: Group;
   member: Member;
+  mood?: AvatarMood;
   breakdown: MemberBreakdown;
 }) {
   const { balance } = breakdown;
@@ -77,11 +65,7 @@ function MemberRow({
     <Card className='gap-0 p-0'>
       <Collapsible.Root>
         <Collapsible.Trigger className='group flex w-full items-center gap-3 rounded-tile p-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40'>
-          <MemberAvatar
-            member={member}
-            decorative
-            mood={balance.balance < 0 ? 'sad' : 'happy'}
-          />
+          <MemberAvatar member={member} decorative mood={mood} />
           <span className='min-w-0 flex-1'>
             <span className='block font-medium break-words'>{member.name}</span>
             <BalanceLabel balance={balance.balance} className='text-sm' />
@@ -90,8 +74,8 @@ function MemberRow({
         </Collapsible.Trigger>
         <Collapsible.Content className='grid gap-4 border-t px-3 pt-3 pb-4 text-sm'>
           <dl className='grid gap-1.5'>
-            <Line label='Pagó en gastos' value={formatAmount(balance.paid)} />
-            <Line label='Le corresponde' value={formatAmount(balance.share)} />
+            <Line label='Pagó' value={formatAmount(balance.paid)} />
+            <Line label='Su parte' value={formatAmount(balance.share)} />
             {balance.paymentsSent > 0 && (
               <Line
                 label='Pagos que envió'
@@ -113,7 +97,7 @@ function MemberRow({
             </div>
           </dl>
           <p className='text-muted-foreground'>
-            Saldo = pagó − le corresponde + pagos enviados − pagos recibidos.
+            Saldo = pagó − su parte + pagos enviados − pagos recibidos.
           </p>
 
           {breakdown.expenses.length > 0 && (
@@ -138,7 +122,7 @@ function MemberRow({
                         </span>
                       )}
                       <span className='block text-muted-foreground'>
-                        Le tocó {formatAmount(line.share)}
+                        Su parte {formatAmount(line.share)}
                       </span>
                     </span>
                   </li>

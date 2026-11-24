@@ -11,7 +11,12 @@ import {
   type Group,
 } from '@/domain';
 import { useCurrentGroup } from '@/features/groups/data';
-import { MemberAvatar } from '@/features/members';
+import { EntityIcon } from '@/features/icons';
+import {
+  MemberAvatar,
+  useMemberMoods,
+  type AvatarMood,
+} from '@/features/members';
 import { restoreFocusIfLost } from '@/lib/focus';
 import { plural } from '@/lib/plural';
 import { ExpenseDialog } from './ExpenseDialog';
@@ -28,6 +33,7 @@ export function ExpensesTab() {
   const count = group.expenses.length;
   const hasExpenses = count > 0;
   const days = groupByDate(sortExpenses(group.expenses));
+  const moods = useMemberMoods(group);
 
   // Lets the toasts rise above the fixed button on mobile (see index.css).
   useEffect(() => {
@@ -88,6 +94,7 @@ export function ExpensesTab() {
               <li key={expense.id}>
                 <ExpenseRow
                   group={group}
+                  moods={moods}
                   expense={expense}
                   onOpen={() => setTarget(expense)}
                 />
@@ -164,10 +171,12 @@ function NeedMoreMembers({ group }: { group: Group }) {
 
 function ExpenseRow({
   group,
+  moods,
   expense,
   onOpen,
 }: {
   group: Group;
+  moods: Map<string, AvatarMood>;
   expense: Expense;
   onOpen: () => void;
 }) {
@@ -178,20 +187,29 @@ function ExpenseRow({
     <button
       type='button'
       onClick={onOpen}
-      className='flex w-full flex-col gap-1 rounded-tile border bg-card p-3 text-left shadow-soft transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40'
+      className='flex w-full items-center gap-3 rounded-tile border bg-card p-2.5 pr-3 text-left shadow-soft transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40'
     >
-      <span className='flex items-start justify-between gap-3'>
-        <span className='min-w-0 font-medium break-words'>
-          {expense.description}
+      <EntityIcon text={expense.description} kind='expense' size='list' />
+      <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
+        <span className='flex items-start justify-between gap-3'>
+          <span className='min-w-0 font-medium break-words'>
+            {expense.description}
+          </span>
+          <span className='shrink-0 font-semibold tabular-nums'>
+            {formatAmount(expense.amount)}
+          </span>
         </span>
-        <span className='shrink-0 font-semibold tabular-nums'>
-          {formatAmount(expense.amount)}
-        </span>
-      </span>
-      <span className='flex items-center gap-2 text-sm text-muted-foreground'>
-        {payer && <MemberAvatar member={payer} className='size-5' />}
-        <span className='min-w-0 break-words'>
-          Pagó {payer?.name ?? 'alguien'} · entre {everyone ? 'todos' : n}
+        <span className='flex items-center gap-2 text-sm text-muted-foreground'>
+          {payer && (
+            <MemberAvatar
+              member={payer}
+              mood={moods.get(payer.id)}
+              className='size-5'
+            />
+          )}
+          <span className='min-w-0 break-words'>
+            Pagó {payer?.name ?? 'alguien'} · entre {everyone ? 'todos' : n}
+          </span>
         </span>
       </span>
     </button>

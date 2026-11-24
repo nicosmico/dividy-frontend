@@ -58,7 +58,7 @@ describe('Pestaña Miembros', () => {
     await user.click(screen.getByRole('button', { name: /Agregar/ }));
     expect(
       await screen.findByText(
-        'Ya hay alguien llamado "beto" en el grupo. Usa otro nombre.'
+        'Ya hay alguien llamado "Beto" en el grupo. Usa otro nombre.'
       )
     ).toBeInTheDocument();
 

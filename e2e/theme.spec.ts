@@ -61,7 +61,7 @@ test('elegir "Oscuro" se recuerda al recargar y no hay destello', async ({
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
   expect(await isDark(page)).toBe(false);
 
@@ -71,7 +71,7 @@ test('elegir "Oscuro" se recuerda al recargar y no hay destello', async ({
   await recordFirstPaint(page);
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
 
   expect(await isDark(page)).toBe(true);
@@ -95,7 +95,7 @@ test('con el sistema oscuro y sin elección, la primera pintura ya es oscura', a
   await recordFirstPaint(page);
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
   const paint = await firstPaint(page);
   expect(paint.atBody).toContain('dark');
@@ -108,7 +108,7 @@ test('"Sistema" sigue al sistema en vivo y "Claro" lo ignora', async ({
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Bienvenido a Dividy' })
+    page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
   const background = () =>
     page.evaluate(() => getComputedStyle(document.body).backgroundColor);

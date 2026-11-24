@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { computeBalances, formatAmount, suggestTransfers } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
+import { openTab } from './navigation';
 
 async function createGroup(page: Page, name: string, members: string[]) {
   await page.goto('/groups/new');
@@ -39,10 +40,20 @@ async function addExpense(page: Page, expense: NewExpense) {
   await expect(dialog).toBeHidden();
 }
 
-function tab(page: Page, name: string): Locator {
+/** The "Saldo por miembro" list (the chart above repeats the same words). */
+function memberBalances(page: Page) {
   return page
-    .getByRole('navigation', { name: 'Secciones del grupo' })
-    .getByRole('link', { name });
+    .getByRole('heading', { name: 'Saldo por miembro' })
+    .locator('xpath=ancestor::section[1]');
+}
+
+/** Icon tiles and avatar moods are decorative: find them by class / data. */
+function icon(scope: Page | Locator, name: string): Locator {
+  return scope.locator(`[data-slot="entity-icon"] svg.lucide-${name}`);
+}
+
+function moods(scope: Locator) {
+  return scope.locator('[data-mood]');
 }
 
 test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', async ({
@@ -59,7 +70,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await expect(page.getByText('2 gastos')).toBeVisible();
   await expect(page.getByText('$13.000', { exact: true })).toBeVisible();
 
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
 
   // The same group computed by the domain: the UI must show those numbers.
   const group = makeGroup({
@@ -76,13 +87,15 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   const balances = computeBalances(group);
   expect(balances.map((b) => b.balance)).toEqual([5166, -1833, -3333]);
   await expect(
-    page.getByText(`Le deben ${formatAmount(balances[0].balance)}`)
+    memberBalances(page).getByText(
+      `Le deben ${formatAmount(balances[0].balance)}`
+    )
   ).toBeVisible();
   await expect(
-    page.getByText(`Debe ${formatAmount(-balances[1].balance)}`)
+    memberBalances(page).getByText(`Debe ${formatAmount(-balances[1].balance)}`)
   ).toBeVisible();
   await expect(
-    page.getByText(`Debe ${formatAmount(-balances[2].balance)}`)
+    memberBalances(page).getByText(`Debe ${formatAmount(-balances[2].balance)}`)
   ).toBeVisible();
 
   const transfers = suggestTransfers(group);
@@ -100,8 +113,17 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await page
     .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     .click();
-  await expect(page.getByText('Pagó en gastos')).toBeVisible();
-  await expect(page.getByText('Le tocó $3.334')).toBeVisible();
+  await expect(page.getByText('Saldo = pagó − su parte')).toBeVisible();
+  await expect(page.getByText('Su parte $3.334')).toBeVisible();
+
+  // While there is money pending, everyone with a balance is sad (decision 93).
+  const balanceList = page
+    .getByRole('heading', { name: 'Saldo por miembro' })
+    .locator('xpath=ancestor::section[1]');
+  await expect(moods(balanceList)).toHaveCount(3);
+  for (const mood of await moods(balanceList).all()) {
+    await expect(mood).toHaveAttribute('data-mood', 'sad');
+  }
 
   // Mark every suggested transfer as paid.
   for (let remaining = transfers.length; remaining > 0; remaining--) {
@@ -119,11 +141,41 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await expect(
     page.getByRole('button', { name: /^Marcar como pagado/ })
   ).toHaveCount(0);
+  // Once everything is settled, all the faces are happy.
+  await expect(moods(balanceList)).toHaveCount(3);
+  for (const mood of await moods(balanceList).all()) {
+    await expect(mood).toHaveAttribute('data-mood', 'happy');
+  }
 
   await page.reload();
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Pagos registrados' })
+  ).toBeVisible();
+});
+
+test('el ícono del gasto se deduce de la descripción, en el formulario y en la lista', async ({
+  page,
+}) => {
+  await createGroup(page, 'Íconos', ['Ana', 'Beto']);
+  await page.getByRole('button', { name: 'Agregar gasto' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
+  await expect(icon(dialog, 'receipt')).toBeVisible();
+  await dialog.getByLabel('Descripción').fill('Uber al terminal');
+  await expect(icon(dialog, 'car-taxi-front')).toBeVisible();
+  await dialog.getByLabel('Monto en pesos').fill('12000');
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(dialog).toBeHidden();
+
+  const row = page.getByRole('button', { name: /Uber al terminal/ });
+  await expect(icon(row, 'car-taxi-front')).toBeVisible();
+  await expect(row.getByText('Pagó Ana')).toBeVisible();
+  await page.reload();
+  await expect(
+    icon(
+      page.getByRole('button', { name: /Uber al terminal/ }),
+      'car-taxi-front'
+    )
   ).toBeVisible();
 });
 
@@ -198,7 +250,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
     without: ['Beto'],
   });
 
-  await tab(page, 'Miembros').click();
+  await openTab(page, 'Miembros');
   await page.getByRole('button', { name: 'Eliminar a Carla' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Carla' });
   await dialog.getByText('Eliminar con sus gastos').click();
@@ -206,7 +258,7 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await expect(dialog).toBeHidden();
   await expect(page.getByText('2 miembros')).toBeVisible();
 
-  await tab(page, 'Gastos').click();
+  await openTab(page, 'Gastos');
   await expect(page.getByRole('button', { name: /Solo Carla/ })).toHaveCount(0);
   // "Cena" stays with Ana as the only participant.
   await page.getByRole('button', { name: /Cena/ }).click();
@@ -216,7 +268,9 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await edit.getByRole('button', { name: 'Cancelar' }).click();
 
   // Ana paid her own dinner: every balance is 0.
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
-  await expect(page.getByText('Al día', { exact: true })).toHaveCount(2);
+  await expect(
+    memberBalances(page).getByText('Al día', { exact: true })
+  ).toHaveCount(2);
 });

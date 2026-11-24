@@ -88,7 +88,7 @@ describe('Página del grupo', () => {
     await waitFor(() => expect(currentPath()).toBe('/'));
     expect(await repository.list()).toEqual([]);
     expect(
-      await screen.findByRole('heading', { name: 'Bienvenido a Dividy' })
+      await screen.findByRole('heading', { name: 'Divide gastos sin enredos' })
     ).toBeInTheDocument();
   });
 });

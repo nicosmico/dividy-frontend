@@ -54,6 +54,7 @@ export const MemberAvatar = memo(function MemberAvatar({
         {...(decorative
           ? { 'aria-hidden': true }
           : { role: 'img', 'aria-label': member.name })}
+        data-mood={mood}
         className={cn(
           BASE,
           'flex items-center justify-center text-sm font-semibold text-muted-foreground uppercase',
@@ -71,6 +72,7 @@ export const MemberAvatar = memo(function MemberAvatar({
       alt={decorative ? '' : member.name}
       width={40}
       height={40}
+      data-mood={mood}
       className={cn(BASE, 'object-cover', className)}
     />
   );

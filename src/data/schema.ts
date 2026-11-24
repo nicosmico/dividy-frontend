@@ -1,6 +1,9 @@
 import { getGroupIssues, type Group } from '@/domain';
 import { z } from 'zod';
 
+/** Version 2: names and descriptions start with a capital letter. */
+export const CURRENT_VERSION = 2;
+
 const isoTimestamp = z.string().min(1);
 const dateString = z.string();
 
@@ -47,12 +50,10 @@ export const groupSchema = z
   });
 
 /** Envelope only: each group is validated on its own (see `parseDocument`). */
-export const documentEnvelopeV1 = z.object({
-  version: z.literal(1),
+export const documentEnvelope = z.object({
+  version: z.literal(CURRENT_VERSION),
   groups: z.array(z.unknown()),
 });
-
-export const CURRENT_VERSION = 1;
 
 /** Latest document shape. */
 export interface StoredDocument {

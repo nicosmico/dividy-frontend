@@ -14,6 +14,7 @@ import {
 import { restoreFocusIfLost } from '@/lib/focus';
 import { AddMemberForm } from './AddMemberForm';
 import { MemberAvatar } from './MemberAvatar';
+import { useMemberMoods } from './member-moods';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import { RenameMemberDialog } from './RenameMemberDialog';
 
@@ -24,6 +25,7 @@ export function MembersTab() {
   const [removing, setRemoving] = useState<Member | null>(null);
   const operation = useGroupOperation(group.id);
   const heading = useRef<HTMLHeadingElement>(null);
+  const moods = useMemberMoods(group);
 
   /**
    * A member without activity is removed right away, with "Deshacer". One with
@@ -70,7 +72,7 @@ export function MembersTab() {
           {group.members.map((member) => (
             <li key={member.id}>
               <Card className='flex-row items-center gap-3 p-2 pl-3'>
-                <MemberAvatar member={member} />
+                <MemberAvatar member={member} mood={moods.get(member.id)} />
                 <span className='min-w-0 flex-1 font-medium break-words'>
                   {member.name}
                 </span>

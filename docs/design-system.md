@@ -108,6 +108,22 @@ Si cambias un token, recalcula los pares que lo usan y corre `npm run test:e2e` 
 - `<meta name="theme-color">` tiene una versión para claro (`#F4F7F2`) y otra para oscuro (`#0B1730`), con `media`; al elegir un tema a mano, `useTheme` iguala ambas. El `theme_color` del manifest es el del modo claro, porque un manifest no puede depender del tema.
 - Para ver el modo oscuro en pruebas E2E: `test.use({ colorScheme: 'dark' })` o `page.emulateMedia({ colorScheme: 'dark' })`.
 
+## Colores de gráfico
+
+Siete tokens exclusivos de la visualización "Pagó vs. su parte" y de la animación (decisión 92). Se usan con `var(--chart-N)` (o `bg-chart-N`); **nunca** para saldos: el verde y el rojo quedan reservados para "Le deben" y "Debe".
+
+| Token                   | Claro     | Oscuro    | Color    |
+| ----------------------- | --------- | --------- | -------- |
+| `--chart-1`             | `#2A78D6` | `#3987E5` | azul     |
+| `--chart-2`             | `#EB6834` | `#D95926` | naranjo  |
+| `--chart-3`             | `#1BAF7A` | `#199E70` | aqua     |
+| `--chart-4`             | `#EDA100` | `#C98500` | amarillo |
+| `--chart-5`             | `#E87BA4` | `#D55181` | magenta  |
+| `--chart-6`             | `#6250D6` | `#9085E9` | violeta  |
+| `--chart-other` (Otros) | `#8D99AE` | `#7D8BA3` | gris     |
+
+Asignación (la hace `buildExplanation`, `src/features/explanation`): los gastos se ordenan por monto descendente (a igual monto, por `createdAt`) y reciben, según su lugar, **1 a 6**: los seis colores sólidos; **7 a 12**: los mismos seis con rayas diagonales (`fillStyle` alterna el color con `--card`); **13 en adelante**: gris "Otros" (la leyenda los agrupa en una fila "Otros (N gastos)"; el tooltip sigue nombrando cada gasto). El color nunca va solo: cada tramo tiene nombre accesible ("Cabaña: $30.000"), la leyenda lleva ícono, nombre y monto, y hay una tabla equivalente ("Ver como tabla").
+
 ## Logo
 
 Cuadrado redondeado con el símbolo de división girado 45° (una diagonal y dos puntos). Claro: cuadrado navy `#14305F`, símbolo menta `#D6FEC2`. Oscuro: invertido. El componente `DividyLogo` lo dibuja con los tokens `--logo-bg` y `--logo-fg`; `public/favicon.svg` es el mismo dibujo con la versión navy y colores fijos (es la del ícono de la app). Si cambias el logo, regenera los PNG de la PWA con `PW_CHROMIUM_PATH=/ruta/a/chrome node scripts/generate-icons.mjs`.
@@ -118,6 +134,19 @@ Cuadrado redondeado con el símbolo de división girado 45° (una diagonal y dos
 - Trazo por defecto de Lucide (2 px, esquinas redondeadas); no cambies `strokeWidth`. Tamaño `size-4` dentro de botones y menús (lo aplica `Button`), `size-5` para íconos de acción sola.
 - **Decorativos con `aria-hidden='true'`** (el texto de al lado ya dice lo mismo). Si el ícono es lo único que hay en un botón, el botón lleva `aria-label` (por ejemplo, el selector de tema: "Tema de colores").
 - Los íconos heredan el color del texto (`currentColor`): no les pongas color propio salvo con un token.
+
+### Íconos de grupos y gastos
+
+Cada grupo y cada gasto muestra un ícono que se **deduce del texto** (nombre del grupo o descripción del gasto); no se guarda ni se elige, y no hay categorías (decisión 89).
+
+- **Diccionario:** `src/features/icons/keywords.ts`. Es una lista de entradas `{ icon, words, only? }` en español de Chile. Sin React. Para agregar palabras, ponlas en las `words` del ícono que corresponda: sin importar mayúsculas ni tildes, en singular (se entienden `-s`, `-es` y `-ces`), y con frases si hace falta (`'santa isabel'`, `'arriendo auto'`; los conectores `de`, `la`, `al`… se ignoran). `only: 'group'` limita una entrada a grupos.
+- **Reglas:** coincidencia por palabra completa (nunca por subcadena: "gas" no es "gastos"); gana la primera palabra del texto con coincidencia, y a igual posición, la frase más larga ("Uber al supermercado" es transporte; "Arriendo de auto" es auto aunque "arriendo" solo sea casa). Una palabra apunta a un solo ícono por tipo (un test lo exige). Sin coincidencia: `receipt` (gastos) o `users` (grupos).
+- **Ícono nuevo:** agrega la clave en `ICON_KEYS` (`keywords.ts`) y su componente de Lucide en `ENTITY_ICONS` (`entity-icons.ts`); el test de diccionario falla si falta uno de los dos. Agrega un caso a `suggest-icon.test.ts`.
+- **Componente:** `EntityIcon` (`text`, `kind`, `size`). Tile con `bg-surface-2` e ícono `text-primary`, `aria-hidden`. Tamaños: `list` (40 px, filas de gasto), `header` (44 px, encabezado del grupo y junto a los campos, a la altura del input) y `card` (52 px, tarjeta de grupo). Sin colores por grupo ni por gasto.
+
+### Caritas
+
+El humor del avatar sale del saldo (decisión 93): **triste** si el saldo es distinto de 0 (debe o le deben), **feliz** si está al día. Usa `useMemberMoods(group)` (`@/features/members`) y pasa `mood={moods.get(member.id)}` a `MemberAvatar`; no decidas el humor a mano. El avatar lleva `data-mood` para los tests.
 
 ## Cómo agregar un componente de shadcn
 

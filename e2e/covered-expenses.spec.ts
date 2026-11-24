@@ -9,6 +9,7 @@ import {
   type BalanceChange,
 } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
+import { openTab } from './navigation';
 
 const MEMBERS = ['Ana', 'Beto', 'Carla'];
 
@@ -33,14 +34,8 @@ async function addExpense(page: Page, description: string, amount: number) {
   await expect(dialog).toBeHidden();
 }
 
-function tab(page: Page, name: string) {
-  return page
-    .getByRole('navigation', { name: 'Secciones del grupo' })
-    .getByRole('link', { name });
-}
-
 async function settleEverything(page: Page) {
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
   const transfers = suggestTransfers(
     makeGroup({
       members: MEMBERS,
@@ -59,7 +54,7 @@ async function settleEverything(page: Page) {
     await expect(page.getByRole('alertdialog')).toBeHidden();
   }
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
-  await tab(page, 'Gastos').click();
+  await openTab(page, 'Gastos');
 }
 
 /** Same words as the Saldos tab: "Al día", "Debe $X", "Le deben $X". */
@@ -133,9 +128,10 @@ test('eliminar un gasto ya pagado advierte, se puede cancelar, confirmar y desha
     page.getByRole('button', { name: 'Eliminar gasto' })
   ).toBeFocused();
   await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
   await expect(page.getByText('¡Están al día! 🎉')).toBeVisible();
-  await tab(page, 'Gastos').click();
+  await openTab(page, 'Gastos');
+  await expect(page).toHaveURL(/\/expenses$/);
 
   // Confirm: balances change.
   await page.getByRole('button', { name: /Supermercado/ }).click();
@@ -144,7 +140,7 @@ test('eliminar un gasto ya pagado advierte, se puede cancelar, confirmar y desha
     .getByRole('button', { name: 'Eliminar de todas formas' })
     .click();
   await expect(page.getByText('Gasto eliminado')).toBeVisible();
-  await tab(page, 'Saldos').click();
+  await openTab(page, 'Saldos');
   await expect(page.getByText('¡Están al día! 🎉')).toBeHidden();
   await expect(page.getByText(words(-6666)).first()).toBeVisible();
 
@@ -233,6 +229,14 @@ test('con un sheet abierto el toast no tapa sus botones y "Deshacer" sigue usabl
       toastBox.y < box.y + box.height &&
       box.y < toastBox.y + toastBox.height;
     expect(overlaps, `el toast tapa "${name}"`).toBe(false);
+  }
+  // The toast sits above the sheet with a visible gap, never touching it.
+  const sheetBox = (await dialog.boundingBox())!;
+  if (toastBox.y < sheetBox.y) {
+    expect(
+      sheetBox.y - (toastBox.y + toastBox.height),
+      'separación entre el toast y el sheet'
+    ).toBeGreaterThanOrEqual(8);
   }
 
   await toast.getByRole('button', { name: 'Deshacer' }).click();

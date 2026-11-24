@@ -47,6 +47,156 @@ describe('Pestaña Saldos', () => {
     );
   });
 
+  describe('orden y estado', () => {
+    const headings = () =>
+      screen
+        .getAllByRole('heading')
+        .map((h) => h.textContent?.replace(/\s+/g, ' ').trim());
+
+    it('con deuda: estado y Compartir arriba, luego transferencias, pagos y el detalle', async () => {
+      const group = groupWithDebts();
+      group.payments.push({
+        id: 'p1',
+        fromId: 'Carla',
+        toId: 'Ana',
+        amount: 1000,
+        date: '2026-01-02',
+        createdAt: '2026-01-02T10:00:00.000Z',
+      });
+      renderWithProviders(undefined, { route: ROUTE, groups: [group] });
+      await screen.findByRole('heading', { name: 'Detalle' });
+      const all = headings();
+      const order = all.slice(
+        all.findIndex((h) => h?.startsWith('Pendiente:'))
+      );
+      expect(order.slice(0, 5)).toEqual([
+        expect.stringMatching(/^Pendiente: \$\d/),
+        'Para quedar al día',
+        'Pagos registrados',
+        'Detalle',
+        'Pagó vs. su parte',
+      ]);
+      expect(order.at(-1)).toBe('Saldo por miembro');
+      expect(
+        screen.getByRole('heading', { name: 'Pagó vs. su parte' }).tagName
+      ).toBe('H3');
+    });
+
+    it('Compartir resumen queda en el estado de arriba, antes de las transferencias, y no se repite abajo', async () => {
+      renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      const share = await screen.findByRole('button', {
+        name: 'Copiar resumen',
+      });
+      expect(screen.getAllByRole('button', { name: /resumen$/ })).toHaveLength(
+        1
+      );
+      const status = share.closest('section')!;
+      expect(status).toHaveTextContent('Pendiente:');
+      const transfers = screen
+        .getByRole('heading', { name: 'Para quedar al día' })
+        .closest('section')!;
+      expect(
+        status.compareDocumentPosition(transfers) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
+    it('el estado pendiente suma las transferencias sugeridas', async () => {
+      renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      // 3.333 + 1.833
+      expect(
+        await screen.findByRole('heading', {
+          name: 'Pendiente: $5.166 por saldar',
+        })
+      ).toBeInTheDocument();
+    });
+
+    it('al día: estado "¡Están al día! 🎉" con Compartir, sin transferencias', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto'],
+        expenses: [
+          {
+            id: 'e1',
+            description: 'Cena',
+            amount: 10000,
+            payer: 'Ana',
+            among: ['Ana', 'Beto'],
+          },
+        ],
+        payments: [{ id: 'p1', from: 'Beto', to: 'Ana', amount: 5000 }],
+      });
+      renderWithProviders(undefined, { route: ROUTE, groups: [group] });
+      const heading = await screen.findByRole('heading', {
+        name: '¡Están al día! 🎉',
+      });
+      expect(
+        within(heading.closest('section')!).getByRole('button', {
+          name: 'Copiar resumen',
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: 'Para quedar al día' })
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Pendiente:/)).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Pagos registrados' })
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('"Ver cómo se calculó" a pantalla completa', () => {
+    async function open() {
+      const view = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithDebts()],
+      });
+      const trigger = await screen.findByRole('button', {
+        name: 'Ver cómo se calculó',
+      });
+      await view.user.click(trigger);
+      const dialog = await screen.findByRole('dialog', {
+        name: 'Cómo se calculó',
+      });
+      await within(dialog).findByText('1 · Cada uno paga');
+      return { ...view, trigger, dialog };
+    }
+
+    it('tiene encabezado con el grupo, narración en el cuerpo y controles en el pie', async () => {
+      const { dialog } = await open();
+      const header = dialog.querySelector('[data-slot="page-dialog-header"]')!;
+      expect(header).toHaveTextContent('Cómo se calculó');
+      expect(header).toHaveTextContent('Grupo');
+      const body = dialog.querySelector('[data-slot="player-body"]')!;
+      const footer = dialog.querySelector('[data-slot="player-footer"]')!;
+      expect(body.querySelector('[aria-live="polite"]')).not.toBeNull();
+      expect(
+        within(footer as HTMLElement).getByRole('button', {
+          name: 'Paso siguiente',
+        })
+      ).toBeInTheDocument();
+      expect(footer.querySelector('[aria-live]')).toBeNull();
+    });
+
+    it('el botón Cerrar cierra y devuelve el foco a "Ver cómo se calculó"', async () => {
+      const { user, dialog, trigger } = await open();
+      const close = within(dialog).getByRole('button', { name: 'Cerrar' });
+      expect(
+        within(dialog).getAllByRole('button', { name: 'Cerrar' })
+      ).toHaveLength(1);
+      await user.click(close);
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      );
+      expect(trigger).toHaveFocus();
+    });
+  });
+
   it('muestra las transferencias sugeridas correctas', async () => {
     renderWithProviders(undefined, {
       route: ROUTE,
@@ -69,9 +219,12 @@ describe('Pestaña Saldos', () => {
       route: ROUTE,
       groups: [groupWithDebts()],
     });
-    expect(await screen.findByText('Le deben $5.166')).toBeInTheDocument();
-    expect(screen.getByText('Debe $1.833')).toBeInTheDocument();
-    expect(screen.getByText('Debe $3.333')).toBeInTheDocument();
+    const section = (
+      await screen.findByRole('heading', { name: 'Saldo por miembro' })
+    ).closest('section')!;
+    expect(within(section).getByText('Le deben $5.166')).toBeInTheDocument();
+    expect(within(section).getByText('Debe $1.833')).toBeInTheDocument();
+    expect(within(section).getByText('Debe $3.333')).toBeInTheDocument();
   });
 
   it('marca una transferencia como pagada tras confirmar y, si era la última, queda al día', async () => {
@@ -144,7 +297,7 @@ describe('Pestaña Saldos', () => {
     expect((await repository.get('g1'))?.payments).toHaveLength(0);
   });
 
-  it('el desglose permite verificar el saldo: pagó, le corresponde y pagos', async () => {
+  it('el desglose permite verificar el saldo: pagó, su parte y pagos', async () => {
     const group = groupWithDebts();
     group.payments.push({
       id: 'p1',
@@ -166,9 +319,9 @@ describe('Pestaña Saldos', () => {
     const row = screen
       .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
-    expect(within(row).getByText('Pagó en gastos')).toBeInTheDocument();
+    expect(within(row).getByText('Pagó')).toBeInTheDocument();
     expect(within(row).getByText('$10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Le corresponde')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte')).toBeInTheDocument();
     // 3.334 (supermercado) + 1.500 (taxi)
     expect(within(row).getByText('$4.834')).toBeInTheDocument();
     expect(within(row).getByText('Pagos que recibió')).toBeInTheDocument();
@@ -178,9 +331,9 @@ describe('Pestaña Saldos', () => {
     expect(within(row).getByText('$4.166')).toBeInTheDocument();
     expect(within(row).getByText('Supermercado')).toBeInTheDocument();
     expect(within(row).getByText('Pagó $10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Le tocó $3.334')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte $3.334')).toBeInTheDocument();
     expect(within(row).getByText('Taxi')).toBeInTheDocument();
-    expect(within(row).getByText('Le tocó $1.500')).toBeInTheDocument();
+    expect(within(row).getByText('Su parte $1.500')).toBeInTheDocument();
     expect(within(row).getByText(/Recibió de Carla/)).toBeInTheDocument();
   });
 

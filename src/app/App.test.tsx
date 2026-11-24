@@ -29,7 +29,7 @@ describe('App', () => {
     vi.spyOn(repository, 'list').mockResolvedValue([]);
     await user.click(screen.getByRole('link', { name: 'Volver al inicio' }));
     expect(
-      await screen.findByRole('heading', { name: 'Bienvenido a Dividy' })
+      await screen.findByRole('heading', { name: 'Divide gastos sin enredos' })
     ).toBeInTheDocument();
   });
 
