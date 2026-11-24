@@ -311,7 +311,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
     '• Bencina: $40.000, pagó Carla, por partes (Ana 2, Beto 1, Carla 1)'
   );
   const link = /Ver el detalle: (\S+)$/.exec(text)?.[1] as string;
-  expect(link).toMatch(/\/shared#v2\./);
+  expect(link).toMatch(/\/shared#v3\./);
 
   const context = await freshContext(browser, testInfo);
   const other = await context.newPage();
@@ -349,12 +349,12 @@ test('el gráfico dice cómo se dividió un gasto por partes', async ({
   await expectNoHorizontalScroll(page);
 });
 
-test('los links v1 de antes siguen abriendo y los v2 llevan las divisiones nuevas', async ({
+test('los links v1 y v2 de antes siguen abriendo (en CLP) y los v3 llevan además la moneda', async ({
   page,
 }) => {
   const group = expectedGroup();
-  // v2 keeps the custom splits.
-  await page.goto(snapshotPath(group, TAKEN));
+  // v2 keeps the custom splits and has no currency: it opens as CLP.
+  await page.goto(snapshotPath(group, TAKEN, 2));
   await skipViewerSheet(page);
   await expect(page.getByText('Pagó Ana · dividido por montos')).toBeVisible();
   await openTab(page, 'Saldos');

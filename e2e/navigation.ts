@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 type Tab = 'Gastos' | 'Saldos' | 'Miembros';
 
-// A snapshot opened from a link keeps its data in the URL hash (`#v2...`).
+// A snapshot opened from a link keeps its data in the URL hash (`#v3...`).
 const PATHS: Record<Tab, RegExp> = {
   Gastos: /\/expenses(#.*)?$/,
   Saldos: /\/balances(#.*)?$/,

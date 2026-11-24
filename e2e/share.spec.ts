@@ -148,7 +148,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   expect(originalBalances).toHaveLength(3);
   const first = await shareSummary(page);
   expect(first.text).toContain('*Viaje a Pucón*');
-  expect(first.link).toMatch(/\/shared#v2\.[A-Za-z0-9_-]+$/);
+  expect(first.link).toMatch(/\/shared#v3\.[A-Za-z0-9_-]+$/);
   expect(first.link).not.toContain('?');
 
   // --- Someone else, with a brand new browser (no data at all), opens the link.
@@ -170,7 +170,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   await expect(
     other.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toHaveCount(0);
-  await expect(other).toHaveURL(/\/shared\/expenses#v2\./);
+  await expect(other).toHaveURL(/\/shared\/expenses#v3\./);
   await expect(other.getByText('Supermercado')).toBeVisible();
   await expect(other.getByText('$13.000', { exact: true })).toBeVisible();
 
@@ -194,7 +194,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
 
   // Saldos: the same numbers, nothing to register or delete.
   await openTab(other, 'Saldos');
-  await expect(other).toHaveURL(/\/shared\/balances#v2\./);
+  await expect(other).toHaveURL(/\/shared\/balances#v3\./);
   expect(await balanceTexts(other)).toEqual(originalBalances);
   await expect(
     other.getByRole('button', { name: /Marcar como pagado/ })
@@ -341,7 +341,7 @@ test('un link corrupto, truncado o de otra versión muestra una pantalla amable'
   for (const hash of [
     '#v1.esto-no-es-una-captura',
     `#${token.slice(0, Math.floor(token.length / 2))}`,
-    `#${token.replace(/^v2\./, 'v9.')}`,
+    `#${token.replace(/^v3\./, 'v9.')}`,
     '',
   ]) {
     await page.goto(`/shared${hash}`);
