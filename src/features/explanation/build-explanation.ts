@@ -28,6 +28,11 @@ export interface ExplainedExpense {
   rank: number;
   color: ExpenseColor;
   icon: IconKey;
+  /**
+   * What each participant owes for this expense (`computeShares`), in group
+   * order, leaving out those who owe nothing. Adds up to `amount`.
+   */
+  shares: { memberId: MemberId; amount: Amount }[];
 }
 
 /** The part of a bar that belongs to one expense. */
@@ -75,6 +80,9 @@ export function buildExplanation(group: Group): Explanation {
       a.id.localeCompare(b.id)
   );
   const expenses: ExplainedExpense[] = sorted.map((expense, rank) => ({
+    shares: [...computeShares(expense, group.members)]
+      .filter(([, amount]) => amount > 0)
+      .map(([memberId, amount]) => ({ memberId, amount })),
     id: expense.id,
     description: expense.description,
     amount: expense.amount,

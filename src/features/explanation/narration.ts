@@ -1,5 +1,6 @@
 import { formatAmount } from '@/domain';
 import type { Explanation, MemberExplanation } from './build-explanation';
+import type { ShareStep } from './share-steps';
 
 export const STEP_TITLES = [
   'Cada uno paga',
@@ -128,6 +129,46 @@ function settleNarration(
 }
 
 /**
+ * Text of one sub-step of step 2: who paid the expense and how it is split.
+ * With a remainder, says who gets the extra peso. Generated from the data.
+ */
+export function narrateShareStep(
+  explanation: Explanation,
+  step: ShareStep
+): string {
+  if (step.kind === 'rest') {
+    const rest = explanation.expenses.filter((e) =>
+      step.expenseIds.includes(e.id)
+    );
+    const total = rest.reduce((sum, e) => sum + e.amount, 0);
+    return rest.length === 1
+      ? `El otro gasto (${formatAmount(total)}) se divide igual entre quienes lo comparten. Con eso, la parte de cada uno queda completa.`
+      : `Los otros ${rest.length} gastos (${formatAmount(total)} en total) se dividen igual entre quienes los comparten. Con eso, la parte de cada uno queda completa.`;
+  }
+  const expense = explanation.expenses.find((e) => e.id === step.expenseIds[0]);
+  if (!expense) return '';
+  const { shares } = expense;
+  const people = expense.participantIds.length;
+  const paid = `${nameOf(explanation, expense.payerId)} pagó ${expense.description} (${formatAmount(expense.amount)}).`;
+  if (shares.length === 0) return paid;
+  const base =
+    shares.length < people ? 0 : Math.min(...shares.map((s) => s.amount));
+  const extra = shares.filter((s) => s.amount > base);
+  const everyone = people === 1 ? 'Solo lo paga' : `Se divide entre ${people}:`;
+  const each =
+    people === 1
+      ? `${nameOf(explanation, shares[0].memberId)}.`
+      : `${formatAmount(base)} cada uno.`;
+  const rounding =
+    extra.length === 0 || extra.length === shares.length
+      ? ''
+      : extra.length === 1
+        ? ` A ${nameOf(explanation, extra[0].memberId)} le toca $1 más por redondeo.`
+        : ` A ${joinList(extra.map((s) => nameOf(explanation, s.memberId)))} les toca $1 más por redondeo.`;
+  return `${paid} ${everyone} ${each}${rounding}`;
+}
+
+/**
  * Text of each step, written from the explanation (never hand-typed numbers).
  * `settledAtEnd` is the welcome example, where the last step shows the
  * suggested transfers as already paid.
@@ -135,13 +176,16 @@ function settleNarration(
 export function narrate(
   explanation: Explanation,
   step: number,
-  settledAtEnd = false
+  settledAtEnd = false,
+  shareStep?: ShareStep
 ): string {
   switch (step) {
     case 0:
       return payNarration(explanation);
     case 1:
-      return shareNarration(explanation);
+      return shareStep
+        ? narrateShareStep(explanation, shareStep)
+        : shareNarration(explanation);
     case 2:
       return compareNarration(explanation);
     default:
