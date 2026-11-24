@@ -32,12 +32,13 @@ describe('LocalStorageGroupRepository', () => {
     const group = makeGroup({ members: ['A', 'B'] });
     await makeRepo().save(group);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
-      version: 3,
+      version: 4,
       groups: [group],
+      snapshots: [],
     });
   });
 
-  it('lee un documento v1 en minúsculas ya capitalizado y lo guarda como v3', async () => {
+  it('lee un documento v1 en minúsculas ya capitalizado y lo guarda como v4', async () => {
     const group = makeGroup({ name: 'casa', members: ['ana'] });
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -50,7 +51,7 @@ describe('LocalStorageGroupRepository', () => {
     expect(loaded?.members[0].avatar).toEqual({ color: 0, seed: 'ana' });
     await repo.save(loaded!);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).version).toBe(
-      3
+      4
     );
   });
 
