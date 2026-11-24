@@ -1,14 +1,17 @@
 import { memo, useEffect, useState } from 'react';
 
+import type { Member } from '@/domain';
 import { cn } from '@/lib/utils';
+import { AVATAR_INK, avatarBackground } from './avatar-palette';
 import {
+  avatarKey,
   getCachedAvatarUri,
   loadAvatarUri,
   type AvatarMood,
 } from './avatar-uri';
 
 interface MemberAvatarProps {
-  member: { id: string; name: string };
+  member: Pick<Member, 'name' | 'avatar'>;
   /** Happy mouth by default; `sad` for members who owe money. */
   mood?: AvatarMood;
   /** The name is already next to the avatar: hide it from assistive tech. */
@@ -16,12 +19,13 @@ interface MemberAvatarProps {
   className?: string;
 }
 
-const BASE = 'size-10 shrink-0 rounded-full bg-secondary';
+const BASE = 'size-10 shrink-0 rounded-full';
 
 /**
- * Round avatar seeded with the member id, so it never changes on rename. The
- * illustration is generated on demand; until it is ready (or if it fails) a
- * circle of the same size shows the member's initial, so nothing shifts.
+ * Round avatar drawn from `member.avatar` (face = seed, background = color)
+ * and the mood. The illustration is generated on demand; until it is ready
+ * (or if it fails) a circle of the same size and color shows the member's
+ * initial, so nothing shifts. `data-avatar-color` exposes the palette index.
  */
 export const MemberAvatar = memo(function MemberAvatar({
   member,
@@ -29,24 +33,26 @@ export const MemberAvatar = memo(function MemberAvatar({
   decorative = false,
   className,
 }: MemberAvatarProps) {
-  const key = `${mood}:${member.id}`;
+  const { seed, color } = member.avatar;
+  const spec = { seed, color, mood };
+  const key = avatarKey(spec);
   const [loaded, setLoaded] = useState<{ key: string; uri: string } | null>(
     null
   );
-  const cached = getCachedAvatarUri(member.id, mood);
+  const cached = getCachedAvatarUri(spec);
   const uri = cached ?? (loaded?.key === key ? loaded.uri : undefined);
 
   useEffect(() => {
     if (cached) return;
     let active = true;
-    loadAvatarUri(member.id, mood).then(
+    loadAvatarUri({ seed, color, mood }).then(
       (next) => active && setLoaded({ key, uri: next }),
       () => {} // keeps the placeholder
     );
     return () => {
       active = false;
     };
-  }, [cached, key, member.id, mood]);
+  }, [cached, key, seed, color, mood]);
 
   if (!uri) {
     return (
@@ -55,9 +61,11 @@ export const MemberAvatar = memo(function MemberAvatar({
           ? { 'aria-hidden': true }
           : { role: 'img', 'aria-label': member.name })}
         data-mood={mood}
+        data-avatar-color={color}
+        style={{ backgroundColor: avatarBackground(color), color: AVATAR_INK }}
         className={cn(
           BASE,
-          'flex items-center justify-center text-sm font-semibold text-muted-foreground uppercase',
+          'flex items-center justify-center text-sm font-semibold uppercase',
           className
         )}
       >
@@ -73,6 +81,7 @@ export const MemberAvatar = memo(function MemberAvatar({
       width={40}
       height={40}
       data-mood={mood}
+      data-avatar-color={color}
       className={cn(BASE, 'object-cover', className)}
     />
   );

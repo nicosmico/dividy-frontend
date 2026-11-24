@@ -7,7 +7,7 @@ import {
 } from 'react';
 
 import { BalanceLabel } from '@/components/balance-label';
-import { formatAmount } from '@/domain';
+import { formatAmount, type Member } from '@/domain';
 import { EntityIcon } from '@/features/icons';
 import { MemberAvatar, type AvatarMood } from '@/features/members';
 import { cn } from '@/lib/utils';
@@ -55,7 +55,7 @@ export interface BarData {
 }
 
 export interface PaidShareRowProps {
-  member: { id: string; name: string };
+  member: Pick<Member, 'id' | 'name' | 'avatar'>;
   mood?: AvatarMood;
   /** `paid - share + paymentsSent - paymentsReceived`. */
   balance: number;

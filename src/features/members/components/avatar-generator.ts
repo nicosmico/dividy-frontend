@@ -1,6 +1,7 @@
 import { createAvatar } from '@dicebear/core';
 import * as lorelei from '@dicebear/lorelei';
 
+import { avatarBackground } from './avatar-palette';
 import type { AvatarMood } from './avatar-uri';
 
 const HAPPY_MOUTHS = [
@@ -36,25 +37,20 @@ const SAD_MOUTHS = [
   'sad09',
 ] as const;
 
-const BACKGROUNDS = [
-  'fef3c7',
-  'fde68a',
-  'e7e5e4',
-  'ecfccb',
-  'e0f2fe',
-  'ffe4e6',
-];
-
 /**
  * Illustrated avatar as a data URI, generated locally (no network). This
  * module is the only one that imports dicebear and is loaded on demand by
  * `avatar-uri.ts`, so the library stays out of the initial and tab chunks.
  */
-export function generateAvatarUri(seed: string, mood: AvatarMood): string {
+export function generateAvatarUri(
+  seed: string,
+  color: number,
+  mood: AvatarMood
+): string {
   return createAvatar(lorelei, {
     seed,
     mouth: [...(mood === 'happy' ? HAPPY_MOUTHS : SAD_MOUTHS)],
-    backgroundColor: BACKGROUNDS,
+    backgroundColor: [avatarBackground(color).slice(1)],
     backgroundType: ['solid'],
   }).toDataUri();
 }

@@ -1,3 +1,5 @@
+import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -10,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   MAX_MEMBER_NAME_LENGTH,
+  regenerateMemberAvatar,
   renameMember,
   validateMemberName,
   type Group,
@@ -18,7 +21,10 @@ import {
 import {
   isInfrastructureError,
   useGroupOperation,
+  useServices,
 } from '@/features/groups/data';
+import { useMemberMoods } from './member-moods';
+import { MemberAvatar } from './MemberAvatar';
 
 interface RenameMemberDialogProps {
   group: Group;
@@ -36,7 +42,7 @@ export function RenameMemberDialog({
     <ResponsiveDialog
       open={member !== null}
       onOpenChange={(open) => !open && onClose()}
-      title='Renombrar miembro'
+      title='Editar miembro'
     >
       {member && (
         <RenameMemberForm
@@ -60,6 +66,13 @@ function RenameMemberForm({
   onDone: () => void;
 }) {
   const operation = useGroupOperation(group.id);
+  const { newId } = useServices();
+  const mood = useMemberMoods(group).get(member.id);
+  // Preview only: the new face is saved with "Guardar" and dropped on cancel.
+  const [previewSeed, setPreviewSeed] = useState<string | null>(null);
+  const previewMember = previewSeed
+    ? { ...member, avatar: { ...member.avatar, seed: previewSeed } }
+    : member;
   const {
     register,
     control,
@@ -70,9 +83,13 @@ function RenameMemberForm({
   const draftName = useWatch({ control, name: 'name' });
 
   const onSubmit = handleSubmit(async ({ name }) => {
-    const result = await operation.run((g) => renameMember(g, member.id, name));
+    const result = await operation.run((g) => {
+      const renamed = renameMember(g, member.id, name);
+      if (!renamed.ok || previewSeed === null) return renamed;
+      return regenerateMemberAvatar(renamed.value, member.id, previewSeed);
+    });
     if (result.ok) {
-      toast.success('Miembro renombrado');
+      toast.success('Miembro actualizado');
       onDone();
     } else if (!isInfrastructureError(result.error)) {
       setError('name', { message: result.error.message });
@@ -85,6 +102,24 @@ function RenameMemberForm({
       className='grid grid-cols-[minmax(0,1fr)] gap-4'
       noValidate
     >
+      <div className='relative mx-auto size-24'>
+        <MemberAvatar
+          member={previewMember}
+          mood={mood}
+          decorative
+          className='size-24'
+        />
+        <Button
+          type='button'
+          variant='secondary'
+          size='icon'
+          aria-label='Generar otra cara'
+          onClick={() => setPreviewSeed(newId())}
+          className='absolute -right-1 -bottom-1 size-11 border border-border shadow-soft'
+        >
+          <RefreshCw />
+        </Button>
+      </div>
       <FormField
         label='Nombre'
         error={errors.name?.message}
