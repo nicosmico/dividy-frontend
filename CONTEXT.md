@@ -39,7 +39,7 @@ Miembro entre quienes se reparte un gasto. Un gasto tiene al menos un participan
 _Avoid_: Debtor, member (para este rol)
 
 **Split** (División):
-La regla que dice cuánto le corresponde a cada participante de un gasto. Por ahora solo existe la división en partes iguales.
+La regla que dice cuánto le corresponde a cada participante de un gasto. Tiene cuatro formas: **iguales** (`equal`, por defecto), **por montos** (`exact`: un monto en pesos por participante, que suman exactamente el monto del gasto), **por porcentaje** (`percent`: un porcentaje con hasta 2 decimales por participante, guardado en puntos básicos enteros, 100,00 % = 10000, que suman 10000) y **por partes** (`shares`: partes enteras de al menos 1 por participante, p. ej. Ana 2 y Beto 1). Las tres últimas se llaman "división personalizada". Solo `computeShares` convierte una división en partes.
 _Avoid_: Distribution, prorrateo
 
 **Share** (Parte; en Saldos, "Su parte"):
@@ -47,7 +47,7 @@ El monto, en pesos enteros, que le corresponde a un participante en un gasto. La
 _Avoid_: Portion, cuota, splitAmount
 
 **Remainder** (Resto):
-Los pesos que sobran cuando un monto no se divide exacto entre los participantes; se asignan de a un peso a los primeros participantes según el orden de los miembros del grupo.
+Los pesos que sobran cuando un monto no se divide exacto entre los participantes (en partes iguales, por porcentaje o por partes: la división por montos no deja resto); se asignan de a un peso a los primeros participantes según el orden de los miembros del grupo, saltándose a quien ya tenía su proporción exacta, para que ninguna parte se aleje un peso o más de la proporcional.
 
 ### Saldos y pagos
 
@@ -86,10 +86,10 @@ Los gastos que un miembro pagó o en los que participa, y los pagos que envió o
 _Avoid_: History, historial
 
 **Reassign** (Reasignar):
-Al eliminar un miembro con gastos o pagos, traspasar todas sus apariciones (como pagador, participante o en pagos) a otro miembro del grupo.
+Al eliminar un miembro con gastos o pagos, traspasar todas sus apariciones (como pagador, participante o en pagos) a otro miembro del grupo. En una división personalizada, su monto, porcentaje o partes se suman a los de quien recibe (o los toma, si no participaba).
 
 **Cascade delete** (Eliminar con sus gastos y pagos):
-Al eliminar un miembro, borrar los gastos que pagó y sus pagos, y quitarlo de los gastos donde participa. Las partes de los demás cambian.
+Al eliminar un miembro, borrar los gastos que pagó y sus pagos, y quitarlo de los gastos donde participa. Las partes de los demás cambian. Si participaba en un gasto con división personalizada, ese gasto pasa a partes iguales entre quienes quedan (el diálogo lo avisa).
 
 ### Dinero
 

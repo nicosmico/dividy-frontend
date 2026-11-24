@@ -55,6 +55,16 @@ describe('computeShares con división personalizada', () => {
       expected: { A: 33_334, B: 66_666 },
     },
     {
+      name: 'partes: el peso que sobra no va a quien ya tenía su proporción exacta ($2 en 2/1/1)',
+      amount: 2,
+      split: {
+        type: 'shares',
+        participantIds: ['A', 'B', 'C'],
+        parts: { A: 2, B: 1, C: 1 },
+      } as Split,
+      expected: { A: 1, B: 1, C: 0 },
+    },
+    {
       name: 'partes: el resto sigue el orden del grupo, no el de participantIds',
       amount: 10,
       split: {
