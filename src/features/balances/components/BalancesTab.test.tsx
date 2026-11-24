@@ -319,23 +319,25 @@ describe('Pestaña Saldos', () => {
     const row = screen
       .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
-    expect(within(row).getByText('Gastó en el grupo')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Lo que gastó en el grupo')
+    ).toBeInTheDocument();
     expect(within(row).getByText('$10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Su parte de los gastos')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Menos su parte de los gastos')
+    ).toBeInTheDocument();
     // 3.334 (supermercado) + 1.500 (taxi), subtracted
     expect(within(row).getByText('−$4.834')).toBeInTheDocument();
-    expect(within(row).getByText('Pagos recibidos')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Menos los pagos que recibió')
+    ).toBeInTheDocument();
     // in the sum and in the payment line
     expect(within(row).getAllByText('−$1.000')).toHaveLength(2);
-    expect(within(row).queryByText('Pagos enviados')).toBeNull();
+    expect(within(row).queryByText('Más los pagos que envió')).toBeNull();
     // 10.000 − 4.834 − 1.000, in words
     const balance = within(row).getByText('Saldo').closest('div')!;
     expect(balance).toHaveTextContent('Le deben $4.166');
-    expect(
-      within(row).getByText(
-        'Saldo = gastó en el grupo − su parte de los gastos − pagos recibidos + pagos enviados.'
-      )
-    ).toBeInTheDocument();
+    expect(within(row).queryByText(/^Saldo =/)).toBeNull();
     expect(within(row).getByText('Supermercado')).toBeInTheDocument();
     expect(within(row).getByText('Gastó $10.000')).toBeInTheDocument();
     expect(within(row).getByText('Su parte $3.334')).toBeInTheDocument();
@@ -347,7 +349,7 @@ describe('Pestaña Saldos', () => {
     expect(within(row).getByText(/Recibió de Carla/)).toBeInTheDocument();
   });
 
-  it('el desglose muestra "Pagos enviados" con + y el saldo en palabras', async () => {
+  it('el desglose muestra "Más los pagos que envió" con + y el saldo en palabras', async () => {
     const group = groupWithDebts();
     group.payments.push({
       id: 'p1',
@@ -369,9 +371,11 @@ describe('Pestaña Saldos', () => {
     const row = screen
       .getByRole('button', { name: /^Carla\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
-    expect(within(row).getByText('Pagos enviados')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Más los pagos que envió')
+    ).toBeInTheDocument();
     expect(within(row).getAllByText('+$1.000')).toHaveLength(2);
-    expect(within(row).queryByText('Pagos recibidos')).toBeNull();
+    expect(within(row).queryByText('Menos los pagos que recibió')).toBeNull();
     expect(within(row).getByText(/Envió a Ana/)).toBeInTheDocument();
     expect(within(row).getByText('Saldo').closest('div')).toHaveTextContent(
       /^SaldoDebe \$/

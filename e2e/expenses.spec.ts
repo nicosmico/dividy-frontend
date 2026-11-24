@@ -113,7 +113,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   await page
     .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
     .click();
-  await expect(page.getByText('Saldo = gastó en el grupo')).toBeVisible();
+  await expect(page.getByText('Lo que gastó en el grupo')).toBeVisible();
   await expect(page.getByText('Su parte $3.334')).toBeVisible();
 
   // While there is money pending, everyone with a balance is sad (decision 93).

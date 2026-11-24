@@ -75,22 +75,22 @@ function MemberRow({
         <Collapsible.Content className='grid gap-4 border-t px-3 pt-3 pb-4 text-sm'>
           <dl className='grid gap-1.5'>
             <Line
-              label='Gastó en el grupo'
+              label='Lo que gastó en el grupo'
               value={formatAmount(balance.paid)}
             />
             <Line
-              label='Su parte de los gastos'
+              label='Menos su parte de los gastos'
               value={`−${formatAmount(balance.share)}`}
             />
             {balance.paymentsReceived > 0 && (
               <Line
-                label='Pagos recibidos'
+                label='Menos los pagos que recibió'
                 value={`−${formatAmount(balance.paymentsReceived)}`}
               />
             )}
             {balance.paymentsSent > 0 && (
               <Line
-                label='Pagos enviados'
+                label='Más los pagos que envió'
                 value={`+${formatAmount(balance.paymentsSent)}`}
               />
             )}
@@ -101,10 +101,6 @@ function MemberRow({
               </dd>
             </div>
           </dl>
-          <p className='text-muted-foreground'>
-            Saldo = gastó en el grupo − su parte de los gastos − pagos recibidos
-            + pagos enviados.
-          </p>
 
           {breakdown.expenses.length > 0 && (
             <div className='grid gap-1.5'>

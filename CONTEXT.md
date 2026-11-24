@@ -56,7 +56,7 @@ Un movimiento de dinero entre dos miembros que Dividy propone para dejar los sal
 _Avoid_: Simplified debt, transaction, deuda simplificada
 
 **Payment** (Pago):
-Dinero que un miembro efectivamente le transfirió a otro para saldar deudas. Se registra (por ejemplo, al marcar una transferencia sugerida como pagada) y afecta los saldos. En el desglose de un miembro se llaman "Pagos enviados" (suman) y "Pagos recibidos" (restan); nunca se mezclan con "Gastó", que es solo lo que pagó en gastos.
+Dinero que un miembro efectivamente le transfirió a otro para saldar deudas. Se registra (por ejemplo, al marcar una transferencia sugerida como pagada) y afecta los saldos. En el desglose de un miembro aparecen como "Más los pagos que envió" y "Menos los pagos que recibió"; nunca se mezclan con "Gastó", que es solo lo que pagó en gastos.
 _Avoid_: Settlement, transfer (para el hecho registrado), reembolso
 
 **Covered expense** (Gasto ya saldado):
