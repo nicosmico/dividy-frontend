@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Port of the preview server; set PW_PORT to run two suites at once without sharing a build.
+const PORT = Number(process.env.PW_PORT ?? 4173);
+
 // Optional: use a preinstalled Chromium instead of the one managed by Playwright.
 const executablePath = process.env.PW_CHROMIUM_PATH || undefined;
 const launchOptions = executablePath ? { executablePath } : {};
@@ -44,7 +47,7 @@ export default defineConfig({
       ]
     : [['list']],
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
     launchOptions,
   },
@@ -97,8 +100,8 @@ export default defineConfig({
       : []),
   ],
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173',
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -129,6 +129,8 @@ Checklist manual en un iPhone real para cada PR que toque formularios o sheets:
 
 ## Comandos
 
+Si corres dos suites E2E a la vez (por ejemplo en dos ramas), cambia el puerto del servidor de `preview` con `PW_PORT` (por defecto 4173), o una usará el build de la otra: `PW_PORT=4273 npm run test:e2e`.
+
 ```bash
 npm test               # unitarios + componentes
 npm run test:coverage  # con cobertura (meta: ≥ 95 % en src/domain)
