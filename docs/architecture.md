@@ -21,6 +21,7 @@ UI (React, shadcn/ui)  ──usa──▶  hooks de datos (TanStack Query)  ─�
 
 - `GroupRepository`: interfaz **asíncrona** (`list`, `get`, `save`, `delete`). Solo guarda y recupera grupos completos; no tiene reglas de negocio.
 - `LocalStorageGroupRepository`: documento `{ version, groups }` en una sola clave, con migraciones por versión y migración desde el formato antiguo.
+  - **Documento v2** (`CURRENT_VERSION = 2`): igual que la v1, pero los nombres de grupos y miembros y las descripciones de gastos empiezan con mayúscula. La migración `v1 → v2` (`migrations[1]` en `src/data/migrations.ts`) aplica `capitalizeFirst` a esos textos. Si capitalizar un nombre de miembro chocara (sin distinguir mayúsculas) con otro del mismo grupo, conserva el valor original para no perder datos; con datos v1 válidos no ocurre, porque la unicidad ya ignoraba mayúsculas. Un documento v2 se lee tal cual; uno con versión mayor se rechaza.
 - `InMemoryGroupRepository`: para tests.
 - Tests de contrato compartidos: la misma suite corre contra cada implementación (y correrá contra una futura `HttpGroupRepository`).
 
@@ -133,7 +134,8 @@ Todo se importa desde `@/domain`. Las operaciones devuelven `Result<T>` (`{ ok: 
 
 **Validación (para los formularios)**
 
-- `validateGroupName`, `validateMemberName(group, name, exceptId?)`, `validateDescription`, `validateAmount`, `validateDate`: devuelven el valor normalizado o el error.
+- `validateGroupName`, `validateMemberName(group, name, exceptId?)`, `validateDescription`, `validateAmount`, `validateDate`: devuelven el valor normalizado (recortado y, en nombres y descripción, con mayúscula inicial vía `capitalizeFirst`) o el error.
+- `capitalizeFirst(text)`: fuente única de la regla de mayúscula inicial; pura e idempotente.
 - `validateExpenseFields(group, fields)`, `validatePaymentFields(group, fields)`: validan un gasto o pago completo.
 - `getGroupIssues(group)`: lista de invariantes rotas (vacía si el grupo es válido).
 
