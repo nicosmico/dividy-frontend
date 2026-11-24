@@ -9,7 +9,7 @@ test('crear grupo, administrar miembros, persistir tras recargar y eliminar el g
   await expect(
     page.getByRole('heading', { name: 'Divide gastos sin enredos' })
   ).toBeVisible();
-  await expect(page.getByText('Solo pesos chilenos.')).toBeVisible();
+  await expect(page.getByText('Pesos, dólares, euros y más.')).toBeVisible();
 
   // Create a group with 3 members.
   await page.getByRole('link', { name: 'Crear mi primer grupo' }).click();

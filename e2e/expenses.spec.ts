@@ -30,7 +30,9 @@ async function addExpense(page: Page, expense: NewExpense) {
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(expense.description);
-  await dialog.getByLabel('Monto').fill(String(expense.amount));
+  await dialog
+    .getByLabel('Monto', { exact: true })
+    .fill(String(expense.amount));
   if (expense.payer) {
     await dialog.getByLabel('Pagado por').click();
     await page.getByRole('option', { name: expense.payer }).click();
@@ -169,7 +171,7 @@ test('el ícono del gasto se deduce de la descripción, en el formulario y en la
   await expect(icon(dialog, 'receipt')).toBeVisible();
   await dialog.getByLabel('Descripción').fill('Uber al terminal');
   await expect(icon(dialog, 'car-taxi-front')).toBeVisible();
-  await dialog.getByLabel('Monto').fill('12000');
+  await dialog.getByLabel('Monto', { exact: true }).fill('12000');
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
 
@@ -194,8 +196,12 @@ test('escribir rápido y guardar deja exactamente 1 gasto (hallazgo 2)', async (
   await dialog
     .getByLabel('Descripción')
     .pressSequentially('Supermercado', { delay: 20 });
-  await dialog.getByLabel('Monto').pressSequentially('12345', { delay: 20 });
-  await expect(dialog.getByLabel('Monto')).toHaveValue('12.345');
+  await dialog
+    .getByLabel('Monto', { exact: true })
+    .pressSequentially('12345', { delay: 20 });
+  await expect(dialog.getByLabel('Monto', { exact: true })).toHaveValue(
+    '12.345'
+  );
   await dialog.getByRole('button', { name: 'Guardar' }).dblclick();
   await expect(dialog).toBeHidden();
 
@@ -235,7 +241,7 @@ test('al eliminar un gasto y abrir el otro, se muestran sus propios datos (halla
 
   await page.getByRole('button', { name: /Asado/ }).click();
   await expect(edit.getByLabel('Descripción')).toHaveValue('Asado');
-  await expect(edit.getByLabel('Monto')).toHaveValue('9.000');
+  await expect(edit.getByLabel('Monto', { exact: true })).toHaveValue('9.000');
   await expect(edit.getByLabel('Pagado por')).toContainText('Ana');
 });
 

@@ -31,7 +31,7 @@ async function addExpense(page: Page, description: string, amount: number) {
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(description);
-  await dialog.getByLabel('Monto').fill(String(amount));
+  await dialog.getByLabel('Monto', { exact: true }).fill(String(amount));
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
 }

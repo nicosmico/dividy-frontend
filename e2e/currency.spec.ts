@@ -88,7 +88,7 @@ test('grupo en dólares: centavos, división por montos que cuadra, saldos exact
   // --- A first expense with cents, split equally: 10,01 → 5,01 / 5,00.
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   let dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
-  const amount = dialog.getByLabel('Monto');
+  const amount = dialog.getByLabel('Monto', { exact: true });
   await expect(
     amount.locator('xpath=..').locator('span[aria-hidden="true"]')
   ).toHaveText('US$');
@@ -105,7 +105,7 @@ test('grupo en dólares: centavos, división por montos que cuadra, saldos exact
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill('Taxi');
-  await dialog.getByLabel('Monto').fill('20');
+  await dialog.getByLabel('Monto', { exact: true }).fill('20');
   await dialog.getByLabel('Pagado por').click();
   await page.getByRole('option', { name: 'Beto' }).click();
   await dialog.getByRole('radio', { name: 'Montos' }).click();
@@ -196,13 +196,15 @@ test('en una moneda sin decimales, escribir decimales dice qué hacer; en dólar
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill('Pan');
-  await dialog.getByLabel('Monto').fill('1000,5');
+  await dialog.getByLabel('Monto', { exact: true }).fill('1000,5');
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(
     dialog.getByText('El peso chileno no usa decimales.')
   ).toBeVisible();
-  await dialog.getByLabel('Monto').fill('1000');
-  await expect(dialog.getByLabel('Monto')).toHaveValue('1.000');
+  await dialog.getByLabel('Monto', { exact: true }).fill('1000');
+  await expect(dialog.getByLabel('Monto', { exact: true })).toHaveValue(
+    '1.000'
+  );
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
 
@@ -222,12 +224,12 @@ test('en una moneda sin decimales, escribir decimales dice qué hacer; en dólar
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const form = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await form.getByLabel('Descripción').fill('Pan');
-  await form.getByLabel('Monto').fill('10,555');
+  await form.getByLabel('Monto', { exact: true }).fill('10,555');
   await form.getByRole('button', { name: 'Guardar' }).click();
   await expect(
     form.getByText('El dólar estadounidense admite hasta 2 decimales.')
   ).toBeVisible();
-  await form.getByLabel('Monto').fill('10,5');
-  await form.getByLabel('Monto').blur();
-  await expect(form.getByLabel('Monto')).toHaveValue('10,50');
+  await form.getByLabel('Monto', { exact: true }).fill('10,5');
+  await form.getByLabel('Monto', { exact: true }).blur();
+  await expect(form.getByLabel('Monto', { exact: true })).toHaveValue('10,50');
 });

@@ -5,7 +5,7 @@ Dividy no tiene backend (Fase 5), pero ya se puede compartir lo que importa: lo 
 ## Formato
 
 ```
-https://<dominio>/shared#v2.<payload>
+https://<dominio>/shared#v3.<payload>
 ```
 
 - **En el hash, nunca en la query ni en la ruta.** El navegador no envía el hash al servidor, así que los nombres, gastos y montos del grupo no pasan por Netlify ni quedan en sus registros, ni en el `Referer` de un enlace externo. La ruta `/shared` y el id de una captura guardada (`/shared/:snapshotId`) no contienen datos.
@@ -33,6 +33,14 @@ Cuando los gastos pudieron dividirse por montos, porcentajes o partes (ADR 0008)
 - **Quien genera usa siempre `v2.`** (`LINK_VERSION = 2`); `DECODERS` conserva el de `v1.`, así que los links ya compartidos siguen abriendo, y como es la misma forma sin los campos finales, ambos pasan por `fromCompactSnapshotV2`. Un `v2.` abierto en una app que solo entiende `v1.` cae en la pantalla "Este link no se pudo abrir" (versión desconocida): no hay nada que hacer para eso.
 - La captura decodificada se valida con las mismas reglas de un grupo, que ahora incluyen que las divisiones sumen (`validateSplit`): un link manipulado con montos que no suman, partes en 0 o un tipo desconocido da el error amable.
 - **Tamaño medido** con el mismo grupo de 60 gastos (8 miembros, 6 pagos) donde ahora 15 gastos (uno de cada cuatro, rotando entre montos, porcentaje y partes) tienen división personalizada: **2.161** caracteres de token y **2.195** con la URL de Netlify. El grupo con todos los gastos iguales sigue en 1.897. El test sigue fallando por encima de 4.000 caracteres.
+
+## v3: la moneda del grupo
+
+Con monedas por grupo (ADR 0009) los montos del link se leen en la moneda del grupo, así que `v3` es el payload de `v2` con **un séptimo elemento al final: el código de la moneda** (`"USD"`), validado contra la lista cerrada (un código desconocido, o un `v3` sin código, es un link dañado).
+
+- **Quien genera usa siempre `v3.`** (`LINK_VERSION = 3`). `DECODERS` conserva `v1.` y `v2.`, que no llevan moneda y **se leen como CLP** (lo que eran todos los grupos hasta entonces), así que los links ya compartidos siguen abriendo igual.
+- Las capturas guardadas en el dispositivo llevan `currency`; las guardadas antes de este cambio se leen como CLP.
+- **Tamaño medido** con el mismo grupo de 60 gastos (15 personalizados): **2.167** caracteres de token y **2.201** con la URL de Netlify (v2: 2.161 y 2.195); con otra moneda pesa lo mismo (el código son pocos bytes y se comprime). El test sigue fallando por encima de 4.000 caracteres.
 
 ## Qué pasa al abrir y al guardar
 
