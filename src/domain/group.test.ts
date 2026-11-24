@@ -425,3 +425,63 @@ describe('getTotalSpent', () => {
     expect(getTotalSpent(makeGroup({ members: ['A'] }))).toBe(0);
   });
 });
+
+describe('mayúscula inicial en las operaciones', () => {
+  const base = () => makeGroup({ members: ['Ana', 'Beto'] });
+  const value = <T>(r: Result<T>): T => {
+    if (!r.ok) throw new Error(r.error.code);
+    return r.value;
+  };
+
+  it('createGroup capitaliza el grupo y los miembros', () => {
+    const g = value(
+      createGroup({
+        id: 'g',
+        name: 'viaje al sur',
+        members: [
+          { id: 'a', name: 'ana' },
+          { id: 'b', name: 'beto' },
+        ],
+        now: NOW,
+      })
+    );
+    expect(g.name).toBe('Viaje al sur');
+    expect(g.members.map((m) => m.name)).toEqual(['Ana', 'Beto']);
+  });
+
+  it('createGroup rechaza "ana" y "Ana" juntos', () => {
+    const r = createGroup({
+      id: 'g',
+      name: 'x',
+      members: [
+        { id: 'a', name: 'ana' },
+        { id: 'b', name: 'Ana' },
+      ],
+      now: NOW,
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it('renameGroup, addMember y renameMember capitalizan', () => {
+    let g = value(renameGroup(base(), 'casa'));
+    expect(g.name).toBe('Casa');
+    g = value(addMember(g, { id: 'c', name: 'carla' }));
+    expect(g.members[2].name).toBe('Carla');
+    g = value(renameMember(g, 'c', 'ñuñoa'));
+    expect(g.members[2].name).toBe('Ñuñoa');
+  });
+
+  it('addExpense y updateExpense capitalizan la descripción', () => {
+    const fields = {
+      description: 'pizza',
+      amount: 1000,
+      payerId: 'Ana',
+      split: { type: 'equal' as const, participantIds: ['Ana', 'Beto'] },
+      date: '2026-01-01',
+    };
+    let g = value(addExpense(base(), { ...fields, id: 'e1', createdAt: NOW }));
+    expect(g.expenses[0].description).toBe('Pizza');
+    g = value(updateExpense(g, 'e1', { ...fields, description: 'bebidas' }));
+    expect(g.expenses[0].description).toBe('Bebidas');
+  });
+});

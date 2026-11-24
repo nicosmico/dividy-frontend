@@ -1,5 +1,6 @@
 import { isValidAmount, MAX_AMOUNT } from './money';
 import { fail, ok } from './result';
+import { capitalizeFirst } from './text';
 import type {
   Amount,
   Expense,
@@ -34,10 +35,10 @@ function validateText(
   const trimmed = typeof value === 'string' ? value.trim() : '';
   if (trimmed.length === 0) return fail(code, messages.empty);
   if (trimmed.length > max) return fail(code, messages.tooLong(max));
-  return ok(trimmed);
+  return ok(capitalizeFirst(trimmed));
 }
 
-/** Returns the trimmed name. */
+/** Returns the trimmed name with its first letter uppercased. */
 export function validateGroupName(name: string): Result<string> {
   return validateText(name, MAX_GROUP_NAME_LENGTH, 'invalid_group_name', {
     empty: 'Escribe un nombre para el grupo.',
@@ -51,7 +52,7 @@ function normalizeName(name: string): string {
 }
 
 /**
- * Returns the trimmed name. Names must be unique in the group ignoring case and
+ * Returns the trimmed, capitalized name. Names must be unique in the group ignoring case and
  * surrounding spaces; `exceptId` skips that member (used when renaming).
  */
 export function validateMemberName(
@@ -82,7 +83,7 @@ export function validateMemberName(
   return valid;
 }
 
-/** Returns the trimmed description. */
+/** Returns the trimmed description with its first letter uppercased. */
 export function validateDescription(description: string): Result<string> {
   return validateText(
     description,
@@ -122,7 +123,7 @@ export function validateDate(date: string): Result<string> {
   return fail('invalid_date', 'Elige una fecha válida.');
 }
 
-/** Validates an expense against the group and returns it normalized (trimmed). */
+/** Validates an expense against the group and returns it normalized (trimmed, capitalized). */
 export function validateExpenseFields(
   group: Pick<Group, 'members'>,
   fields: ExpenseFields

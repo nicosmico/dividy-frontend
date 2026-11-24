@@ -32,9 +32,25 @@ describe('LocalStorageGroupRepository', () => {
     const group = makeGroup({ members: ['A', 'B'] });
     await makeRepo().save(group);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
-      version: 1,
+      version: 2,
       groups: [group],
     });
+  });
+
+  it('lee un documento v1 en minúsculas ya capitalizado y lo guarda como v2', async () => {
+    const group = makeGroup({ name: 'casa', members: ['ana'] });
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, groups: [group] })
+    );
+    const repo = makeRepo();
+    const loaded = await repo.get(group.id);
+    expect(loaded?.name).toBe('Casa');
+    expect(loaded?.members[0].name).toBe('Ana');
+    await repo.save(loaded!);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).version).toBe(
+      2
+    );
   });
 
   it('persiste entre instancias del repositorio', async () => {

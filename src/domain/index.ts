@@ -70,4 +70,5 @@ export {
   type ExpenseFields,
   type PaymentFields,
 } from './validation';
+export { capitalizeFirst } from './text';
 export { formatGroupSummary } from './summary';

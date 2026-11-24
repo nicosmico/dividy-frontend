@@ -183,3 +183,53 @@ describe('getGroupIssues', () => {
     );
   });
 });
+
+describe('mayúscula inicial', () => {
+  it('nombre de grupo y descripción: recortan y capitalizan', () => {
+    expect(validateGroupName('  viaje al sur ')).toEqual({
+      ok: true,
+      value: 'Viaje al sur',
+    });
+    expect(validateDescription(' ¡asado! ')).toEqual({
+      ok: true,
+      value: '¡Asado!',
+    });
+  });
+
+  it('nombre de miembro: recorta y capitaliza', () => {
+    expect(validateMemberName(group, ' nico ')).toEqual({
+      ok: true,
+      value: 'Nico',
+    });
+    expect(validateMemberName(group, 'ñandú')).toEqual({
+      ok: true,
+      value: 'Ñandú',
+    });
+  });
+
+  it('"nico" y "Nico" chocan como duplicados', () => {
+    const g = makeGroup({ members: ['Nico'] });
+    expect(code(validateMemberName(g, 'nico'))).toBe('duplicate_member_name');
+    expect(code(validateMemberName(g, 'NICO'))).toBe('duplicate_member_name');
+    const lower = { members: [{ id: 'x', name: 'nico' }] };
+    expect(code(validateMemberName(lower, 'Nico'))).toBe(
+      'duplicate_member_name'
+    );
+  });
+
+  it('validateExpenseFields capitaliza la descripción', () => {
+    const r = validateExpenseFields(group, {
+      description: ' pizza ',
+      amount: 1000,
+      payerId: 'Ana',
+      split: { type: 'equal', participantIds: ['Ana'] },
+      date: '2026-01-01',
+    });
+    expect(r.ok && r.value.description).toBe('Pizza');
+  });
+
+  it('getGroupIssues marca un nombre de grupo sin mayúscula', () => {
+    const g = { ...makeGroup({ members: ['Ana'] }), name: 'viaje' };
+    expect(getGroupIssues(g)).toContain('invalid group name');
+  });
+});

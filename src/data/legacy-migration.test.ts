@@ -152,6 +152,16 @@ describe('migrateLegacyData', () => {
     ).toEqual(['b', 'a']);
   });
 
+  it('capitaliza nombres de miembros y descripciones de gastos', () => {
+    const { members, bills } = legacy(
+      { a: mem('a', 'ana'), b: mem('b', 'beto') },
+      { x: bill({ name: 'pizza', members: ['a', 'b'] }) }
+    );
+    const group = migrateLegacyData(input(members, bills))!;
+    expect(group.members.map((m) => m.name)).toEqual(['Ana', 'Beto']);
+    expect(group.expenses[0].description).toBe('Pizza');
+  });
+
   it('agrega sufijo " (2)" a nombres repetidos, sin distinguir mayúsculas', () => {
     const { members } = legacy({
       a: mem('a', 'Ana'),
@@ -161,7 +171,7 @@ describe('migrateLegacyData', () => {
     const group = migrateLegacyData(input(members, null))!;
     expect(group.members.map((m) => m.name)).toEqual([
       'Ana',
-      'ana (2)',
+      'Ana (2)',
       'Ana (3)',
     ]);
   });
