@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { computeBalances, formatAmount, suggestTransfers } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
@@ -92,6 +92,13 @@ const hasNoHorizontalScroll = (page: Page) =>
     () => document.documentElement.scrollWidth <= window.innerWidth
   );
 
+/** Clicks "Paso siguiente" `times` times, inside `scope`. */
+async function clickNext(scope: Page | Locator, times: number) {
+  for (let i = 0; i < times; i++) {
+    await scope.getByRole('button', { name: 'Paso siguiente' }).click();
+  }
+}
+
 test('sin grupos se ve la bienvenida animada, avanza con Siguiente y lleva a crear grupo', async ({
   page,
 }) => {
@@ -101,10 +108,31 @@ test('sin grupos se ve la bienvenida animada, avanza con Siguiente y lleva a cre
   await expect(example).toHaveAttribute('data-step', '0');
   await page.getByRole('button', { name: 'Pausar' }).click();
   await expect(example.locator('[data-mood="sad"]')).toHaveCount(3);
+  // The same horizontal rows as the Saldos chart, one per member.
+  await expect(example.locator('[data-slot="paid-share-row"]')).toHaveCount(3);
 
+  const live = example.locator('[aria-live="polite"]');
   const next = page.getByRole('button', { name: 'Paso siguiente' });
+
+  // Step 2 goes through the 3 expenses one by one.
+  await next.click();
+  await expect(example).toHaveAttribute('data-step', '1');
+  await expect(example.getByText('2 · Se calcula su parte')).toBeVisible();
+  await expect(example).toContainText('Gasto 1 de 3');
+  await expect(live).toContainText(
+    'Beto pagó Alojamiento ($45.000). Se divide entre 3: $15.000 cada uno.'
+  );
+  await expect(example.locator('[data-slot="pieces"] > span')).toHaveCount(3);
+  await next.click();
+  await expect(example).toContainText('Gasto 2 de 3');
+  await expect(live).toContainText('Ana pagó Carne ($30.000)');
+  await next.click();
+  await expect(example).toContainText('Gasto 3 de 3');
+  await expect(live).toContainText(
+    'Carla pagó Bebidas ($15.000). Se divide entre 2: $7.500 cada uno.'
+  );
+
   for (const [step, title] of [
-    [1, '2 · Se calcula su parte'],
     [2, '3 · Se compara'],
     [3, '4 · Se salda'],
   ] as const) {
@@ -114,10 +142,28 @@ test('sin grupos se ve la bienvenida animada, avanza con Siguiente y lleva a cre
   }
   await expect(example.locator('[data-mood="happy"]')).toHaveCount(3);
   await expect(example.getByText('$12.500').last()).toBeVisible();
+  await expect(example.getByText('Al día', { exact: true })).toHaveCount(3);
   expect(await hasNoHorizontalScroll(page)).toBe(true);
 
   await page.getByRole('link', { name: 'Crear mi primer grupo' }).click();
   await expect(page).toHaveURL(/\/groups\/new$/);
+});
+
+test('la bienvenida no desborda ni cambia de alto entre pasos a 360 px', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto('/');
+  const example = page.getByRole('region', { name: /Ejemplo animado/ });
+  await page.getByRole('button', { name: 'Pausar' }).click();
+  await page.waitForTimeout(300);
+  const heights = new Set<number>();
+  for (let i = 0; i < 6; i++) {
+    expect(await hasNoHorizontalScroll(page)).toBe(true);
+    heights.add(Math.round((await example.boundingBox())!.height));
+    await clickNext(page, 1);
+  }
+  expect([...heights]).toHaveLength(1);
 });
 
 test('el gráfico de Saldos muestra los montos que calcula el dominio', async ({
@@ -181,9 +227,16 @@ test('"Ver cómo se calculó" abre la animación con los datos del grupo y naveg
   const dialog = page.getByRole('dialog', { name: 'Cómo se calculó' });
   await expect(dialog.getByText('1 · Cada uno paga')).toBeVisible();
   await dialog.getByRole('button', { name: 'Pausar' }).click();
-  for (let i = 0; i < 3; i++) {
-    await dialog.getByRole('button', { name: 'Paso siguiente' }).click();
-  }
+  await expect(dialog.locator('[data-slot="paid-share-row"]')).toHaveCount(5);
+  // 7 expenses: the 6 biggest one by one and a last sub-step with the other.
+  await clickNext(dialog, 1);
+  await expect(dialog).toContainText('Gasto 1 de 7');
+  await clickNext(dialog, 6);
+  await expect(dialog).toContainText('El otro gasto');
+  await expect(dialog.locator('[aria-live="polite"]')).toContainText(
+    'El otro gasto ($12.000) se divide igual'
+  );
+  await clickNext(dialog, 2);
   await expect(dialog.getByText('4 · Se salda')).toBeVisible();
   const transfers = suggestTransfers(tripGroup);
   await expect(dialog.locator('[data-slot="transfer"]')).toHaveCount(
@@ -203,7 +256,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('bienvenida en sus cuatro pasos', async ({ page }) => {
       await page.goto('/');
       await page.getByRole('button', { name: 'Pausar' }).click();
-      for (let i = 0; i < 4; i++) {
+      // 6 positions: step 1, the 3 sub-steps of step 2, steps 3 and 4.
+      for (let i = 0; i < 6; i++) {
         await page.waitForTimeout(900);
         await expectNoSeriousViolations(page);
         await page.getByRole('button', { name: 'Paso siguiente' }).click();
@@ -237,9 +291,13 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await dialog.getByRole('button', { name: 'Pausar' }).click();
       await page.waitForTimeout(900);
       await expectNoSeriousViolations(page);
-      for (let i = 0; i < 3; i++) {
-        await dialog.getByRole('button', { name: 'Paso siguiente' }).click();
-      }
+      // A sub-step of step 2, with a segment cut into pieces.
+      await clickNext(dialog, 2);
+      await page.waitForTimeout(900);
+      await expectNoSeriousViolations(page);
+      // Last position: step 4.
+      await clickNext(dialog, 7);
+      await expect(dialog.getByText('4 · Se salda')).toBeVisible();
       await page.waitForTimeout(900);
       await expectNoSeriousViolations(page);
     });
