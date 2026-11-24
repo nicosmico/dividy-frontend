@@ -203,13 +203,16 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
     other.getByRole('heading', { name: 'Pagos registrados' })
   ).toBeVisible();
   // Scrolled down, the full notice is gone but a one-line bar stays on top.
-  await other.mouse.wheel(0, 2000);
+  // (mouse.wheel does not exist in mobile WebKit, so scroll the window.)
+  await other.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  );
   await expect(banner).not.toBeInViewport();
   const compact = other.getByTestId('snapshot-compact-banner');
   await expect(compact).toBeVisible();
   await expect(compact).toContainText(/Captura del .+ · solo lectura/);
   await expect(compact).toBeInViewport();
-  await other.mouse.wheel(0, -4000);
+  await other.evaluate(() => window.scrollTo(0, 0));
   await expect(banner).toBeInViewport();
   await expect(compact).toBeHidden();
   await expectNoHorizontalScroll(other);
