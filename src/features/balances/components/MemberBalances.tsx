@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import { Collapsible } from 'radix-ui';
 
+import { BalanceLabel } from '@/components/balance-label';
 import { Card } from '@/components/ui/card';
 import {
   formatAmount,
@@ -14,28 +15,7 @@ import {
   useMemberMoods,
   type AvatarMood,
 } from '@/features/members';
-import { describeBalance } from '@/lib/balance-text';
 import { formatDate } from '@/lib/dates';
-import { cn } from '@/lib/utils';
-
-/** Balance as text and color (never color alone). */
-export function BalanceLabel({
-  balance,
-  className,
-}: {
-  balance: number;
-  className?: string;
-}) {
-  const tone =
-    balance > 0
-      ? 'font-semibold text-positive'
-      : balance < 0
-        ? 'font-semibold text-negative'
-        : 'font-medium text-muted-foreground';
-  return (
-    <span className={cn(tone, className)}>{describeBalance(balance)}</span>
-  );
-}
 
 /** Balance of every member; each row expands to show where the number comes from. */
 export function MemberBalances({ group }: { group: Group }) {

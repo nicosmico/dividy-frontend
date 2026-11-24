@@ -17,4 +17,10 @@ export {
 } from './colors';
 export { buildExampleGroup, settleGroup } from './example-group';
 export { LazyExplanationPlayer } from './LazyExplanationPlayer';
-export { narrate, STEP_TITLES } from './narration';
+export { narrate, narrateShareStep, STEP_TITLES } from './narration';
+export { PaidShareRow, type PaidShareRowProps } from './PaidShareRow';
+export {
+  buildShareSteps,
+  MAX_INDIVIDUAL_SHARE_STEPS,
+  type ShareStep,
+} from './share-steps';
