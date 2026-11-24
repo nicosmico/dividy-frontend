@@ -92,3 +92,13 @@ export {
   type Snapshot,
   type SnapshotSaveDecision,
 } from './snapshot';
+export {
+  describeViewerStatus,
+  isStaleViewerChoice,
+  resolveViewer,
+  viewerFirst,
+  type ViewerChoice,
+  type ViewerResolution,
+  type ViewerScope,
+  type ViewerStatus,
+} from './viewer';
