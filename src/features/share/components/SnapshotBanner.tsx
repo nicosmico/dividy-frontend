@@ -12,7 +12,7 @@ export function SnapshotBanner({ takenAt }: { takenAt: string }) {
     <div className='sticky top-0 z-30 bg-background py-2'>
       <section
         aria-label='Captura de solo lectura'
-        className='flex items-start gap-2.5 rounded-card bg-accent p-3 text-sm text-accent-foreground shadow-soft'
+        className='flex items-start gap-2.5 rounded-card bg-accent p-3 text-sm leading-snug text-accent-foreground shadow-soft'
       >
         <Eye aria-hidden='true' className='mt-0.5 size-5 shrink-0' />
         <p>
