@@ -65,7 +65,7 @@ describe('Crear grupo', () => {
     await user.type(input, ' ana {Enter}');
     expect(
       await screen.findByText(
-        'Ya hay alguien llamado "ana" en el grupo. Usa otro nombre.'
+        'Ya hay alguien llamado "Ana" en el grupo. Usa otro nombre.'
       )
     ).toBeInTheDocument();
 
