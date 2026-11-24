@@ -37,14 +37,18 @@ const MAX_LISTED_PARTS = 6;
 
 /**
  * The division of an expense for the tooltip, e.g. "entre 5: $30.000 c/u" or,
- * with a remainder, "entre 3: $3.334 / $3.333 / $3.333". `null` when only one
- * person pays it (there is no division to show).
+ * with a remainder, "entre 3: $3.334 / $3.333 / $3.333". A custom split says
+ * how it was made: "por partes: Ana 2, Beto 1, Carla 1" (or "por montos: Ana
+ * $50.000, …", "por porcentaje: Ana 50 %, …"). `null` when only one person
+ * pays it (there is no division to show).
  */
 export function describeDivision(
-  expense: Pick<ExplainedExpense, 'shares' | 'participantIds'>
+  expense: Pick<ExplainedExpense, 'shares' | 'participantIds'> &
+    Partial<Pick<ExplainedExpense, 'customDivision'>>
 ): string | null {
   const people = expense.participantIds.length;
   if (people < 2) return null;
+  if (expense.customDivision) return expense.customDivision;
   // Participants who owe $0 (more people than pesos) are not in `shares`.
   const parts = [
     ...expense.shares.map((share) => share.amount),

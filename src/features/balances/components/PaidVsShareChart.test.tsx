@@ -189,6 +189,39 @@ describe('Gráfico "Gastó vs. su parte"', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
+  it('el tramo de un gasto por partes dice cómo se dividió', async () => {
+    renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [
+        makeGroup({
+          members: ['Ana', 'Beto', 'Carla'],
+          expenses: [
+            {
+              description: 'Cabaña',
+              amount: 150_000,
+              payer: 'Ana',
+              among: ['Ana', 'Beto', 'Carla'],
+              split: {
+                type: 'shares',
+                participantIds: ['Ana', 'Beto', 'Carla'],
+                parts: { Ana: 2, Beto: 1, Carla: 1 },
+              },
+            },
+          ],
+        }),
+      ],
+    });
+    const section = await chart();
+    const name = 'Cabaña: $150.000 · por partes: Ana 2, Beto 1, Carla 1';
+    within(section).getByRole('button', { name }).focus();
+    const tip = await screen.findByRole('dialog', { name });
+    expect(
+      within(tip).getByText('$150.000 · por partes: Ana 2, Beto 1, Carla 1')
+    ).toBeInTheDocument();
+    // The long text wraps instead of widening the tooltip.
+    expect(tip.className).toContain('max-w-');
+  });
+
   it('tocar un tramo abre su tooltip y las flechas pasan al siguiente tramo', async () => {
     const { user } = renderWithProviders(undefined, {
       route: ROUTE,

@@ -1,6 +1,8 @@
 import {
   computeBalances,
   computeShares,
+  describeSplitValues,
+  splitTypeLabel,
   suggestTransfers,
   type Amount,
   type ExpenseId,
@@ -9,6 +11,7 @@ import {
   type MemberId,
   type Payment,
   type SuggestedTransfer,
+  type Split,
 } from '@/domain';
 import { suggestIcon, type IconKey } from '@/features/icons';
 import {
@@ -24,6 +27,14 @@ export interface ExplainedExpense {
   amount: Amount;
   payerId: MemberId;
   participantIds: MemberId[];
+  /** How it is divided: equal parts, or amounts, percentages or parts (ADR 0008). */
+  split: Split;
+  /**
+   * What the tooltip says of a custom split, in group order ("por partes: Ana
+   * 2, Beto 1"); `null` for equal parts, which `describeDivision` explains
+   * from the shares.
+   */
+  customDivision: string | null;
   /** 0 = the biggest expense. */
   rank: number;
   color: ExpenseColor;
@@ -88,6 +99,11 @@ export function buildExplanation(group: Group): Explanation {
     amount: expense.amount,
     payerId: expense.payerId,
     participantIds: expense.split.participantIds,
+    split: expense.split,
+    customDivision:
+      expense.split.type === 'equal'
+        ? null
+        : `${splitTypeLabel(expense.split.type)}: ${describeSplitValues(expense.split, group.members)}`,
     rank,
     color: colorForRank(rank),
     icon: suggestIcon(expense.description, 'expense'),
