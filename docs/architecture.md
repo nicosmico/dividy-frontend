@@ -32,7 +32,7 @@ src/
                        (QueryClient + RepositoryProvider + Toaster), router.tsx (AppRoutes),
                        AppLayout (enlace "Saltar al contenido", header + columna max-w-lg),
                        ErrorBoundary, NotFoundPage, pwa.ts (registro del service worker)
-  components/          dividy-logo, theme-toggle, form-field, responsive-dialog, page-fallback
+  components/          dividy-logo, balance-label (saldo en palabras y color), theme-toggle, form-field, responsive-dialog, page-fallback
     ui/                shadcn/ui (button, input, label, card, dialog, alert-dialog, drawer,
                        dropdown-menu, radio-group, select, separator, skeleton, badge, sonner)
   features/
@@ -44,9 +44,9 @@ src/
                        dominio), expense-list.ts (orden y agrupación por fecha)
     icons/             suggestIcon (función pura) + keywords.ts (diccionario) + ENTITY_ICONS (clave → Lucide)
                        + EntityIcon (tile). Calculado al mostrar; nada se guarda (decisión 89)
-    explanation/       buildExplanation(group) (pura: tramos por gasto de lo que pagó cada uno y de su parte, saldos, transferencias sugeridas y color por gasto, con `computeShares`, `computeBalances` y `suggestTransfers`), buildLegend, narrate (texto de cada paso), buildExampleGroup / settleGroup (el ejemplo de la bienvenida, en memoria),
-                       ExplanationPlayer (animación de 4 pasos; columnas verticales hasta 4 miembros, filas desde 5; CSS transitions) y LazyExplanationPlayer (su propio chunk)
-    balances/          BalancesTab: PaidVsShareChart ("Pagó vs. su parte", tramos con tooltip, leyenda, tabla y botón "Ver cómo se calculó" que abre la animación en un ResponsiveDialog), SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
+    explanation/       buildExplanation(group) (pura: tramos por gasto de lo que pagó cada uno y de su parte, saldos, transferencias sugeridas y color por gasto, con `computeShares`, `computeBalances` y `suggestTransfers`), buildLegend, narrate (texto de cada paso), buildExampleGroup / settleGroup (el ejemplo de la bienvenida, en memoria), buildShareSteps (pura: los sub-pasos del paso 2, un gasto cada uno) y narrateShareStep,
+                       PaidShareRow (la fila "Pagó / Su parte" que dibujan el gráfico de Saldos y la animación; con `motion` se anima, con `tooltips` sus tramos son botones), ExplanationPlayer (animación de 4 pasos sobre esas filas horizontales para cualquier cantidad de miembros; el paso 2 va gasto por gasto; CSS transitions) y LazyExplanationPlayer (su propio chunk)
+    balances/          BalancesTab: PaidVsShareChart ("Pagó vs. su parte" con `PaidShareRow` de explanation, tramos con tooltip, leyenda, tabla y botón "Ver cómo se calculó" que abre la animación en un ResponsiveDialog), SuggestedTransfers ("Marcar como pagado"), MemberBalances (desglose),
                        PaymentsList, ShareSummaryButton (compartir o copiar el resumen)
   hooks/               use-media-query, use-theme (tema claro/oscuro; ver docs/design-system.md)
   lib/                 utils (cn), dates (todayLocal, formatDate), plural, id, query-client,
