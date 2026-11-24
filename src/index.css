@@ -178,6 +178,9 @@
 :root {
   --toast-bottom: calc(1rem + env(safe-area-inset-bottom));
   --toast-top: calc(1rem + env(safe-area-inset-top));
+  /* A bottom sheet never grows into the strip where a top toast shows while a
+     modal is open: toast (about 4.75rem with its action) plus a 1rem gap. */
+  --sheet-max-h: min(90svh, calc(100svh - var(--toast-top) - 5.75rem));
 }
 /* Radix sets pointer-events: none on <body> while a modal is open and the
    toaster lives outside it: without this "Deshacer" could not be tapped. */

@@ -230,6 +230,14 @@ test('con un sheet abierto el toast no tapa sus botones y "Deshacer" sigue usabl
       box.y < toastBox.y + toastBox.height;
     expect(overlaps, `el toast tapa "${name}"`).toBe(false);
   }
+  // The toast sits above the sheet with a visible gap, never touching it.
+  const sheetBox = (await dialog.boundingBox())!;
+  if (toastBox.y < sheetBox.y) {
+    expect(
+      sheetBox.y - (toastBox.y + toastBox.height),
+      'separación entre el toast y el sheet'
+    ).toBeGreaterThanOrEqual(8);
+  }
 
   await toast.getByRole('button', { name: 'Deshacer' }).click();
   await expect(page.getByText('Cambio deshecho')).toBeVisible();
