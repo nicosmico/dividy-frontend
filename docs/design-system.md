@@ -4,7 +4,7 @@ El design system de Dividy vive solo en el código (decisión 88): tokens semán
 
 ## Reglas de oro
 
-1. **Colores solo vía tokens.** En componentes, `bg-card`, `text-muted-foreground`, `border-border`, `text-positive`... Nunca un hex ni una paleta fija de Tailwind (`zinc-900`, `amber-200`, `emerald-700`, `red-600`, `bg-white`, `bg-black/50`). Los únicos archivos que definen colores son `src/index.css` y el generador de avatares (los avatares no cambian con el tema).
+1. **Colores solo vía tokens.** En componentes, `bg-card`, `text-muted-foreground`, `border-border`, `text-positive`... Nunca un hex ni una paleta fija de Tailwind (`zinc-900`, `amber-200`, `emerald-700`, `red-600`, `bg-white`, `bg-black/50`). Los únicos archivos que definen colores son `src/index.css` y los de avatares (`avatar-palette.ts` y `avatar-generator.ts`; los avatares no cambian con el tema).
 2. **El menta nunca va como texto sobre blanco** (contraste 1,12:1). Es un color de relleno: fondo de botones y badges, siempre con texto navy (`accent-foreground`).
 3. **El color nunca es el único portador de significado.** "Le deben" y "Debe" siempre llevan texto; el verde y el rojo solo refuerzan.
 4. **Contraste AA en ambos modos**: 4,5:1 para texto normal, 3:1 para texto grande y para el borde de los controles de formulario (WCAG 1.4.11). Cada par de la tabla de abajo se calculó con la fórmula de WCAG; axe lo audita además en los E2E, en claro y en oscuro.
@@ -110,7 +110,7 @@ Si cambias un token, recalcula los pares que lo usan y corre `npm run test:e2e` 
 
 ## Colores de gráfico
 
-Siete tokens exclusivos de la visualización "Pagó vs. su parte" y de la animación (decisión 92). Se usan con `var(--chart-N)` (o `bg-chart-N`); **nunca** para saldos: el verde y el rojo quedan reservados para "Le deben" y "Debe".
+Siete tokens exclusivos de la visualización "Gastó vs. su parte" y de la animación (decisión 92). Se usan con `var(--chart-N)` (o `bg-chart-N`); **nunca** para saldos: el verde y el rojo quedan reservados para "Le deben" y "Debe".
 
 | Token                   | Claro     | Oscuro    | Color    |
 | ----------------------- | --------- | --------- | -------- |
@@ -148,6 +148,14 @@ Cada grupo y cada gasto muestra un ícono que se **deduce del texto** (nombre de
 
 El humor del avatar sale del saldo (decisión 93): **triste** si el saldo es distinto de 0 (debe o le deben), **feliz** si está al día. Usa `useMemberMoods(group)` (`@/features/members`) y pasa `mood={moods.get(member.id)}` a `MemberAvatar`; no decidas el humor a mano. El avatar lleva `data-mood` para los tests.
 
+### Colores de avatar
+
+Cada miembro guarda `avatar: { color, seed }` (decisión 133). `color` es un índice 0 a 7 de `AVATAR_COLORS` (`src/features/members/components/avatar-palette.ts`): menta `#D6FEC2`, celeste `#CFE3FF`, lavanda `#E3D9FF`, durazno `#FFDCC7`, rosado `#FFD6E5`, mantequilla `#FFF1B8`, aqua `#C8F2EA` y gris perla `#E4E8EE`. Son datos de ilustración, no tokens del tema: se ven igual en claro y oscuro (por eso `avatar-palette.ts` y `avatar-generator.ts` son los únicos archivos fuera de `index.css` con hex). **No cambies el orden**: el índice está guardado en cada miembro. El texto sobre ese fondo (la inicial mientras carga) usa `AVATAR_INK`. Tocar un avatar es un botón de 44 px (`AvatarButton`, `aria-label="Cambiar avatar de Ana"`).
+
+### Cortes en la barra "Gastó"
+
+El tramo de cada gasto en "Gastó" se corta en tantas partes como participantes, con separadores finos de 2 px del color de fondo (`bg-card`), decorativos (`aria-hidden`, `data-slot="cut"`). Las posiciones salen de las partes reales (`computeShares`, con el peso extra del resto) en `computeCuts` (`src/features/explanation/cuts.ts`); si la parte más angosta mediría menos de 6 px (`MIN_PART_PX`) no se dibuja ningún corte de ese tramo. "Su parte" nunca lleva cortes.
+
 ## Cómo agregar un componente de shadcn
 
 1. `npx shadcn@latest add <componente>`. Se instala en `src/components/ui/`.
@@ -167,4 +175,4 @@ El humor del avatar sale del saldo (decisión 93): **triste** si el saldo es dis
 
 3. Respeta los tamaños táctiles (`h-11`, `min-h-11`) y los íconos (Lucide, `aria-hidden`).
 4. Si necesitas un color nuevo que ningún token cubre, agrégalo como token en `:root` **y** en `.dark` de `index.css`, expónlo en `@theme inline` y documéntalo en la tabla de arriba; no lo escribas en el componente. Un componente con lógica lleva test, y toda pantalla o diálogo nuevo se agrega a `e2e/a11y.spec.ts` (que ya corre en ambos modos).
-5. Verifica: `grep -rnE "(bg|text|border|ring|fill|stroke)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]|#[0-9a-fA-F]{3,8}\b|(bg|text|border)-(white|black)\b" src --include=*.tsx --include=*.ts | grep -v "src/index.css\|avatar-generator"` no debe imprimir nada.
+5. Verifica: `grep -rnE "(bg|text|border|ring|fill|stroke)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]|#[0-9a-fA-F]{3,8}\b|(bg|text|border)-(white|black)\b" src --include=*.tsx --include=*.ts | grep -v "src/index.css\|avatar-generator\|avatar-palette"` no debe imprimir nada.
