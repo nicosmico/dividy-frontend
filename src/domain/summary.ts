@@ -8,13 +8,25 @@ function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`;
 }
 
+export interface SummaryOptions {
+  /** Formatted date of a snapshot: adds "Cuentas al <asOf>" under the title. */
+  asOf?: string;
+  /** Read-only link: adds "Ver el detalle: <link>" at the end. */
+  link?: string;
+}
+
 /** WhatsApp-friendly Spanish summary of the group (uses the group's order). */
-export function formatGroupSummary(group: Group): string {
+export function formatGroupSummary(
+  group: Group,
+  options: SummaryOptions = {}
+): string {
   const nameOf = new Map<MemberId, string>(
     group.members.map((m) => [m.id, m.name])
   );
   const name = (id: MemberId) => nameOf.get(id) ?? '?';
-  const lines: string[] = [`*${group.name}*`, ''];
+  const lines: string[] = [`*${group.name}*`];
+  if (options.asOf) lines.push(`Cuentas al ${options.asOf}`);
+  lines.push('');
 
   lines.push('*Gastos*');
   if (group.expenses.length === 0) {
@@ -52,5 +64,6 @@ export function formatGroupSummary(group: Group): string {
       );
     }
   }
+  if (options.link) lines.push('', `Ver el detalle: ${options.link}`);
   return lines.join('\n');
 }

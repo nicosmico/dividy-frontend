@@ -80,4 +80,15 @@ export {
   type PaymentFields,
 } from './validation';
 export { capitalizeFirst } from './text';
-export { formatGroupSummary } from './summary';
+export { formatGroupSummary, type SummaryOptions } from './summary';
+export {
+  createSnapshot,
+  decideSnapshotSave,
+  fromCompactSnapshotV1,
+  getSnapshotIssues,
+  snapshotToGroup,
+  toCompactSnapshotV1,
+  type CompactSnapshotV1,
+  type Snapshot,
+  type SnapshotSaveDecision,
+} from './snapshot';

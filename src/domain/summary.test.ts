@@ -67,4 +67,39 @@ describe('formatGroupSummary', () => {
     });
     expect(formatGroupSummary(group)).toContain('pagó ?');
   });
+
+  it('en una captura agrega "Cuentas al <fecha>" bajo el título y el link al final', () => {
+    const group = makeGroup({
+      name: 'Asado',
+      members: ['Ana', 'Beto'],
+      expenses: [
+        {
+          description: 'Carne',
+          amount: 1000,
+          payer: 'Ana',
+          among: ['Ana', 'Beto'],
+        },
+      ],
+    });
+    const lines = formatGroupSummary(group, {
+      asOf: '24 nov 2026, 10:42',
+      link: 'https://dividy.app/shared#v1.abc',
+    }).split('\n');
+    expect(lines.slice(0, 3)).toEqual([
+      '*Asado*',
+      'Cuentas al 24 nov 2026, 10:42',
+      '',
+    ]);
+    expect(lines.slice(-2)).toEqual([
+      '',
+      'Ver el detalle: https://dividy.app/shared#v1.abc',
+    ]);
+  });
+
+  it('sin opciones el texto no lleva fecha ni link', () => {
+    const group = makeGroup({ name: 'Asado', members: ['Ana'] });
+    const text = formatGroupSummary(group);
+    expect(text).not.toContain('Cuentas al');
+    expect(text).not.toContain('Ver el detalle');
+  });
 });
