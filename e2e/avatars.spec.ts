@@ -182,13 +182,13 @@ test('migra un documento v2 sembrado: misma cara (semilla = id) y colores en ord
   await expect.poll(async () => (await listColors(page)).length).toBe(3);
   expect(await listColors(page)).toEqual(['0', '1', '2']);
 
-  // The first change saves the migrated document (v3) without losing data.
+  // The first change saves the migrated document (v4) without losing data.
   await page.getByRole('button', { name: 'Cambiar avatar de Cami' }).click();
   await expect(page.getByText('Cara nueva para Cami')).toBeVisible();
   const stored = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('dividy') ?? '{}')
   );
-  expect(stored.version).toBe(3);
+  expect(stored.version).toBe(4);
   expect(stored.groups[0].expenses).toHaveLength(1);
   expect(
     stored.groups[0].members.map(

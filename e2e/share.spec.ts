@@ -8,6 +8,7 @@ import {
 } from '@playwright/test';
 
 import { openTab } from './navigation';
+import { sampleGroups, seedDocument } from './seed';
 import { snapshotToken } from './snapshot-link';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 
@@ -288,7 +289,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
 
   // Delete it, and undo.
   await other.getByRole('button', { name: 'Eliminar captura' }).click();
-  await expect(other.getByText('Captura eliminada')).toBeVisible();
+  await expect(other.getByText('Captura eliminada').last()).toBeVisible();
   await expect(other).toHaveURL(/\/$/);
   await other.getByRole('button', { name: 'Deshacer' }).click();
   await expect(sharedSection).toBeVisible();
@@ -296,7 +297,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   await other
     .getByRole('button', { name: 'Eliminar captura de Viaje a Pucón' })
     .click();
-  await expect(other.getByText('Captura eliminada')).toBeVisible();
+  await expect(other.getByText('Captura eliminada').last()).toBeVisible();
   await expect(sharedSection).toHaveCount(0);
   await other.reload();
   await expect(
@@ -371,4 +372,40 @@ test('un link armado por otro programa (zlib) también se abre', async ({
   await expect(page.getByText('Carne')).toBeVisible();
   await openTab(page, 'Saldos');
   await expect(page.getByText('Pendiente: $6.666 por saldar')).toBeVisible();
+});
+
+test('un documento v3 (sin capturas) se migra a v4 al guardar una captura, sin perder los grupos', async ({
+  page,
+}) => {
+  const groups = sampleGroups();
+  await seedDocument(page, { version: 3, groups });
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: /Viaje a Pucón/ })).toBeVisible();
+  await expect(page.getByText('Compartidos conmigo')).toHaveCount(0);
+
+  const other = makeGroup({
+    name: 'Asado',
+    members: ['Ana', 'Beto'],
+    expenses: [{ amount: 4000, payer: 'Ana', among: ['Ana', 'Beto'] }],
+  });
+  await page.goto(
+    `/shared#${snapshotToken(other, '2026-11-24T13:42:00.000Z')}`
+  );
+  await page.getByRole('button', { name: 'Guardar en mi celular' }).click();
+  await expect(page.getByText('Captura guardada en Mis grupos')).toBeVisible();
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('dividy') ?? '{}')
+  );
+  expect(stored.version).toBe(4);
+  expect(stored.groups.map((g: { name: string }) => g.name)).toEqual(
+    groups.map((g) => g.name)
+  );
+  expect(stored.snapshots).toHaveLength(1);
+
+  await page.getByRole('link', { name: 'Dividy' }).click();
+  await expect(page.getByRole('link', { name: /Viaje a Pucón/ })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Compartidos conmigo · solo lectura' })
+  ).toBeVisible();
 });
