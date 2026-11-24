@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { createSnapshot } from '../src/domain';
 import { sampleGroups, seedDocument, seedGroups } from './seed';
 import { snapshotPath } from './snapshot-link';
+import { seedViewers } from './viewer';
 
 /**
  * Visual regression: one screenshot per main screen, in light and dark.
@@ -136,7 +137,25 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await shot(page, `explanation-step4-${colorScheme}`);
     });
 
+    test('Saldos, viendo como quien debe', async ({ page }) => {
+      await seedViewers(page, { 'group:g1': { memberId: 'Beto' } });
+      await seedGroups(page, sampleGroups(), { askViewer: true });
+      await page.goto('/groups/g1/balances');
+      await expect(page.getByText('Debes $1.333')).toBeVisible();
+      await shot(page, `balances-viewer-${colorScheme}`);
+    });
+
+    test('¿Quién eres? al abrir una captura', async ({ page }) => {
+      await page.goto(snapshotPath(sampleGroups()[0], TAKEN));
+      await expect(
+        page.getByRole('dialog', { name: '¿Quién eres?' })
+      ).toBeVisible();
+      await shot(page, `viewer-sheet-${colorScheme}`);
+    });
+
     test('Captura de solo lectura', async ({ page }) => {
+      // Already answered "Solo estoy mirando", so the sheet does not cover it.
+      await seedViewers(page, { 'snapshot:g1': { none: true } });
       await page.goto(snapshotPath(sampleGroups()[0], TAKEN));
       await expect(
         page.getByRole('region', { name: 'Captura de solo lectura' })
