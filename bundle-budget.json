@@ -1,24 +1,22 @@
 {
-  "initialJs": 198800,
-  "initialCss": 10200,
+  "initialJs": 199400,
+  "initialCss": 10300,
   "chunks": {
     "ExplanationPlayer.js": 4000,
     "alert-dialog.js": 1400,
     "avatar-generator.js": 54400,
-    "balances.js": 6800,
-    "card.js": 600,
+    "balances.js": 7200,
     "dates.js": 10600,
-    "expenses.js": 7600,
+    "expenses.js": 7500,
     "explanation.js": 8000,
-    "focus.js": 88500,
-    "groups.js": 4300,
+    "groups.js": 4400,
+    "index.css": 10300,
     "index.js": 82500,
-    "index.css": 10200,
-    "members.js": 41300,
+    "members.js": 43200,
     "play.js": 300,
-    "preload-helper.js": 27400,
+    "preload-helper.js": 116500,
     "rolldown-runtime.js": 500,
-    "share.js": 4800,
+    "share.js": 5100,
     "workbox-window.prod.es5.js": 2500
   }
 }
