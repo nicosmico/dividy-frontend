@@ -1,5 +1,6 @@
 import { computeBalances } from './balances';
 import { formatAmount } from './money';
+import { describeSplitValues, splitTypeLabel } from './split';
 import { suggestTransfers } from './transfers';
 import type { Group, MemberId } from './types';
 
@@ -37,8 +38,12 @@ export function formatGroupSummary(
       const among = group.members
         .filter((m) => participants.has(m.id))
         .map((m) => m.name);
+      const how =
+        e.split.type === 'equal'
+          ? `entre ${joinNames(among)}`
+          : `${splitTypeLabel(e.split.type)} (${describeSplitValues(e.split, group.members)})`;
       lines.push(
-        `• ${e.description}: ${formatAmount(e.amount)}, pagó ${name(e.payerId)}, entre ${joinNames(among)}`
+        `• ${e.description}: ${formatAmount(e.amount)}, pagó ${name(e.payerId)}, ${how}`
       );
     }
   }

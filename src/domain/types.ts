@@ -27,8 +27,33 @@ export interface EqualSplit {
   participantIds: MemberId[];
 }
 
-/** Discriminated union so other split kinds can be added without migrations. */
-export type Split = EqualSplit;
+/** Each participant owes a whole-peso amount; the amounts add up to the expense. */
+export interface ExactSplit {
+  type: 'exact';
+  participantIds: MemberId[];
+  amounts: Record<MemberId, Amount>;
+}
+
+/**
+ * Each participant owes a percentage, stored as integer basis points
+ * (100,00 % = 10000); they add up to 10000. See ADR 0008.
+ */
+export interface PercentSplit {
+  type: 'percent';
+  participantIds: MemberId[];
+  basisPoints: Record<MemberId, number>;
+}
+
+/** Each participant owes in proportion to their parts (integers, at least 1). */
+export interface SharesSplit {
+  type: 'shares';
+  participantIds: MemberId[];
+  parts: Record<MemberId, number>;
+}
+
+/** Discriminated union: how an expense is divided among its participants. */
+export type Split = EqualSplit | ExactSplit | PercentSplit | SharesSplit;
+export type SplitType = Split['type'];
 
 export interface Expense {
   id: ExpenseId;
@@ -86,6 +111,7 @@ export type DomainErrorCode =
   | 'invalid_snapshot'
   | 'unsupported_snapshot_version'
   | 'no_participants'
+  | 'invalid_split'
   | 'same_member_payment';
 
 export interface DomainError {

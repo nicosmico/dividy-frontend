@@ -29,7 +29,7 @@ function useDecodedSnapshot(hash: string): Result<Snapshot> | null {
 }
 
 /**
- * `/shared#v1.<payload>`: opens a snapshot straight from the link, even on a
+ * `/shared#v2.<payload>`: opens a snapshot straight from the link, even on a
  * first visit (the welcome screen is not involved). Its tabs are the children
  * of this route.
  */

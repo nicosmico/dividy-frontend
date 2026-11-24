@@ -127,16 +127,11 @@ export function ExpenseForm({ group, expense, onDone }: ExpenseFormProps) {
     Number.isInteger(amount) && amount > 0
       ? computeShares(
           {
-            id: 'preview',
-            description: '',
             amount,
-            payerId: values.payerId ?? '',
             split: {
               type: 'equal',
               participantIds: (values.participantIds ?? []) as string[],
             },
-            date: values.date ?? '',
-            createdAt: '',
           },
           group.members
         )

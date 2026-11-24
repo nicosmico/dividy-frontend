@@ -1,5 +1,6 @@
 import { nextAvatarColor, validateAvatar } from './avatar';
 import { fail, ok } from './result';
+import { reassignSplit, toEqualSplit } from './split';
 import type {
   Expense,
   ExpenseId,
@@ -10,6 +11,7 @@ import type {
   Payment,
   PaymentId,
   Result,
+  Split,
 } from './types';
 import {
   validateExpenseFields,
@@ -62,6 +64,12 @@ export interface MemberRemovalImpact {
   payments: Payment[];
   /** Expenses that a cascade delete would remove (paid by them, or left without participants). */
   expensesDeletedByCascade: Expense[];
+  /**
+   * Expenses with a custom split (amounts, percentages or parts) the member
+   * takes part in and that survive a cascade delete: they become equal parts
+   * among the people who remain (ADR 0008).
+   */
+  expensesConvertedByCascade: Expense[];
   /** `true` when the member has any activity, so a strategy other than `none` is needed. */
   requiresStrategy: boolean;
 }
@@ -159,6 +167,15 @@ function memberNotFound<T>(): Result<T> {
   );
 }
 
+/** The split with its participants in the order of the group (how forms save them). */
+function inGroupOrder(split: Split, members: readonly Member[]): Split {
+  const order = new Map(members.map((m, i) => [m.id, i]));
+  const participantIds = [...split.participantIds].sort(
+    (a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0)
+  );
+  return { ...split, participantIds };
+}
+
 function participantsOf(expense: Expense): MemberId[] {
   return expense.split.participantIds;
 }
@@ -179,11 +196,16 @@ export function getMemberRemovalImpact(
     (e) =>
       e.payerId === memberId || participantsOf(e).every((id) => id === memberId)
   );
+  const deletedIds = new Set(expensesDeletedByCascade.map((e) => e.id));
+  const expensesConvertedByCascade = participatingExpenses.filter(
+    (e) => e.split.type !== 'equal' && !deletedIds.has(e.id)
+  );
   return ok({
     paidExpenses,
     participatingExpenses,
     payments,
     expensesDeletedByCascade,
+    expensesConvertedByCascade,
     requiresStrategy:
       paidExpenses.length > 0 ||
       participatingExpenses.length > 0 ||
@@ -229,11 +251,13 @@ export function removeMember(
         if (e.payerId !== memberId && !participantsOf(e).includes(memberId)) {
           return e;
         }
-        const participantIds = [...new Set(participantsOf(e).map(swap))];
         return {
           ...e,
           payerId: swap(e.payerId),
-          split: { ...e.split, participantIds },
+          split: inGroupOrder(
+            reassignSplit(e.split, memberId, target),
+            members
+          ),
         };
       });
       const payments = group.payments
@@ -250,14 +274,14 @@ export function removeMember(
       const expenses: Expense[] = [];
       for (const e of group.expenses) {
         if (e.payerId === memberId) continue;
-        const participantIds = participantsOf(e).filter(
-          (id) => id !== memberId
-        );
-        if (participantIds.length === 0) continue;
+        const remaining = participantsOf(e).filter((id) => id !== memberId);
+        if (remaining.length === 0) continue;
+        // A custom split cannot lose a participant and still add up: the
+        // expense becomes equal parts among who remains (ADR 0008).
         expenses.push(
-          participantIds.length === participantsOf(e).length
+          remaining.length === participantsOf(e).length
             ? e
-            : { ...e, split: { ...e.split, participantIds } }
+            : { ...e, split: toEqualSplit(e.split, memberId) }
         );
       }
       const payments = group.payments.filter(

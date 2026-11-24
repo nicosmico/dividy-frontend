@@ -13,7 +13,11 @@ export type {
   Payment,
   PaymentId,
   Result,
+  ExactSplit,
+  PercentSplit,
+  SharesSplit,
   Split,
+  SplitType,
 } from './types';
 export { MAX_AMOUNT, MIN_AMOUNT, formatAmount, isValidAmount } from './money';
 export {
@@ -24,7 +28,15 @@ export {
   validateAvatar,
 } from './avatar';
 export { fail, ok } from './result';
-export { computeShares } from './split';
+export {
+  computeShares,
+  describeSplitValues,
+  formatPercent,
+  FULL_PERCENT,
+  presetSplit,
+  splitTypeLabel,
+  validateSplit,
+} from './split';
 export {
   computeBalances,
   getMemberBreakdown,
@@ -85,10 +97,13 @@ export {
   createSnapshot,
   decideSnapshotSave,
   fromCompactSnapshotV1,
+  fromCompactSnapshotV2,
   getSnapshotIssues,
   snapshotToGroup,
   toCompactSnapshotV1,
+  toCompactSnapshotV2,
   type CompactSnapshotV1,
+  type CompactSnapshotV2,
   type Snapshot,
   type SnapshotSaveDecision,
 } from './snapshot';

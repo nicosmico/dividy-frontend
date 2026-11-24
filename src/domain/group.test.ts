@@ -299,6 +299,7 @@ describe('getMemberRemovalImpact / removeMember', () => {
       participatingExpenses: [],
       payments: [],
       expensesDeletedByCascade: [],
+      expensesConvertedByCascade: [],
       requiresStrategy: false,
     });
   });

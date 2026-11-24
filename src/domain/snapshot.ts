@@ -1,4 +1,5 @@
 import { fail, ok } from './result';
+import { splitValuesOf } from './split';
 import type {
   Expense,
   Group,
@@ -7,6 +8,7 @@ import type {
   MemberId,
   Payment,
   Result,
+  Split,
 } from './types';
 import { getGroupIssues } from './validation';
 
@@ -31,6 +33,30 @@ export interface Snapshot {
 function canonicalIso(value: string, fallback: string): string {
   const ms = Date.parse(value);
   return Number.isNaN(ms) ? fallback : new Date(ms).toISOString();
+}
+
+/** The split with member ids replaced by `m<position>`, participants sorted by position. */
+function positionalSplit(
+  split: Split,
+  position: (id: MemberId) => number
+): Split {
+  const participantIds = split.participantIds
+    .map(position)
+    .sort((a, b) => a - b)
+    .map((p) => `m${p}`);
+  const values = splitValuesOf(split);
+  if (!values) return { type: 'equal', participantIds };
+  const moved = Object.fromEntries(
+    split.participantIds.map((id) => [`m${position(id)}`, values[id]])
+  );
+  switch (split.type) {
+    case 'exact':
+      return { type: 'exact', participantIds, amounts: moved };
+    case 'percent':
+      return { type: 'percent', participantIds, basisPoints: moved };
+    default:
+      return { type: 'shares', participantIds, parts: moved };
+  }
 }
 
 /**
@@ -59,13 +85,7 @@ export function createSnapshot(group: Group, takenAt: string): Snapshot {
       description: e.description,
       amount: e.amount,
       payerId: `m${position(e.payerId)}`,
-      split: {
-        type: 'equal',
-        participantIds: e.split.participantIds
-          .map(position)
-          .sort((a, b) => a - b)
-          .map((p) => `m${p}`),
-      },
+      split: positionalSplit(e.split, position),
       date: e.date,
       createdAt: canonicalIso(e.createdAt, taken),
     })),
@@ -143,7 +163,7 @@ export function decideSnapshotSave(
 
 /**
  * Compact form of format `v1` (see ADR 0006): positional arrays instead of
- * objects and member positions instead of ids.
+ * objects and member positions instead of ids. Equal splits only.
  */
 export type CompactSnapshotV1 = [
   sourceGroupId: string,
@@ -167,8 +187,57 @@ export type CompactSnapshotV1 = [
   ][],
 ];
 
-/** Replaces ids by positions and timestamps by epoch milliseconds. */
+/**
+ * Split kind of a v2 expense: 1 `exact`, 2 `percent`, 3 `shares`. An equal
+ * split writes neither the kind nor the values (ADR 0006, section v2).
+ */
+export type CompactSplitKind = 1 | 2 | 3;
+const KIND_OF_TYPE = { exact: 1, percent: 2, shares: 3 } as const;
+const TYPE_OF_KIND = { 1: 'exact', 2: 'percent', 3: 'shares' } as const;
+
+/**
+ * Compact form of format `v2`: the v1 shape with two trailing fields in each
+ * expense, only for custom splits: the split kind and one value per
+ * participant (same order as `participants`).
+ */
+export type CompactSnapshotV2 = [
+  ...CompactSnapshotV1Head,
+  expenses: (
+    | CompactExpenseV1
+    | [...CompactExpenseV1, kind: CompactSplitKind, values: number[]]
+  )[],
+  payments: CompactSnapshotV1[5],
+];
+type CompactSnapshotV1Head = [
+  sourceGroupId: CompactSnapshotV1[0],
+  takenAt: CompactSnapshotV1[1],
+  name: CompactSnapshotV1[2],
+  members: CompactSnapshotV1[3],
+];
+type CompactExpenseV1 = CompactSnapshotV1[4][number];
+
+/** Replaces ids by positions and timestamps by epoch milliseconds. Equal splits only (use v2 for the rest). */
 export function toCompactSnapshotV1(snapshot: Snapshot): CompactSnapshotV1 {
+  const compact = toCompactSnapshotV2(snapshot);
+  return [
+    compact[0],
+    compact[1],
+    compact[2],
+    compact[3],
+    compact[4].map((e): CompactExpenseV1 => [
+      e[0],
+      e[1],
+      e[2],
+      e[3],
+      e[4],
+      e[5],
+    ]),
+    compact[5],
+  ];
+}
+
+/** Replaces ids by positions and timestamps by epoch milliseconds. */
+export function toCompactSnapshotV2(snapshot: Snapshot): CompactSnapshotV2 {
   const index = new Map<MemberId, number>(
     snapshot.members.map((m, i) => [m.id, i])
   );
@@ -178,14 +247,23 @@ export function toCompactSnapshotV1(snapshot: Snapshot): CompactSnapshotV1 {
     Date.parse(snapshot.takenAt),
     snapshot.name,
     snapshot.members.map((m) => [m.name, m.avatar.color, m.avatar.seed]),
-    snapshot.expenses.map((e) => [
-      e.description,
-      e.amount,
-      at(e.payerId),
-      e.split.participantIds.map(at),
-      e.date,
-      Date.parse(e.createdAt),
-    ]),
+    snapshot.expenses.map((e) => {
+      const base: CompactExpenseV1 = [
+        e.description,
+        e.amount,
+        at(e.payerId),
+        e.split.participantIds.map(at),
+        e.date,
+        Date.parse(e.createdAt),
+      ];
+      const values = splitValuesOf(e.split);
+      if (!values || e.split.type === 'equal') return base;
+      return [
+        ...base,
+        KIND_OF_TYPE[e.split.type],
+        e.split.participantIds.map((id) => values[id]),
+      ];
+    }),
     snapshot.payments.map((p) => [
       at(p.fromId),
       at(p.toId),
@@ -198,12 +276,20 @@ export function toCompactSnapshotV1(snapshot: Snapshot): CompactSnapshotV1 {
 
 const INVALID = 'El contenido del link no es válido.';
 
-/**
- * Rebuilds a snapshot from its compact form, checking that every position
- * points to a member and that the result satisfies every group invariant.
- */
+/** Rebuilds a snapshot from the compact form of `v1`. */
 export function fromCompactSnapshotV1(
   compact: CompactSnapshotV1
+): Result<Snapshot> {
+  return fromCompactSnapshotV2(compact);
+}
+
+/**
+ * Rebuilds a snapshot from its compact form (`v2`, and `v1`, which is the
+ * same without custom splits), checking that every position points to a
+ * member and that the result satisfies every group invariant.
+ */
+export function fromCompactSnapshotV2(
+  compact: CompactSnapshotV1 | CompactSnapshotV2
 ): Result<Snapshot> {
   const [sourceGroupId, takenAt, name, members, expenses, payments] = compact;
   const instants = [
@@ -221,6 +307,34 @@ export function fromCompactSnapshotV1(
   for (const p of payments) positions.push(p[0], p[1]);
   if (!positions.every(isPosition)) return fail('invalid_snapshot', INVALID);
 
+  const splits: Split[] = [];
+  for (const e of expenses) {
+    const participantIds = e[3].map((p) => `m${p}`);
+    const [, , , , , , kind, values] = e as [
+      ...CompactExpenseV1,
+      CompactSplitKind?,
+      number[]?,
+    ];
+    if (kind === undefined) {
+      splits.push({ type: 'equal', participantIds });
+      continue;
+    }
+    const type = TYPE_OF_KIND[kind];
+    if (!type || !values || values.length !== participantIds.length) {
+      return fail('invalid_snapshot', INVALID);
+    }
+    const byId = Object.fromEntries(
+      participantIds.map((id, i) => [id, values[i]])
+    );
+    splits.push(
+      type === 'exact'
+        ? { type, participantIds, amounts: byId }
+        : type === 'percent'
+          ? { type, participantIds, basisPoints: byId }
+          : { type, participantIds, parts: byId }
+    );
+  }
+
   const iso = (ms: number) => new Date(ms).toISOString();
   const snapshot: Snapshot = {
     sourceGroupId,
@@ -232,15 +346,12 @@ export function fromCompactSnapshotV1(
       avatar: { color, seed },
     })),
     expenses: expenses.map(
-      ([description, amount, payer, participants, date, createdAt], i) => ({
+      ([description, amount, payer, , date, createdAt], i) => ({
         id: `e${i}`,
         description,
         amount,
         payerId: `m${payer}`,
-        split: {
-          type: 'equal',
-          participantIds: participants.map((p) => `m${p}`),
-        },
+        split: splits[i],
         date,
         createdAt: iso(createdAt),
       })

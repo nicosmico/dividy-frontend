@@ -1,6 +1,7 @@
 import { validateAvatar } from './avatar';
 import { isValidAmount, MAX_AMOUNT } from './money';
 import { fail, ok } from './result';
+import { validateSplit } from './split';
 import { capitalizeFirst } from './text';
 import type {
   Amount,
@@ -163,11 +164,13 @@ export function validateExpenseFields(
       'Quita de la división a quien ya no está en el grupo.'
     );
   }
+  const split = validateSplit(amount.value, fields.split, group.members);
+  if (!split.ok) return split;
   return ok({
     description: description.value,
     amount: amount.value,
     payerId: fields.payerId,
-    split: { type: 'equal', participantIds: [...participantIds] },
+    split: split.value,
     date: date.value,
   });
 }
