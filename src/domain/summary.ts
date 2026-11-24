@@ -48,7 +48,7 @@ export function formatGroupSummary(group: Group): string {
   } else {
     for (const t of transfers) {
       lines.push(
-        `• ${name(t.fromId)} le paga ${formatAmount(t.amount)} a ${name(t.toId)}`
+        `• ${name(t.fromId)} le transfiere ${formatAmount(t.amount)} a ${name(t.toId)}`
       );
     }
   }

@@ -74,11 +74,11 @@ describe('Pestaña Saldos', () => {
         'Para quedar al día',
         'Pagos registrados',
         'Detalle',
-        'Pagó vs. su parte',
+        'Gastó vs. su parte',
       ]);
       expect(order.at(-1)).toBe('Saldo por miembro');
       expect(
-        screen.getByRole('heading', { name: 'Pagó vs. su parte' }).tagName
+        screen.getByRole('heading', { name: 'Gastó vs. su parte' }).tagName
       ).toBe('H3');
     });
 
@@ -237,13 +237,13 @@ describe('Pestaña Saldos', () => {
     });
     // Each button names who pays whom, so a screen reader can tell them apart.
     expect(pay.map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Marcar como pagado: Carla le paga $3.333 a Ana',
-      'Marcar como pagado: Beto le paga $1.833 a Ana',
+      'Marcar como pagado: Carla le transfiere $3.333 a Ana',
+      'Marcar como pagado: Beto le transfiere $1.833 a Ana',
     ]);
     await user.click(pay[0]);
     const confirm = await screen.findByRole('alertdialog');
     expect(
-      within(confirm).getByText('¿Carla le pagó $3.333 a Ana?')
+      within(confirm).getByText('¿Carla le transfirió $3.333 a Ana?')
     ).toBeInTheDocument();
     // Nothing is registered until the user confirms.
     expect((await repository.get('g1'))?.payments).toHaveLength(0);
@@ -268,7 +268,7 @@ describe('Pestaña Saldos', () => {
     // Only Beto → Ana is left.
     await user.click(
       await screen.findByRole('button', {
-        name: 'Marcar como pagado: Beto le paga $1.833 a Ana',
+        name: 'Marcar como pagado: Beto le transfiere $1.833 a Ana',
       })
     );
     await user.click(
@@ -319,22 +319,67 @@ describe('Pestaña Saldos', () => {
     const row = screen
       .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
       .closest('li')!;
-    expect(within(row).getByText('Pagó')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Lo que gastó en el grupo')
+    ).toBeInTheDocument();
     expect(within(row).getByText('$10.000')).toBeInTheDocument();
-    expect(within(row).getByText('Su parte')).toBeInTheDocument();
-    // 3.334 (supermercado) + 1.500 (taxi)
-    expect(within(row).getByText('$4.834')).toBeInTheDocument();
-    expect(within(row).getByText('Pagos que recibió')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Menos su parte de los gastos')
+    ).toBeInTheDocument();
+    // 3.334 (supermercado) + 1.500 (taxi), subtracted
+    expect(within(row).getByText('−$4.834')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Menos los pagos que recibió')
+    ).toBeInTheDocument();
     // in the sum and in the payment line
     expect(within(row).getAllByText('−$1.000')).toHaveLength(2);
-    // 10.000 − 4.834 − 1.000
-    expect(within(row).getByText('$4.166')).toBeInTheDocument();
+    expect(within(row).queryByText('Más los pagos que envió')).toBeNull();
+    // 10.000 − 4.834 − 1.000, in words
+    const balance = within(row).getByText('Saldo').closest('div')!;
+    expect(balance).toHaveTextContent('Le deben $4.166');
+    expect(within(row).queryByText(/^Saldo =/)).toBeNull();
     expect(within(row).getByText('Supermercado')).toBeInTheDocument();
-    expect(within(row).getByText('Pagó $10.000')).toBeInTheDocument();
+    expect(within(row).getByText('Gastó $10.000')).toBeInTheDocument();
     expect(within(row).getByText('Su parte $3.334')).toBeInTheDocument();
     expect(within(row).getByText('Taxi')).toBeInTheDocument();
     expect(within(row).getByText('Su parte $1.500')).toBeInTheDocument();
+    expect(
+      within(row).getByText('Pagos enviados y recibidos')
+    ).toBeInTheDocument();
     expect(within(row).getByText(/Recibió de Carla/)).toBeInTheDocument();
+  });
+
+  it('el desglose muestra "Más los pagos que envió" con + y el saldo en palabras', async () => {
+    const group = groupWithDebts();
+    group.payments.push({
+      id: 'p1',
+      fromId: 'Carla',
+      toId: 'Ana',
+      amount: 1000,
+      date: '2026-01-02',
+      createdAt: '2026-01-02T10:00:00.000Z',
+    });
+    const { user } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [group],
+    });
+    await user.click(
+      await screen.findByRole('button', {
+        name: /^Carla\s*(Le deben|Debe|Al día)/,
+      })
+    );
+    const row = screen
+      .getByRole('button', { name: /^Carla\s*(Le deben|Debe|Al día)/ })
+      .closest('li')!;
+    expect(
+      within(row).getByText('Más los pagos que envió')
+    ).toBeInTheDocument();
+    expect(within(row).getAllByText('+$1.000')).toHaveLength(2);
+    expect(within(row).queryByText('Menos los pagos que recibió')).toBeNull();
+    expect(within(row).getByText(/Envió a Ana/)).toBeInTheDocument();
+    expect(within(row).getByText('Saldo').closest('div')).toHaveTextContent(
+      /^SaldoDebe \$/
+    );
   });
 
   it('lista los pagos, permite eliminarlos sin confirmar y deshacer', async () => {

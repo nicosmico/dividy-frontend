@@ -29,8 +29,8 @@ describe('formatGroupSummary', () => {
         '• Cami: debe $3.333',
         '',
         '*Para quedar al día*',
-        '• Beto le paga $3.333 a Ana',
-        '• Cami le paga $3.333 a Ana',
+        '• Beto le transfiere $3.333 a Ana',
+        '• Cami le transfiere $3.333 a Ana',
       ].join('\n')
     );
   });

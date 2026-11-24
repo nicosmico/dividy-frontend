@@ -44,8 +44,22 @@ describe('Pestaña Miembros', () => {
       groups: [makeGroup({ members: ['Ana', 'Beto'] })],
     });
     expect(await screen.findByText('2 miembros')).toBeInTheDocument();
-    expect(await screen.findByAltText('Ana')).toBeInTheDocument();
-    expect(await screen.findByAltText('Beto')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Cambiar avatar de Ana' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Cambiar avatar de Beto' })
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.querySelectorAll('img[data-avatar-color]')).toHaveLength(
+        2
+      )
+    );
+    expect(
+      [...document.querySelectorAll('[data-avatar-color]')].map((el) =>
+        el.getAttribute('data-avatar-color')
+      )
+    ).toEqual(['0', '1']);
   });
 
   it('agrega un miembro y valida duplicados', async () => {
@@ -71,16 +85,84 @@ describe('Pestaña Miembros', () => {
     expect(group?.members[2].id).toBe('id1');
   });
 
-  it('renombra un miembro', async () => {
+  it('tocar la carita da otra cara al instante, con el mismo color, y se puede deshacer', async () => {
+    const { user, repository } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [makeGroup({ members: ['Ana', 'Beto'] })],
+    });
+    const button = await screen.findByRole('button', {
+      name: 'Cambiar avatar de Beto',
+    });
+    expect(button).toHaveClass('size-11');
+    await user.click(button);
+
+    expect(await screen.findByText('Cara nueva para Beto')).toBeInTheDocument();
+    let group = await repository.get('g1');
+    expect(group?.members[1].avatar).toEqual({ color: 1, seed: 'id1' });
+    expect(group?.members[0].avatar).toEqual({ color: 0, seed: 'Ana' });
+
+    await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+    expect(await screen.findByText('Cambio deshecho')).toBeInTheDocument();
+    group = await repository.get('g1');
+    expect(group?.members[1].avatar).toEqual({ color: 1, seed: 'Beto' });
+  });
+
+  it('en el diálogo, la cara nueva es una vista previa: Guardar la persiste', async () => {
     const { user, repository } = renderWithProviders(undefined, {
       route: ROUTE,
       groups: [makeGroup({ members: ['Ana', 'Beto'] })],
     });
     await user.click(
-      await screen.findByRole('button', { name: 'Renombrar a Ana' })
+      await screen.findByRole('button', { name: 'Editar a Ana' })
     );
     const dialog = await screen.findByRole('dialog', {
-      name: 'Renombrar miembro',
+      name: 'Editar miembro',
+    });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Generar otra cara' })
+    );
+    expect((await repository.get('g1'))?.members[0].avatar.seed).toBe('Ana');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    expect((await repository.get('g1'))?.members[0].avatar).toEqual({
+      color: 0,
+      seed: 'id1',
+    });
+  });
+
+  it('en el diálogo, Cancelar descarta la cara nueva', async () => {
+    const { user, repository } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [makeGroup({ members: ['Ana', 'Beto'] })],
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar a Ana' })
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Editar miembro',
+    });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Generar otra cara' })
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    );
+    expect((await repository.get('g1'))?.members[0].avatar.seed).toBe('Ana');
+  });
+
+  it('edita el nombre de un miembro', async () => {
+    const { user, repository } = renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [makeGroup({ members: ['Ana', 'Beto'] })],
+    });
+    await user.click(
+      await screen.findByRole('button', { name: 'Editar a Ana' })
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Editar miembro',
     });
     const input = within(dialog).getByLabelText('Nombre');
     expect(input).toHaveValue('Ana');
@@ -102,7 +184,11 @@ describe('Pestaña Miembros', () => {
     );
     expect(await screen.findByText('Anita')).toBeInTheDocument();
     const group = await repository.get('g1');
-    expect(group?.members[0]).toEqual({ id: 'Ana', name: 'Anita' });
+    expect(group?.members[0]).toEqual({
+      id: 'Ana',
+      name: 'Anita',
+      avatar: { color: 0, seed: 'Ana' },
+    });
   });
 
   it('elimina directo, sin confirmar, a un miembro sin movimientos', async () => {
@@ -165,7 +251,9 @@ describe('Pestaña Miembros', () => {
     await user.click(screen.getByRole('button', { name: 'Deshacer' }));
 
     expect(
-      await screen.findByText('No se pudo deshacer porque el grupo cambió.')
+      await screen.findByText(
+        'No se pudo deshacer porque el grupo cambió. Revisa los cambios y corrígelos a mano.'
+      )
     ).toBeInTheDocument();
     expect((await repository.get('g1'))?.members).toHaveLength(3);
   });
@@ -247,7 +335,9 @@ describe('Pestaña Miembros', () => {
       name: 'Eliminar a Beto',
     });
     await user.click(
-      within(dialog).getByRole('radio', { name: 'Eliminar con sus gastos' })
+      within(dialog).getByRole('radio', {
+        name: 'Eliminar con sus gastos y pagos',
+      })
     );
     expect(
       within(dialog).getByText('Se borrarán 2 gastos:')

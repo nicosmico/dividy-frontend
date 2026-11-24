@@ -22,7 +22,7 @@ interface PaidVsShareChartProps {
 }
 
 /**
- * "Pagó vs. su parte" (decision 92): two horizontal bars per member split by
+ * "Gastó vs. su parte" (decision 92): two horizontal bars per member split by
  * expense, on one common scale, with a legend, tooltips on the segments and an
  * equivalent table. Everything comes from `buildExplanation`.
  */
@@ -35,14 +35,14 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
     () => new Map(explanation.expenses.map((e) => [e.id, e])),
     [explanation]
   );
-  const tooltips = { expenseById, active, setActive };
+  const tooltips = { active, setActive };
 
   return (
     <section aria-labelledby='chart-heading'>
       <Card className='gap-4 rounded-card p-4'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <h3 id='chart-heading' className='text-base font-bold'>
-            Pagó vs. su parte
+            Gastó vs. su parte
           </h3>
           <Button variant='accent' size='sm' onClick={onExplain}>
             <Play aria-hidden='true' className='fill-current' />
@@ -61,6 +61,7 @@ export function PaidVsShareChart({ group, onExplain }: PaidVsShareChartProps) {
               share={{ slices: m.shareSlices, total: m.share }}
               scaleMax={explanation.scaleMax}
               colors={explanation.colors}
+              expenseById={expenseById}
               tooltips={tooltips}
             />
           ))}
@@ -143,7 +144,7 @@ function TableAlternative({
                     Gasto
                   </th>
                   <th scope='col' className='py-1 text-right font-medium'>
-                    Pagó
+                    Gastó
                   </th>
                   <th scope='col' className='py-1 pl-2 text-right font-medium'>
                     Su parte
@@ -186,7 +187,7 @@ function TableAlternative({
         })}
         {group.payments.length > 0 && (
           <p className='text-muted-foreground'>
-            Los saldos incluyen los pagos ya registrados.
+            Los saldos incluyen los pagos registrados.
           </p>
         )}
       </div>

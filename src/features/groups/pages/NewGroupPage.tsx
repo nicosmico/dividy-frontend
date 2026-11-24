@@ -9,21 +9,33 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { EntityIcon } from '@/features/icons';
+import { AvatarButton } from '@/features/members';
 import {
   MAX_GROUP_NAME_LENGTH,
   MAX_MEMBER_NAME_LENGTH,
   validateGroupName,
+  nextAvatarColor,
   validateMemberName,
+  type NewMemberInput,
 } from '@/domain';
-import { isInfrastructureError, useCreateGroup } from '../data';
+import { isInfrastructureError, useCreateGroup, useServices } from '../data';
 
 const MIN_MEMBERS = 2;
+
+/** A member of the form: the id exists from the start so the face can be shown. */
+interface DraftMember {
+  id: string;
+  name: string;
+  /** Starts as the id; "regenerate" replaces it with a new one. */
+  seed: string;
+}
 
 /** `/groups/new`: group name and members in a single form. */
 export function NewGroupPage() {
   const navigate = useNavigate();
   const { create, isPending } = useCreateGroup();
-  const [members, setMembers] = useState<string[]>([]);
+  const { newId } = useServices();
+  const [members, setMembers] = useState<DraftMember[]>([]);
   const [memberDraft, setMemberDraft] = useState('');
   const [memberError, setMemberError] = useState<string>();
   const {
@@ -36,17 +48,18 @@ export function NewGroupPage() {
   const groupName = useWatch({ control, name: 'name' });
 
   /** Validates `draft` against the current members; returns the new list or null. */
-  function withDraft(current: string[], draft: string): string[] | null {
-    const result = validateMemberName(
-      { members: current.map((name) => ({ id: name, name })) },
-      draft
-    );
+  function withDraft(
+    current: DraftMember[],
+    draft: string
+  ): DraftMember[] | null {
+    const result = validateMemberName({ members: current }, draft);
     if (!result.ok) {
       setMemberError(result.error.message);
       return null;
     }
     setMemberError(undefined);
-    return [...current, result.value];
+    const id = newId();
+    return [...current, { id, name: result.value, seed: id }];
   }
 
   function addMember() {
@@ -63,6 +76,20 @@ export function NewGroupPage() {
     }
   }
 
+  /** Same rule as `createGroup`: colors in order, first free one. */
+  const avatarColors: number[] = [];
+  for (let i = 0; i < members.length; i++) {
+    avatarColors.push(
+      nextAvatarColor(avatarColors.map((color) => ({ avatar: { color } })))
+    );
+  }
+
+  function regenerateAvatar(id: string) {
+    setMembers((current) =>
+      current.map((m) => (m.id === id ? { ...m, seed: newId() } : m))
+    );
+  }
+
   const onSubmit = handleSubmit(async ({ name }) => {
     let finalMembers = members;
     if (memberDraft.trim()) {
@@ -76,7 +103,12 @@ export function NewGroupPage() {
       setMemberError('Agrega al menos 2 miembros para crear el grupo.');
       return;
     }
-    const result = await create({ name, memberNames: finalMembers });
+    const input: NewMemberInput[] = finalMembers.map((m) => ({
+      id: m.id,
+      name: m.name,
+      avatarSeed: m.seed,
+    }));
+    const result = await create({ name, members: input });
     if (result.ok) {
       toast.success('Grupo creado');
       navigate(`/groups/${result.value.id}`);
@@ -148,19 +180,31 @@ export function NewGroupPage() {
 
             {members.length > 0 && (
               <ul className='grid gap-2' aria-label='Miembros agregados'>
-                {members.map((name) => (
+                {members.map((member, index) => (
                   <li
-                    key={name}
-                    className='flex items-center justify-between gap-2 rounded-xl bg-secondary py-1 pr-1 pl-4'
+                    key={member.id}
+                    className='flex items-center gap-2 rounded-xl bg-secondary py-1 pr-1 pl-1'
                   >
-                    <span className='min-w-0 break-words'>{name}</span>
+                    <AvatarButton
+                      member={{
+                        name: member.name,
+                        avatar: {
+                          color: avatarColors[index],
+                          seed: member.seed,
+                        },
+                      }}
+                      onRegenerate={() => regenerateAvatar(member.id)}
+                    />
+                    <span className='min-w-0 flex-1 break-words'>
+                      {member.name}
+                    </span>
                     <Button
                       type='button'
                       variant='ghost'
                       size='icon'
-                      aria-label={`Quitar a ${name}`}
+                      aria-label={`Quitar a ${member.name}`}
                       onClick={() =>
-                        setMembers(members.filter((m) => m !== name))
+                        setMembers(members.filter((m) => m.id !== member.id))
                       }
                     >
                       <X />

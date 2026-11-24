@@ -8,6 +8,7 @@ export type {
   Group,
   GroupId,
   Member,
+  MemberAvatar,
   MemberId,
   Payment,
   PaymentId,
@@ -15,6 +16,13 @@ export type {
   Split,
 } from './types';
 export { MAX_AMOUNT, MIN_AMOUNT, formatAmount, isValidAmount } from './money';
+export {
+  AVATAR_COLOR_COUNT,
+  isValidAvatarColor,
+  nextAvatarColor,
+  regenerateMemberAvatar,
+  validateAvatar,
+} from './avatar';
 export { fail, ok } from './result';
 export { computeShares } from './split';
 export {
@@ -52,6 +60,7 @@ export {
   type CreateGroupInput,
   type MemberRemovalImpact,
   type NewExpenseInput,
+  type NewMemberInput,
   type NewPaymentInput,
   type RemoveMemberStrategy,
 } from './group';

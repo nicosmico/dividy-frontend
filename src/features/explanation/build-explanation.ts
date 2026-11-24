@@ -68,7 +68,7 @@ export interface Explanation {
 }
 
 /**
- * Everything the "Pagó vs. su parte" chart and the step-by-step animation
+ * Everything the "Gastó vs. su parte" chart and the step-by-step animation
  * draw, derived from the real domain (`computeShares`, `computeBalances`,
  * `suggestTransfers`). Pure: no React, no storage.
  */

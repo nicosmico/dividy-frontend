@@ -130,8 +130,8 @@ test('renombrar grupo no se desborda', async ({ page }) => {
 
 test('renombrar miembro con nombre largo no se desborda', async ({ page }) => {
   await page.goto('/groups/g1/members');
-  await page.getByRole('button', { name: `Renombrar a ${LONG_NAME}` }).click();
-  const sheet = page.getByRole('dialog', { name: 'Renombrar miembro' });
+  await page.getByRole('button', { name: `Editar a ${LONG_NAME}` }).click();
+  const sheet = page.getByRole('dialog', { name: 'Editar miembro' });
   await expectNoHorizontalOverflow(page, sheet);
 });
 
@@ -144,10 +144,10 @@ test('eliminar miembro con movimientos no se desborda en ninguna opción', async
   await expectNoHorizontalOverflow(page, sheet);
 
   await sheet.getByText('Reasignar a…').click();
-  await expect(sheet.getByLabel('Miembro destino')).toBeVisible();
+  await expect(sheet.getByLabel('¿A quién se los pasas?')).toBeVisible();
   await expectNoHorizontalOverflow(page, sheet);
 
-  await sheet.getByText('Eliminar con sus gastos').click();
+  await sheet.getByText('Eliminar con sus gastos y pagos').click();
   await expect(sheet.getByText(/Se borrar/)).toBeVisible();
   await expectNoHorizontalOverflow(page, sheet);
 });

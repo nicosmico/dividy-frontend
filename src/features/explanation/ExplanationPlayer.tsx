@@ -120,7 +120,7 @@ export function ExplanationPlayer({
   const [wantsPlay, setWantsPlay] = useState(true);
   const playing = wantsPlay && !reducedMotion;
 
-  // The "Pagó" bars start empty and grow once the first frame is on screen.
+  // The "Gastó" bars start empty and grow once the first frame is on screen.
   useEffect(() => {
     const id = window.setTimeout(() => setGrown(true), 60);
     return () => window.clearTimeout(id);
@@ -143,6 +143,10 @@ export function ExplanationPlayer({
   const moods = last ? moodsAfter : moodsBefore;
   const scaleMax = Math.max(before.scaleMax, after.scaleMax, 1);
   const titleId = useId();
+  const expenseById = useMemo(
+    () => new Map(before.expenses.map((e) => [e.id, e])),
+    [before]
+  );
   const shareStep: ShareStep | undefined =
     step === SHARE_STEP ? shareSteps[sub] : undefined;
   const rows = useMemo(
@@ -264,11 +268,11 @@ export function ExplanationPlayer({
             share={row.share}
             scaleMax={scaleMax}
             colors={before.colors}
+            expenseById={expenseById}
             motion={{
               index,
               paidGrown: grown,
               focus: row.focus,
-              split: row.split,
               shareShown: row.shareShown,
               shareAmountVisible: step >= SHARE_STEP,
               balanceVisible: step >= 2,
@@ -420,7 +424,6 @@ interface RowState {
   paid: BarData;
   share: BarData;
   focus: ReadonlySet<string> | null;
-  split: { expenseId: string; amounts: number[] } | null;
   shareShown: ReadonlySet<string>;
 }
 
@@ -448,20 +451,10 @@ function buildRows({
         : allIds
   );
   const focus = shareStep ? new Set(shareStep.expenseIds) : null;
-  const focused =
-    shareStep?.kind === 'expense'
-      ? before.expenses.find((e) => e.id === shareStep.expenseIds[0])
-      : undefined;
-  const split = focused
-    ? {
-        expenseId: focused.id,
-        amounts: focused.shares.map((share) => share.amount),
-      }
-    : null;
 
   return before.members.map((m, index) => {
     const settled = after.members[index];
-    // The welcome example ends with the transfers paid: each "Pagó" bar
+    // The welcome example ends with the transfers paid: each "Gastó" bar
     // becomes what the member really put in, which is their share.
     const evened = last && settledAtEnd;
     const paid: BarData = evened
@@ -479,7 +472,6 @@ function buildRows({
         displayTotal: shownTotal,
       },
       focus,
-      split,
       shareShown,
     };
   });
@@ -538,7 +530,7 @@ function Footer({
       {before.payments.length > 0 && (
         <div className='grid gap-1.5'>
           <p className='text-xs font-semibold text-muted-foreground'>
-            Pagos ya registrados
+            Pagos registrados
           </p>
           {before.payments.map((p) => (
             <TransferRow

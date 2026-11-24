@@ -4,21 +4,27 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { getMemberRemovalImpact, removeMember, type Member } from '@/domain';
+import {
+  getMemberRemovalImpact,
+  regenerateMemberAvatar,
+  removeMember,
+  type Member,
+} from '@/domain';
 import {
   isInfrastructureError,
   toastUndoable,
   useCurrentGroup,
   useGroupOperation,
+  useServices,
 } from '@/features/groups/data';
 import { restoreFocusIfLost } from '@/lib/focus';
 import { AddMemberForm } from './AddMemberForm';
-import { MemberAvatar } from './MemberAvatar';
+import { AvatarButton } from './AvatarButton';
 import { useMemberMoods } from './member-moods';
 import { RemoveMemberDialog } from './RemoveMemberDialog';
 import { RenameMemberDialog } from './RenameMemberDialog';
 
-/** Members tab: list, add, rename and remove. */
+/** Members tab: list, add, edit (name and face) and remove. */
 export function MembersTab() {
   const group = useCurrentGroup();
   const [renaming, setRenaming] = useState<Member | null>(null);
@@ -26,6 +32,17 @@ export function MembersTab() {
   const operation = useGroupOperation(group.id);
   const heading = useRef<HTMLHeadingElement>(null);
   const moods = useMemberMoods(group);
+  const { newId } = useServices();
+
+  /** New face (same color) right away, with "Deshacer". */
+  async function regenerateAvatar(member: Member) {
+    const result = await operation.run((g) =>
+      regenerateMemberAvatar(g, member.id, newId())
+    );
+    if (result.ok) toastUndoable(`Cara nueva para ${member.name}`, result);
+    else if (!isInfrastructureError(result.error))
+      toast.error(result.error.message);
+  }
 
   /**
    * A member without activity is removed right away, with "Deshacer". One with
@@ -71,15 +88,20 @@ export function MembersTab() {
         <ul className='grid grid-cols-[minmax(0,1fr)] gap-2'>
           {group.members.map((member) => (
             <li key={member.id}>
-              <Card className='flex-row items-center gap-3 p-2 pl-3'>
-                <MemberAvatar member={member} mood={moods.get(member.id)} />
+              <Card className='flex-row items-center gap-2 p-2 pl-2'>
+                <AvatarButton
+                  member={member}
+                  mood={moods.get(member.id)}
+                  disabled={operation.isPending}
+                  onRegenerate={() => void regenerateAvatar(member)}
+                />
                 <span className='min-w-0 flex-1 font-medium break-words'>
                   {member.name}
                 </span>
                 <Button
                   variant='ghost'
                   size='icon'
-                  aria-label={`Renombrar a ${member.name}`}
+                  aria-label={`Editar a ${member.name}`}
                   onClick={() => setRenaming(member)}
                 >
                   <Pencil />

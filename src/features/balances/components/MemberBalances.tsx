@@ -74,35 +74,37 @@ function MemberRow({
         </Collapsible.Trigger>
         <Collapsible.Content className='grid gap-4 border-t px-3 pt-3 pb-4 text-sm'>
           <dl className='grid gap-1.5'>
-            <Line label='Pagó' value={formatAmount(balance.paid)} />
-            <Line label='Su parte' value={formatAmount(balance.share)} />
-            {balance.paymentsSent > 0 && (
-              <Line
-                label='Pagos que envió'
-                value={`+${formatAmount(balance.paymentsSent)}`}
-              />
-            )}
+            <Line
+              label='Lo que gastó en el grupo'
+              value={formatAmount(balance.paid)}
+            />
+            <Line
+              label='Menos su parte de los gastos'
+              value={`−${formatAmount(balance.share)}`}
+            />
             {balance.paymentsReceived > 0 && (
               <Line
-                label='Pagos que recibió'
+                label='Menos los pagos que recibió'
                 value={`−${formatAmount(balance.paymentsReceived)}`}
+              />
+            )}
+            {balance.paymentsSent > 0 && (
+              <Line
+                label='Más los pagos que envió'
+                value={`+${formatAmount(balance.paymentsSent)}`}
               />
             )}
             <div className='flex items-baseline justify-between gap-3 border-t pt-1.5 font-semibold'>
               <dt>Saldo</dt>
-              <dd className='tabular-nums'>
-                {balance.balance < 0 ? '−' : ''}
-                {formatAmount(Math.abs(balance.balance))}
+              <dd>
+                <BalanceLabel balance={balance.balance} />
               </dd>
             </div>
           </dl>
-          <p className='text-muted-foreground'>
-            Saldo = pagó − su parte + pagos enviados − pagos recibidos.
-          </p>
 
           {breakdown.expenses.length > 0 && (
             <div className='grid gap-1.5'>
-              <h3 className='font-semibold'>Gastos en que aparece</h3>
+              <h3 className='font-semibold'>Detalle por gasto</h3>
               <ul className='grid gap-1.5'>
                 {breakdown.expenses.map((line) => (
                   <li
@@ -118,7 +120,7 @@ function MemberRow({
                     <span className='shrink-0 text-right tabular-nums'>
                       {line.paid > 0 && (
                         <span className='block'>
-                          Pagó {formatAmount(line.paid)}
+                          Gastó {formatAmount(line.paid)}
                         </span>
                       )}
                       <span className='block text-muted-foreground'>
@@ -134,12 +136,12 @@ function MemberRow({
           {(breakdown.paymentsSent.length > 0 ||
             breakdown.paymentsReceived.length > 0) && (
             <div className='grid gap-1.5'>
-              <h3 className='font-semibold'>Pagos</h3>
+              <h3 className='font-semibold'>Pagos enviados y recibidos</h3>
               <ul className='grid gap-1.5'>
                 {breakdown.paymentsSent.map((p) => (
                   <li key={p.id} className='flex justify-between gap-3'>
                     <span className='min-w-0 break-words'>
-                      Le pagó a {nameOf(p.toId)} · {formatDate(p.date)}
+                      Envió a {nameOf(p.toId)} · {formatDate(p.date)}
                     </span>
                     <span className='shrink-0 tabular-nums'>
                       +{formatAmount(p.amount)}

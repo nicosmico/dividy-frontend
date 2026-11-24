@@ -122,7 +122,8 @@ test('sin grupos se ve la bienvenida animada, avanza con Siguiente y lleva a cre
   await expect(live).toContainText(
     'Beto pagó Alojamiento ($45.000). Se divide entre 3: $15.000 cada uno.'
   );
-  await expect(example.locator('[data-slot="pieces"] > span')).toHaveCount(3);
+  // Alojamiento is split among 3: its "Gastó" segment gets 2 cuts.
+  await expect(example.locator('[data-slot="cut"]')).toHaveCount(2);
   await next.click();
   await expect(example).toContainText('Gasto 2 de 3');
   await expect(live).toContainText('Ana pagó Carne ($30.000)');
@@ -172,7 +173,7 @@ test('el gráfico de Saldos muestra los montos que calcula el dominio', async ({
   await seedGroups(page, [tripGroup]);
   await page.goto('/groups/g1/balances');
   const chart = page
-    .getByRole('heading', { name: 'Pagó vs. su parte' })
+    .getByRole('heading', { name: 'Gastó vs. su parte' })
     .locator('xpath=ancestor::section[1]');
   await expect(chart).toBeVisible();
 
@@ -186,17 +187,30 @@ test('el gráfico de Saldos muestra los montos que calcula el dominio', async ({
     const word = b.balance > 0 ? 'Le deben' : b.balance < 0 ? 'Debe' : 'Al día';
     await expect(rows.nth(i)).toContainText(word);
   }
+  const cabana = chart.getByRole('button', {
+    name: 'Cabaña: $150.000 · entre 5: $30.000 c/u',
+  });
+  await expect(cabana).toHaveCount(1);
+  // "Gastó" cuts each expense into one part per participant (5 -> 4 cuts);
+  // "Su parte" has none. The cuts are decorative.
+  await expect(cabana.locator('[data-slot="cut"]')).toHaveCount(4);
+  await expect(cabana.locator('[data-slot="cuts"]')).toHaveAttribute(
+    'aria-hidden',
+    'true'
+  );
   await expect(
-    chart.getByRole('button', { name: 'Cabaña: $150.000' })
-  ).toHaveCount(1);
+    rows.nth(0).locator('[data-slot="bar"]').nth(1).locator('[data-slot="cut"]')
+  ).toHaveCount(0);
   const legend = chart.getByRole('list', { name: 'Leyenda de gastos' });
   await expect(legend.locator('li')).toHaveCount(7);
   await expect(legend).toContainText('Uber al terminal');
 
   // Keyboard: focus a segment, see its tooltip.
-  await chart.getByRole('button', { name: 'Cabaña: $150.000' }).focus();
+  await cabana.focus();
   await expect(
-    page.getByRole('dialog', { name: 'Cabaña: $150.000' })
+    page.getByRole('dialog', {
+      name: 'Cabaña: $150.000 · entre 5: $30.000 c/u',
+    })
   ).toBeVisible();
   expect(await hasNoHorizontalScroll(page)).toBe(true);
 });
@@ -270,7 +284,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await seedGroups(page, [manyExpenses]);
       await page.goto('/groups/g1/balances');
       await expect(
-        page.getByRole('heading', { name: 'Pagó vs. su parte' })
+        page.getByRole('heading', { name: 'Gastó vs. su parte' })
       ).toBeVisible();
       await expectNoSeriousViolations(page);
 

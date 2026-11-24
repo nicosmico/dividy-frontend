@@ -139,8 +139,8 @@ describe('addMember / renameMember', () => {
   it('renameMember cambia el nombre manteniendo el id y el orden', () => {
     const next = unwrap(renameMember(group, 'Ana', 'Anita'));
     expect(next.members).toEqual([
-      { id: 'Ana', name: 'Anita' },
-      { id: 'Beto', name: 'Beto' },
+      { ...group.members[0], name: 'Anita' },
+      group.members[1],
     ]);
   });
 

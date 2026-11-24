@@ -16,6 +16,10 @@ _Avoid_: Session, event, split, cuenta
 Una persona dentro de un grupo. Existe solo dentro de su grupo; la misma persona en dos grupos son dos miembros distintos.
 _Avoid_: User, participant (cuando se habla del grupo), friend
 
+**Avatar** (Cara):
+La carita ilustrada de un miembro: un color de fondo (uno de 8 pasteles, índice 0 a 7) y una semilla que decide la cara. Se guardan en el miembro, así que nadie cambia de cara por sí solo. El color es el primer libre del grupo al crearse (si los 8 están ocupados, vuelve a empezar en orden) y no cambia si se elimina a otro; la semilla empieza siendo el id del miembro y "Cambiar avatar" genera otra. El humor (feliz o triste) no se guarda: sale del saldo.
+_Avoid_: Foto, imagen de perfil
+
 ### Gastos
 
 **Expense** (Gasto):
@@ -44,15 +48,15 @@ Los pesos que sobran cuando un monto no se divide exacto entre los participantes
 ### Saldos y pagos
 
 **Balance** (Saldo):
-Lo que un miembro ha puesto ("Pagó") menos su parte ("Su parte"), considerando gastos y pagos. Positivo: le deben. Negativo: debe. La suma de los saldos de un grupo siempre es cero.
+Lo que un miembro gastó en el grupo ("Gastó": lo que pagó en gastos) menos su parte ("Su parte"), más los pagos que envió y menos los que recibió. En la interfaz se dice en palabras: "Le deben $X", "Debe $X" o "Al día". Positivo: le deben. Negativo: debe. La suma de los saldos de un grupo siempre es cero.
 _Avoid_: Debt (para el saldo neto), total
 
-**Suggested Transfer** (Transferencia sugerida):
-Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero. Es un cálculo, no algo que ocurrió.
+**Suggested Transfer** (Transferencia sugerida; la sección de Saldos se llama "Para quedar al día"):
+Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero ("Ana le transfiere $X a Beto"). Es un cálculo, no algo que ocurrió.
 _Avoid_: Simplified debt, transaction, deuda simplificada
 
 **Payment** (Pago):
-Dinero que un miembro efectivamente le transfirió a otro para saldar deudas. Se registra (por ejemplo, al marcar una transferencia sugerida como pagada) y afecta los saldos.
+Dinero que un miembro efectivamente le transfirió a otro para saldar deudas. Se registra (por ejemplo, al marcar una transferencia sugerida como pagada) y afecta los saldos. En el desglose de un miembro aparecen como "Más los pagos que envió" y "Menos los pagos que recibió"; nunca se mezclan con "Gastó", que es solo lo que pagó en gastos.
 _Avoid_: Settlement, transfer (para el hecho registrado), reembolso
 
 **Covered expense** (Gasto ya saldado):
@@ -74,7 +78,7 @@ _Avoid_: History, historial
 **Reassign** (Reasignar):
 Al eliminar un miembro con gastos o pagos, traspasar todas sus apariciones (como pagador, participante o en pagos) a otro miembro del grupo.
 
-**Cascade delete** (Eliminar con sus gastos):
+**Cascade delete** (Eliminar con sus gastos y pagos):
 Al eliminar un miembro, borrar los gastos que pagó y sus pagos, y quitarlo de los gastos donde participa. Las partes de los demás cambian.
 
 ### Dinero

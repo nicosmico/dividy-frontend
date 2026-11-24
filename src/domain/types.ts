@@ -6,9 +6,20 @@ export type GroupId = string;
 /** Whole Chilean pesos (CLP has no decimals). See ADR 0001. */
 export type Amount = number;
 
+/**
+ * Face and background of a member. Both are stored so the avatar never changes
+ * by itself: `color` is an index into the 8-color palette (0-7) and `seed`
+ * decides the face (it starts as the member id and changes on "regenerate").
+ */
+export interface MemberAvatar {
+  color: number;
+  seed: string;
+}
+
 export interface Member {
   id: MemberId;
   name: string;
+  avatar: MemberAvatar;
 }
 
 export interface EqualSplit {
@@ -71,6 +82,7 @@ export type DomainErrorCode =
   | 'payer_not_found'
   | 'participant_not_found'
   | 'duplicate_participant'
+  | 'invalid_avatar'
   | 'no_participants'
   | 'same_member_payment';
 

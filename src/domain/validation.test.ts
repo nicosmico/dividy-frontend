@@ -166,7 +166,10 @@ describe('getGroupIssues', () => {
         { id: 'p1', from: 'A', to: 'B', amount: 5 },
       ],
     });
-    bad.members.push({ id: 'A', name: 'a' }, { id: 'C', name: '' });
+    bad.members.push(
+      { id: 'A', name: 'a', avatar: { color: 0, seed: 'A' } },
+      { id: 'C', name: '', avatar: { color: 99, seed: '' } }
+    );
     const issues = getGroupIssues(bad);
     expect(issues).toEqual(
       expect.arrayContaining([

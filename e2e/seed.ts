@@ -44,6 +44,15 @@ export async function seedGroups(page: Page, groups: Group[]) {
         window.localStorage.setItem('dividy', document);
       }
     },
-    JSON.stringify({ version: 2, groups })
+    JSON.stringify({ version: 3, groups })
   );
+}
+
+/** Saves an exact document (e.g. an old version) before the app loads, only on the first load. */
+export async function seedDocument(page: Page, document: unknown) {
+  await page.addInitScript((raw) => {
+    if (!window.localStorage.getItem('dividy')) {
+      window.localStorage.setItem('dividy', raw);
+    }
+  }, JSON.stringify(document));
 }

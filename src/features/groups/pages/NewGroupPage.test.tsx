@@ -98,4 +98,31 @@ describe('Crear grupo', () => {
     expect(group.members.map((m) => m.name)).toEqual(['Ana', 'Beto', 'Caro']);
     expect(await screen.findByRole('heading', { name: 'Asado' })).toBeVisible();
   });
+
+  it('tocar la carita da otra cara antes de crear el grupo, con colores en orden', async () => {
+    const { user, repository } = await setup();
+    await user.type(screen.getByLabelText('Nombre del grupo'), 'Asado');
+    const input = screen.getByLabelText('Miembros');
+    await user.type(input, 'Ana{Enter}');
+    await user.type(input, 'Beto{Enter}');
+    const colors = () =>
+      [...document.querySelectorAll('[data-avatar-color]')].map((el) =>
+        el.getAttribute('data-avatar-color')
+      );
+    await waitFor(() => expect(colors()).toEqual(['0', '1']));
+
+    const button = screen.getByRole('button', {
+      name: 'Cambiar avatar de Beto',
+    });
+    expect(button).toHaveClass('size-11');
+    await user.click(button);
+    expect(colors()).toEqual(['0', '1']);
+
+    await user.click(screen.getByRole('button', { name: 'Crear grupo' }));
+    await waitFor(() => expect(currentPath()).toMatch(/\/expenses$/));
+    const [group] = await repository.list();
+    expect(group.members.map((m) => m.avatar.color)).toEqual([0, 1]);
+    expect(group.members[0].avatar.seed).toBe(group.members[0].id);
+    expect(group.members[1].avatar.seed).not.toBe(group.members[1].id);
+  });
 });

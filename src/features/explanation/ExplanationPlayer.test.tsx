@@ -113,17 +113,16 @@ describe('ExplanationPlayer', () => {
         'segment'
       ).map((el) => (el as HTMLElement).style.opacity);
 
-    // Step 1: "Su parte" is empty (hidden segments), no pieces anywhere.
+    // Step 1: "Su parte" is empty (hidden segments), no cuts anywhere.
     expect(opacities(0, 1)).toEqual(['0', '0']);
-    expect(slot(section, 'pieces')).toHaveLength(0);
+    expect(slot(section, 'cut')).toHaveLength(0);
 
     await next(user);
-    // Alojamiento (Beto's) is split in 3 pieces; the others are dimmed.
-    const pieces = slot(section, 'pieces');
-    expect(pieces).toHaveLength(1);
-    expect(pieces[0].children).toHaveLength(3);
+    // Alojamiento (Beto's) is cut in 3 parts (2 cuts); the others are dimmed.
+    const cuts = slot(section, 'cut');
+    expect(cuts).toHaveLength(2);
     expect(slot(section, 'paid-share-row')[1]).toContainElement(
-      pieces[0] as HTMLElement
+      cuts[0] as HTMLElement
     );
     // Ana: Alojamiento is her 2nd share slice (biggest first: 15.000, 10.000).
     expect(opacities(0, 1)).toEqual(['1', '0']);
@@ -131,6 +130,12 @@ describe('ExplanationPlayer', () => {
     expect(opacities(2, 1)).toEqual(['1', '0', '0']);
 
     await next(user, 2);
+    // From step 2 on, every "Gastó" segment stays cut; "Su parte" never is.
+    const rowCuts = (row: number, bar: number) =>
+      slot(slot(slot(section, 'paid-share-row')[row], 'bar')[bar], 'cut')
+        .length;
+    expect(rowCuts(0, 0)).toBeGreaterThan(0);
+    expect(rowCuts(0, 1)).toBe(0);
     expect(opacities(0, 1)).toEqual(['1', '1']);
     expect(opacities(2, 1)).toEqual(['1', '1', '1']);
     // The share amount is the running total.
@@ -249,7 +254,7 @@ describe('ExplanationPlayer', () => {
     ]);
   });
 
-  it('en el paso 4 de la bienvenida la barra "Pagó" iguala su parte', async () => {
+  it('en el paso 4 de la bienvenida la barra "Gastó" iguala su parte', async () => {
     const user = userEvent.setup();
     const { section } = renderExample();
     const paidAmounts = () =>
@@ -280,7 +285,7 @@ describe('ExplanationPlayer con un grupo real', () => {
     expect(slot(container, 'paid-share-row')).toHaveLength(5);
     // 1 expense: frames are step 1, its sub-step, step 3 and step 4.
     await next(user, 3);
-    expect(screen.getByText('Pagos ya registrados')).toBeInTheDocument();
+    expect(screen.getByText('Pagos registrados')).toBeInTheDocument();
     expect(screen.getByText('Falta transferir')).toBeInTheDocument();
     expect(screen.getByText(/Ya se registró 1 pago/)).toBeInTheDocument();
   });
@@ -306,7 +311,8 @@ describe('ExplanationPlayer con un grupo real', () => {
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(
       'Los otros 3 gastos'
     );
-    expect(slot(container, 'pieces')).toHaveLength(0);
+    // The 9 expenses are all cut (here, between the 5 people who share them).
+    expect(slot(container, 'cut').length).toBeGreaterThan(0);
   });
 
   it('si no falta nada dice que están al día', async () => {

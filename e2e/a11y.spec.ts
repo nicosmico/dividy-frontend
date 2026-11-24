@@ -93,7 +93,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page
         .getByRole('button', { name: /^Ana\s*(Le deben|Debe|Al día)/ })
         .click();
-      await expect(page.getByText('Saldo = pagó − su parte')).toBeVisible();
+      await expect(page.getByText('Lo que gastó en el grupo')).toBeVisible();
       await expectNoSeriousViolations(page);
 
       await page

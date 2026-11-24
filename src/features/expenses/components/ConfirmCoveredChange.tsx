@@ -53,7 +53,7 @@ export function ConfirmCoveredChange({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Este gasto ya se consideró en pagos registrados
+            Ya hay pagos registrados después de este gasto
           </AlertDialogTitle>
           <AlertDialogDescription>
             Si lo {kind === 'delete' ? 'eliminas' : 'guardas así'}, los saldos

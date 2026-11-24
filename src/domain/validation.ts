@@ -1,3 +1,4 @@
+import { validateAvatar } from './avatar';
 import { isValidAmount, MAX_AMOUNT } from './money';
 import { fail, ok } from './result';
 import { capitalizeFirst } from './text';
@@ -5,6 +6,7 @@ import type {
   Amount,
   Expense,
   Group,
+  Member,
   MemberId,
   Payment,
   Result,
@@ -56,7 +58,7 @@ function normalizeName(name: string): string {
  * surrounding spaces; `exceptId` skips that member (used when renaming).
  */
 export function validateMemberName(
-  group: Pick<Group, 'members'>,
+  group: { members: ReadonlyArray<Pick<Member, 'id' | 'name'>> },
   name: string,
   exceptId?: MemberId
 ): Result<string> {
@@ -152,7 +154,7 @@ export function validateExpenseFields(
   if (new Set(participantIds).size !== participantIds.length) {
     return fail(
       'duplicate_participant',
-      'Hay personas repetidas en la división.'
+      'Una persona aparece dos veces en la división. Quita la repetida.'
     );
   }
   if (!participantIds.every((id) => memberIds.has(id))) {
@@ -182,15 +184,12 @@ export function validatePaymentFields(
   if (fields.fromId === fields.toId) {
     return fail(
       'same_member_payment',
-      'Un pago no puede ser de una persona a sí misma.'
+      'Quien paga y quien recibe deben ser personas distintas. Elige a otra.'
     );
   }
   const memberIds = new Set(group.members.map((m) => m.id));
   if (!memberIds.has(fields.fromId) || !memberIds.has(fields.toId)) {
-    return fail(
-      'member_not_found',
-      'Las personas del pago deben ser parte del grupo.'
-    );
+    return fail('member_not_found', 'Elige personas que sean parte del grupo.');
   }
   return ok({
     fromId: fields.fromId,
@@ -221,6 +220,9 @@ export function getGroupIssues(group: Group): string[] {
     const key = normalizeName(member.name);
     if (names.has(key)) issues.push(`duplicate member name ${member.name}`);
     names.add(key);
+    if (!member.avatar || !validateAvatar(member.avatar).ok) {
+      issues.push(`invalid member avatar ${member.id}`);
+    }
   }
 
   const seen = new Set<string>();

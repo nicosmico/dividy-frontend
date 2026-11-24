@@ -96,9 +96,9 @@ describe('migrateLegacyData', () => {
       name: 'Mi grupo',
       currency: 'CLP',
       members: [
-        { id: 'm1', name: 'Ana' },
-        { id: 'm2', name: 'Beto' },
-        { id: 'm3', name: 'Cami' },
+        { id: 'm1', name: 'Ana', avatar: { color: 0, seed: 'm1' } },
+        { id: 'm2', name: 'Beto', avatar: { color: 1, seed: 'm2' } },
+        { id: 'm3', name: 'Cami', avatar: { color: 2, seed: 'm3' } },
       ],
       expenses: [
         {

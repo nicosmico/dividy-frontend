@@ -1,3 +1,4 @@
+import { nextAvatarColor, validateAvatar } from './avatar';
 import { fail, ok } from './result';
 import type {
   Expense,
@@ -19,10 +20,21 @@ import {
   type PaymentFields,
 } from './validation';
 
+/**
+ * What the caller provides for a new member. The avatar color is assigned by
+ * the domain; the seed is the member id unless `avatarSeed` says otherwise
+ * (e.g. the user regenerated the face before the group was created).
+ */
+export interface NewMemberInput {
+  id: MemberId;
+  name: string;
+  avatarSeed?: string;
+}
+
 export interface CreateGroupInput {
   id: GroupId;
   name: string;
-  members: Member[];
+  members: NewMemberInput[];
   /** ISO timestamp used for `createdAt` and `updatedAt`. */
   now: string;
 }
@@ -64,13 +76,18 @@ export function createGroup(input: CreateGroupInput): Result<Group> {
     if (ids.has(member.id)) {
       return fail(
         'duplicate_member_id',
-        'Hay miembros con el mismo identificador.'
+        'No se pudo crear el grupo porque hay miembros repetidos. Inténtalo de nuevo.'
       );
     }
     ids.add(member.id);
     const valid = validateMemberName({ members }, member.name);
     if (!valid.ok) return valid;
-    members.push({ id: member.id, name: valid.value });
+    const avatar = validateAvatar({
+      color: nextAvatarColor(members),
+      seed: member.avatarSeed ?? member.id,
+    });
+    if (!avatar.ok) return avatar;
+    members.push({ id: member.id, name: valid.value, avatar: avatar.value });
   }
 
   return ok({
@@ -96,18 +113,26 @@ export function touch(group: Group, now: string): Group {
   return { ...group, updatedAt: now };
 }
 
-export function addMember(group: Group, member: Member): Result<Group> {
+export function addMember(group: Group, member: NewMemberInput): Result<Group> {
   if (group.members.some((m) => m.id === member.id)) {
     return fail(
       'duplicate_member_id',
-      'Ya existe un miembro con ese identificador.'
+      'No se pudo agregar al miembro porque ya existe. Inténtalo de nuevo.'
     );
   }
   const name = validateMemberName(group, member.name);
   if (!name.ok) return name;
+  const avatar = validateAvatar({
+    color: nextAvatarColor(group.members),
+    seed: member.avatarSeed ?? member.id,
+  });
+  if (!avatar.ok) return avatar;
   return ok({
     ...group,
-    members: [...group.members, { id: member.id, name: name.value }],
+    members: [
+      ...group.members,
+      { id: member.id, name: name.value, avatar: avatar.value },
+    ],
   });
 }
 
@@ -128,7 +153,10 @@ export function renameMember(
 }
 
 function memberNotFound<T>(): Result<T> {
-  return fail('member_not_found', 'Ese miembro no existe en el grupo.');
+  return fail(
+    'member_not_found',
+    'Ese miembro ya no está en el grupo. Vuelve a la lista de miembros.'
+  );
 }
 
 function participantsOf(expense: Expense): MemberId[] {
@@ -245,7 +273,10 @@ export function addExpense(
   input: NewExpenseInput
 ): Result<Group> {
   if (group.expenses.some((e) => e.id === input.id)) {
-    return fail('duplicate_id', 'Ya existe un gasto con ese identificador.');
+    return fail(
+      'duplicate_id',
+      'No se pudo guardar el gasto porque ya existe uno igual. Inténtalo de nuevo.'
+    );
   }
   const fields = validateExpenseFields(group, input);
   if (!fields.ok) return fields;
@@ -264,7 +295,10 @@ export function updateExpense(
 ): Result<Group> {
   const existing = group.expenses.find((e) => e.id === expenseId);
   if (!existing) {
-    return fail('expense_not_found', 'Ese gasto no existe.');
+    return fail(
+      'expense_not_found',
+      'Ese gasto ya no existe. Vuelve a la lista de gastos.'
+    );
   }
   const valid = validateExpenseFields(group, fields);
   if (!valid.ok) return valid;
@@ -283,7 +317,10 @@ export function removeExpense(
   expenseId: ExpenseId
 ): Result<Group> {
   if (!group.expenses.some((e) => e.id === expenseId)) {
-    return fail('expense_not_found', 'Ese gasto no existe.');
+    return fail(
+      'expense_not_found',
+      'Ese gasto ya no existe. Vuelve a la lista de gastos.'
+    );
   }
   return ok({
     ...group,
@@ -296,7 +333,10 @@ export function addPayment(
   input: NewPaymentInput
 ): Result<Group> {
   if (group.payments.some((p) => p.id === input.id)) {
-    return fail('duplicate_id', 'Ya existe un pago con ese identificador.');
+    return fail(
+      'duplicate_id',
+      'No se pudo registrar el pago porque ya existe uno igual. Inténtalo de nuevo.'
+    );
   }
   const fields = validatePaymentFields(group, input);
   if (!fields.ok) return fields;
@@ -313,7 +353,7 @@ export function removePayment(
   paymentId: PaymentId
 ): Result<Group> {
   if (!group.payments.some((p) => p.id === paymentId)) {
-    return fail('payment_not_found', 'Ese pago no existe.');
+    return fail('payment_not_found', 'Ese pago ya no existe. Vuelve a Saldos.');
   }
   return ok({
     ...group,

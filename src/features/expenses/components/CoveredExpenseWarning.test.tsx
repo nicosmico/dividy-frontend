@@ -47,7 +47,7 @@ describe('Aviso de gasto ya saldado', () => {
     await user.click(screen.getByRole('button', { name: 'Eliminar gasto' }));
 
     const alert = await screen.findByRole('alertdialog', {
-      name: 'Este gasto ya se consideró en pagos registrados',
+      name: 'Ya hay pagos registrados después de este gasto',
     });
     expect(
       within(alert).getByText('Si lo eliminas, los saldos cambian:')
@@ -126,7 +126,7 @@ describe('Aviso de gasto ya saldado', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
 
     const alert = await screen.findByRole('alertdialog', {
-      name: 'Este gasto ya se consideró en pagos registrados',
+      name: 'Ya hay pagos registrados después de este gasto',
     });
     expect(
       within(alert).getByText('Si lo guardas así, los saldos cambian:')

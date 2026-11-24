@@ -85,7 +85,11 @@ export function describeGroupRepositoryContract(
       await repo.save(g);
       g.name = 'mutado';
       const read = (await repo.get('g1'))!;
-      read.members.push({ id: 'x', name: 'X' });
+      read.members.push({
+        id: 'x',
+        name: 'X',
+        avatar: { color: 0, seed: 'x' },
+      });
       const again = (await repo.get('g1'))!;
       expect(again.name).toBe('Grupo g1');
       expect(again.members).toHaveLength(2);
