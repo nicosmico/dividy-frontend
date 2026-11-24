@@ -1,8 +1,17 @@
-import { getGroupIssues, type Group } from '@/domain';
+import {
+  getGroupIssues,
+  getSnapshotIssues,
+  type Group,
+  type Snapshot,
+} from '@/domain';
 import { z } from 'zod';
 
-/** Version 3: every member has an `avatar` (`color` 0-7 and `seed`). */
-export const CURRENT_VERSION = 3;
+/**
+ * Version 4: a `snapshots` list next to `groups` (read-only captures opened
+ * from a link, ADR 0006). Version 3 added `avatar` (`color` 0-7 and `seed`) to
+ * every member.
+ */
+export const CURRENT_VERSION = 4;
 
 const isoTimestamp = z.string().min(1);
 const dateString = z.string();
@@ -54,14 +63,32 @@ export const groupSchema = z
     }
   });
 
-/** Envelope only: each group is validated on its own (see `parseDocument`). */
+/** Shape of a saved snapshot plus every invariant (see `getSnapshotIssues`). */
+export const snapshotSchema = z
+  .object({
+    sourceGroupId: z.string().min(1),
+    takenAt: isoTimestamp,
+    name: z.string(),
+    members: z.array(memberSchema),
+    expenses: z.array(expenseSchema),
+    payments: z.array(paymentSchema),
+  })
+  .superRefine((snapshot, ctx) => {
+    for (const issue of getSnapshotIssues(snapshot as Snapshot)) {
+      ctx.addIssue({ code: 'custom', message: issue });
+    }
+  });
+
+/** Envelope only: each group and snapshot is validated on its own (see `parseDocument`). */
 export const documentEnvelope = z.object({
   version: z.literal(CURRENT_VERSION),
   groups: z.array(z.unknown()),
+  snapshots: z.array(z.unknown()).default([]),
 });
 
 /** Latest document shape. */
 export interface StoredDocument {
   version: typeof CURRENT_VERSION;
   groups: Group[];
+  snapshots: Snapshot[];
 }

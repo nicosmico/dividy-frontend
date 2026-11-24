@@ -9,7 +9,7 @@ Los términos canónicos están en inglés (así aparecen en el código); entre 
 ### Grupo y personas
 
 **Group** (Grupo):
-Conjunto de personas que comparten gastos en un contexto acotado (un viaje, un asado, la casa). Es la unidad que contiene miembros, gastos y pagos, y la que en el futuro se compartirá.
+Conjunto de personas que comparten gastos en un contexto acotado (un viaje, un asado, la casa). Es la unidad que contiene miembros, gastos y pagos, y la que se comparte (como Snapshot de solo lectura; compartirla para editar entre todos requiere backend).
 _Avoid_: Session, event, split, cuenta
 
 **Member** (Miembro):
@@ -68,6 +68,12 @@ Estado de un grupo en que todos los saldos son cero.
 
 **Summary** (Resumen):
 Texto que resume miembros, gastos y transferencias sugeridas de un grupo, pensado para pegarlo en un chat.
+
+### Compartir
+
+**Snapshot** (Captura):
+Copia fija de un grupo en un momento (`takenAt`): nombre, miembros con su cara, gastos y pagos. Se abre con un link y solo se puede mirar; los cambios que se hagan después en el grupo original no aparecen. Se identifica por el grupo del que salió (`sourceGroupId`); de cada grupo se guarda a lo más la captura más nueva. Vive aparte de los grupos propios ("Compartidos conmigo · solo lectura").
+_Avoid_: Copia, export, backup
 
 ### Eliminar miembros
 

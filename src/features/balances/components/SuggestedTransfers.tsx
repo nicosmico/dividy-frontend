@@ -26,9 +26,13 @@ import {
   useServices,
 } from '@/features/groups/data';
 import { MemberAvatar, useMemberMoods } from '@/features/members';
+import { useReadOnly } from '@/hooks/use-snapshot-view';
 import { todayLocal } from '@/lib/dates';
 
-/** What to do to settle up, with "Marcar como pagado" on each transfer. */
+/**
+ * What to do to settle up, with "Marcar como pagado" on each transfer (not in
+ * the read-only view of a snapshot, where it is only the list).
+ */
 export function SuggestedTransfers({
   group,
   transfers,
@@ -36,6 +40,7 @@ export function SuggestedTransfers({
   group: Group;
   transfers: SuggestedTransfer[];
 }) {
+  const readOnly = useReadOnly();
   const [paying, setPaying] = useState<SuggestedTransfer | null>(null);
   const moods = useMemberMoods(group);
   const nameOf = (id: string) => group.members.find((m) => m.id === id);
@@ -67,24 +72,28 @@ export function SuggestedTransfers({
                 <p className='font-medium break-words'>
                   {from.name} → {to.name}
                 </p>
-                <Button
-                  variant='accent'
-                  aria-label={`Marcar como pagado: ${from.name} le transfiere ${formatAmount(t.amount)} a ${to.name}`}
-                  onClick={() => setPaying(t)}
-                >
-                  Marcar como pagado
-                </Button>
+                {!readOnly && (
+                  <Button
+                    variant='accent'
+                    aria-label={`Marcar como pagado: ${from.name} le transfiere ${formatAmount(t.amount)} a ${to.name}`}
+                    onClick={() => setPaying(t)}
+                  >
+                    Marcar como pagado
+                  </Button>
+                )}
               </Card>
             </li>
           );
         })}
       </ul>
-      <ConfirmPayment
-        key={paying ? `${paying.fromId}-${paying.toId}` : 'none'}
-        group={group}
-        transfer={paying}
-        onClose={() => setPaying(null)}
-      />
+      {!readOnly && (
+        <ConfirmPayment
+          key={paying ? `${paying.fromId}-${paying.toId}` : 'none'}
+          group={group}
+          transfer={paying}
+          onClose={() => setPaying(null)}
+        />
+      )}
     </section>
   );
 }

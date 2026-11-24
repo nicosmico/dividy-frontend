@@ -1,8 +1,9 @@
 import { EllipsisVertical, Pencil, Trash2 } from 'lucide-react';
 import { Suspense, useState } from 'react';
-import { NavLink, Outlet, useParams } from 'react-router';
+import { Outlet, useParams } from 'react-router';
 
 import { PageFallback } from '@/components/page-fallback';
+import { TabNav } from '@/components/tab-nav';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EntityIcon } from '@/features/icons';
-import { cn } from '@/lib/utils';
 import { DeleteGroupDialog } from '../components/DeleteGroupDialog';
 import { GroupNotFound } from '../components/GroupNotFound';
 import { RenameGroupDialog } from '../components/RenameGroupDialog';
@@ -76,27 +76,7 @@ export function GroupLayout() {
         </DropdownMenu>
       </div>
 
-      <nav
-        aria-label='Secciones del grupo'
-        className='grid h-[3.25rem] grid-cols-3 gap-1 rounded-full bg-secondary p-1'
-      >
-        {TABS.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center justify-center rounded-full text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
-                isActive
-                  ? 'bg-tab-active font-semibold text-tab-active-foreground shadow-soft'
-                  : 'font-medium text-muted-foreground hover:text-foreground'
-              )
-            }
-          >
-            {tab.label}
-          </NavLink>
-        ))}
-      </nav>
+      <TabNav tabs={TABS} />
 
       <Suspense fallback={<PageFallback />}>
         <Outlet context={group} />

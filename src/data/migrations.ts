@@ -1,8 +1,9 @@
-import { capitalizeFirst, type Group } from '@/domain';
+import { capitalizeFirst, type Group, type Snapshot } from '@/domain';
 import {
   CURRENT_VERSION,
   documentEnvelope,
   groupSchema,
+  snapshotSchema,
   type StoredDocument,
 } from './schema';
 
@@ -85,6 +86,11 @@ function migrateV2toV3(doc: unknown): unknown {
   return { ...doc, version: 3, groups };
 }
 
+/** v3 -> v4: adds the (empty) list of saved snapshots. */
+function migrateV3toV4(doc: unknown): unknown {
+  return { ...(doc as Json), version: 4, snapshots: [] };
+}
+
 /**
  * Migrations by source version: `migrations[n]` turns a version `n` document
  * into version `n + 1`. Add an entry (and bump `CURRENT_VERSION`) when the
@@ -93,6 +99,7 @@ function migrateV2toV3(doc: unknown): unknown {
 export const migrations: Record<number, (doc: unknown) => unknown> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
+  3: migrateV3toV4,
 };
 
 /** Applies `table[version]`, `table[version + 1]`... until `target`. */
@@ -112,12 +119,13 @@ export function runMigrations(
 }
 
 export function emptyDocument(): StoredDocument {
-  return { version: CURRENT_VERSION, groups: [] };
+  return { version: CURRENT_VERSION, groups: [], snapshots: [] };
 }
 
-/** A group of the stored document that failed validation. */
+/** A group or snapshot of the stored document that failed validation. */
 export interface RejectedGroup {
-  /** The group exactly as it was stored. */
+  kind: 'group' | 'snapshot';
+  /** The entry exactly as it was stored. */
   raw: unknown;
   reason: string;
 }
@@ -130,7 +138,8 @@ export type ParseResult =
  * Parses stored text, applies pending migrations and validates the result.
  * Invalid JSON, a missing/unknown version or a wrong envelope make the whole
  * document unusable (`ok: false`). Otherwise every group is validated on its
- * own: valid ones are returned, invalid ones are reported in `rejected`.
+ * own: valid ones are returned, invalid ones are reported in `rejected`
+ * (groups first, then snapshots).
  */
 export function parseDocument(text: string): ParseResult {
   let raw: unknown;
@@ -170,14 +179,36 @@ export function parseDocument(text: string): ParseResult {
     if (parsed.success) groups.push(parsed.data as Group);
     else {
       rejected.push({
+        kind: 'group',
         raw: candidate,
         reason: parsed.error.issues[0]?.message ?? 'invalid shape',
       });
     }
   }
+  const snapshots: Snapshot[] = [];
+  const sourceIds = new Set<string>();
+  for (const candidate of envelope.data.snapshots) {
+    const parsed = snapshotSchema.safeParse(candidate);
+    if (!parsed.success) {
+      rejected.push({
+        kind: 'snapshot',
+        raw: candidate,
+        reason: parsed.error.issues[0]?.message ?? 'invalid shape',
+      });
+    } else if (sourceIds.has(parsed.data.sourceGroupId)) {
+      rejected.push({
+        kind: 'snapshot',
+        raw: candidate,
+        reason: 'duplicate sourceGroupId',
+      });
+    } else {
+      sourceIds.add(parsed.data.sourceGroupId);
+      snapshots.push(parsed.data as Snapshot);
+    }
+  }
   return {
     ok: true,
-    document: { version: CURRENT_VERSION, groups },
+    document: { version: CURRENT_VERSION, groups, snapshots },
     rejected,
   };
 }

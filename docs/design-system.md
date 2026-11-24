@@ -108,6 +108,10 @@ Si cambias un token, recalcula los pares que lo usan y corre `npm run test:e2e` 
 - `<meta name="theme-color">` tiene una versión para claro (`#F4F7F2`) y otra para oscuro (`#0B1730`), con `media`; al elegir un tema a mano, `useTheme` iguala ambas. El `theme_color` del manifest es el del modo claro, porque un manifest no puede depender del tema.
 - Para ver el modo oscuro en pruebas E2E: `test.use({ colorScheme: 'dark' })` o `page.emulateMedia({ colorScheme: 'dark' })`.
 
+## Captura de solo lectura
+
+La vista de una captura (ADR 0006) no agrega tokens. El **aviso fijo** de arriba usa `bg-accent text-accent-foreground` (contraste 11,6 en claro y 15,9 en oscuro) con el ícono `Eye`, va dentro de un contenedor `sticky top-0` con `bg-background` para que nada se lea por detrás, y es una región con nombre ("Captura de solo lectura"), no un `role='alert'`. No puede estar en un `grid` (un hijo `sticky` solo se mueve dentro de su propia celda): la columna es un `flex flex-col`. Las tarjetas de "Compartidos conmigo" usan `Card` y `text-muted-foreground` con el mismo `Eye`. Todo se prueba con axe en claro y oscuro y a 390 px sin scroll horizontal.
+
 ## Colores de gráfico
 
 Siete tokens exclusivos de la visualización "Gastó vs. su parte" y de la animación (decisión 92). Se usan con `var(--chart-N)` (o `bg-chart-N`); **nunca** para saldos: el verde y el rojo quedan reservados para "Le deben" y "Debe".

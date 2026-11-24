@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router';
 
 import { AppProviders } from '@/app/providers';
-import type { GroupRepository } from '@/data';
+import type { GroupRepository, SnapshotRepository } from '@/data';
 
 function LocationProbe() {
   const { pathname } = useLocation();
@@ -12,6 +12,7 @@ function LocationProbe() {
 
 interface TestProvidersProps {
   repository: GroupRepository;
+  snapshotRepository: SnapshotRepository;
   queryClient: QueryClient;
   now: () => string;
   newId: () => string;
@@ -22,6 +23,7 @@ interface TestProvidersProps {
 /** All app providers plus a `MemoryRouter` and a probe that shows the pathname. */
 export function TestProviders({
   repository,
+  snapshotRepository,
   queryClient,
   now,
   newId,
@@ -31,6 +33,7 @@ export function TestProviders({
   return (
     <AppProviders
       repository={repository}
+      snapshotRepository={snapshotRepository}
       queryClient={queryClient}
       now={now}
       newId={newId}

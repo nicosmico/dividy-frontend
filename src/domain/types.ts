@@ -83,6 +83,8 @@ export type DomainErrorCode =
   | 'participant_not_found'
   | 'duplicate_participant'
   | 'invalid_avatar'
+  | 'invalid_snapshot'
+  | 'unsupported_snapshot_version'
   | 'no_participants'
   | 'same_member_payment';
 

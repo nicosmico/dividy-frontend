@@ -28,3 +28,22 @@ export function formatDate(value: string): string {
   if (Number.isNaN(date.getTime())) return value;
   return dateFormatter.format(date).replace(/\./g, '');
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat('es-CL', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+/**
+ * Formats an ISO timestamp in the user's time zone as, e.g.,
+ * `24 nov 2026, 10:42` (the moment a snapshot was taken).
+ */
+export function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return dateTimeFormatter.format(date).replace(/\./g, '');
+}

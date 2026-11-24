@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { toast } from 'sonner';
+import {
+  CompressionStream as NodeCompressionStream,
+  DecompressionStream as NodeDecompressionStream,
+} from 'node:stream/web';
 import { afterEach } from 'vitest';
 
 // jsdom lacks a few browser APIs that Radix UI relies on.
@@ -13,6 +17,13 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 };
+
+// The vitest VM context has no CompressionStream; Node's is the same API
+// browsers ship (snapshot links, ADR 0006).
+globalThis.CompressionStream ??=
+  NodeCompressionStream as unknown as typeof CompressionStream;
+globalThis.DecompressionStream ??=
+  NodeDecompressionStream as unknown as typeof DecompressionStream;
 
 afterEach(() => {
   cleanup();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, todayLocal } from './dates';
+import { formatDate, formatDateTime, todayLocal } from './dates';
 
 describe('todayLocal', () => {
   it('usa la fecha local, no la UTC', () => {
@@ -23,5 +23,23 @@ describe('formatDate', () => {
 
   it('devuelve el texto original si no es una fecha', () => {
     expect(formatDate('ayer')).toBe('ayer');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('formatea fecha y hora locales en es-CL, sin puntos ni AM/PM', () => {
+    expect(formatDateTime(new Date(2026, 10, 24, 10, 42).toISOString())).toBe(
+      '24 nov 2026, 10:42'
+    );
+  });
+
+  it('usa 24 horas y rellena los minutos', () => {
+    expect(formatDateTime(new Date(2026, 0, 5, 18, 5).toISOString())).toBe(
+      '5 ene 2026, 18:05'
+    );
+  });
+
+  it('devuelve el texto original si no es una fecha', () => {
+    expect(formatDateTime('ayer')).toBe('ayer');
   });
 });

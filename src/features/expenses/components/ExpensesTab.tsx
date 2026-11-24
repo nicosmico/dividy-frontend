@@ -17,6 +17,7 @@ import {
   useMemberMoods,
   type AvatarMood,
 } from '@/features/members';
+import { useReadOnly } from '@/hooks/use-snapshot-view';
 import { restoreFocusIfLost } from '@/lib/focus';
 import { plural } from '@/lib/plural';
 import { ExpenseDialog } from './ExpenseDialog';
@@ -24,9 +25,14 @@ import { dateLabel, groupByDate, sortExpenses } from './expense-list';
 
 const MIN_MEMBERS = 2;
 
-/** Expenses tab: total, compact list by date, and the create / edit dialog. */
+/**
+ * Expenses tab: total, compact list by date, and the create / edit dialog.
+ * In the read-only view of a snapshot it is just the total and the list: no
+ * "Agregar gasto", rows do not open anything.
+ */
 export function ExpensesTab() {
   const group = useCurrentGroup();
+  const readOnly = useReadOnly();
   const [target, setTarget] = useState<Expense | 'new' | null>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const canAdd = group.members.length >= MIN_MEMBERS;
@@ -37,11 +43,11 @@ export function ExpensesTab() {
 
   // Lets the toasts rise above the fixed button on mobile (see index.css).
   useEffect(() => {
-    if (!hasExpenses) return;
+    if (!hasExpenses || readOnly) return;
     const root = document.documentElement;
     root.setAttribute('data-floating-action', '');
     return () => root.removeAttribute('data-floating-action');
-  }, [hasExpenses]);
+  }, [hasExpenses, readOnly]);
 
   return (
     <div className='grid grid-cols-[minmax(0,1fr)] gap-4'>
@@ -56,29 +62,39 @@ export function ExpensesTab() {
               {plural(count, 'gasto', 'gastos')}
             </p>
           </div>
-          <AddExpenseButton
-            ref={addButton}
-            enabled={canAdd}
-            floating
-            onClick={() => setTarget('new')}
-          />
+          {!readOnly && (
+            <AddExpenseButton
+              ref={addButton}
+              enabled={canAdd}
+              floating
+              onClick={() => setTarget('new')}
+            />
+          )}
         </div>
       ) : (
         <Card className='items-center gap-3 py-8 text-center'>
           <h2 className='text-lg font-semibold'>Aún no hay gastos</h2>
-          <p className='max-w-xs text-sm text-muted-foreground'>
-            Un gasto es algo que alguien pagó y que se reparte entre el grupo.
-            Anótalo y Dividy calcula quién le debe a quién.
-          </p>
-          <AddExpenseButton
-            ref={addButton}
-            enabled={canAdd}
-            onClick={() => setTarget('new')}
-          />
+          {readOnly ? (
+            <p className='max-w-xs text-sm text-muted-foreground'>
+              Cuando esta captura se tomó, el grupo no tenía gastos.
+            </p>
+          ) : (
+            <>
+              <p className='max-w-xs text-sm text-muted-foreground'>
+                Un gasto es algo que alguien pagó y que se reparte entre el
+                grupo. Anótalo y Dividy calcula quién le debe a quién.
+              </p>
+              <AddExpenseButton
+                ref={addButton}
+                enabled={canAdd}
+                onClick={() => setTarget('new')}
+              />
+            </>
+          )}
         </Card>
       )}
 
-      {!canAdd && <NeedMoreMembers group={group} />}
+      {!readOnly && !canAdd && <NeedMoreMembers group={group} />}
 
       {days.map((day) => (
         <section
@@ -96,7 +112,7 @@ export function ExpensesTab() {
                   group={group}
                   moods={moods}
                   expense={expense}
-                  onOpen={() => setTarget(expense)}
+                  onOpen={readOnly ? undefined : () => setTarget(expense)}
                 />
               </li>
             ))}
@@ -105,17 +121,21 @@ export function ExpensesTab() {
       ))}
 
       {/* Room so the floating button never covers the last expense. */}
-      {count > 0 && <div aria-hidden='true' className='h-16 md:hidden' />}
+      {count > 0 && !readOnly && (
+        <div aria-hidden='true' className='h-16 md:hidden' />
+      )}
 
-      <ExpenseDialog
-        group={group}
-        target={target}
-        onClose={() => {
-          setTarget(null);
-          // A deleted expense takes its row (the dialog's trigger) with it.
-          restoreFocusIfLost(addButton.current);
-        }}
-      />
+      {!readOnly && (
+        <ExpenseDialog
+          group={group}
+          target={target}
+          onClose={() => {
+            setTarget(null);
+            // A deleted expense takes its row (the dialog's trigger) with it.
+            restoreFocusIfLost(addButton.current);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -178,17 +198,14 @@ function ExpenseRow({
   group: Group;
   moods: Map<string, AvatarMood>;
   expense: Expense;
-  onOpen: () => void;
+  /** Opens the edit dialog; without it (read-only) the row is plain text. */
+  onOpen?: () => void;
 }) {
   const payer = group.members.find((m) => m.id === expense.payerId);
   const n = expense.split.participantIds.length;
   const everyone = n === group.members.length;
-  return (
-    <button
-      type='button'
-      onClick={onOpen}
-      className='flex w-full items-center gap-3 rounded-tile border bg-card p-2.5 pr-3 text-left shadow-soft transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40'
-    >
+  const content = (
+    <>
       <EntityIcon text={expense.description} kind='expense' size='list' />
       <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
         <span className='flex items-start justify-between gap-3'>
@@ -213,6 +230,18 @@ function ExpenseRow({
           </span>
         </span>
       </span>
+    </>
+  );
+  const box =
+    'flex w-full items-center gap-3 rounded-tile border bg-card p-2.5 pr-3 text-left shadow-soft';
+  if (!onOpen) return <div className={box}>{content}</div>;
+  return (
+    <button
+      type='button'
+      onClick={onOpen}
+      className={`${box} transition-colors outline-none hover:bg-card/70 focus-visible:ring-[3px] focus-visible:ring-ring/40`}
+    >
+      {content}
     </button>
   );
 }

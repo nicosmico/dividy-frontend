@@ -44,7 +44,7 @@ export async function seedGroups(page: Page, groups: Group[]) {
         window.localStorage.setItem('dividy', document);
       }
     },
-    JSON.stringify({ version: 3, groups })
+    JSON.stringify({ version: 4, groups, snapshots: [] })
   );
 }
 

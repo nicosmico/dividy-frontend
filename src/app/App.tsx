@@ -1,14 +1,24 @@
 import { BrowserRouter } from 'react-router';
 
-import { LocalStorageGroupRepository } from '@/data';
+import {
+  LocalStorageGroupRepository,
+  LocalStorageSnapshotRepository,
+  LocalStorageStore,
+} from '@/data';
 import { AppProviders } from './providers';
 import { AppRoutes } from './router';
 
-const repository = new LocalStorageGroupRepository();
+// One store: groups and snapshots live in the same document.
+const store = new LocalStorageStore();
+const repository = new LocalStorageGroupRepository({ store });
+const snapshotRepository = new LocalStorageSnapshotRepository({ store });
 
 export function App() {
   return (
-    <AppProviders repository={repository}>
+    <AppProviders
+      repository={repository}
+      snapshotRepository={snapshotRepository}
+    >
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createSnapshot } from '@/domain';
 import { makeGroup } from '@/domain/test-utils/fixtures';
 import {
   emptyDocument,
@@ -7,9 +8,15 @@ import {
   runMigrations,
 } from './migrations';
 
+const SNAP_TIME = '2026-11-24T13:42:10.123Z';
+
 describe('parseDocument', () => {
-  it('lee un documento v3 válido', () => {
-    const doc = { version: 3, groups: [makeGroup({ members: ['A'] })] };
+  it('lee un documento v4 válido', () => {
+    const doc = {
+      version: 4,
+      groups: [makeGroup({ members: ['A'] })],
+      snapshots: [],
+    };
     expect(parseDocument(JSON.stringify(doc))).toEqual({
       ok: true,
       document: doc,
@@ -34,7 +41,7 @@ describe('parseDocument', () => {
       expenses: [{ ...good, id: 'x' }],
     };
     const result = parseDocument(
-      JSON.stringify({ version: 3, groups: [bad, good, 7] })
+      JSON.stringify({ version: 4, groups: [bad, good, 7], snapshots: [] })
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -51,7 +58,7 @@ describe('parseDocument', () => {
 
   it.each([
     ['versión 0', { version: 0, groups: [] }],
-    ['versión futura', { version: 4, groups: [] }],
+    ['versión futura', { version: 5, groups: [], snapshots: [] }],
     ['versión fraccionaria', { version: 1.5, groups: [] }],
   ])('rechaza %s', (_n, doc) => {
     expect(parseDocument(JSON.stringify(doc)).ok).toBe(false);
@@ -90,7 +97,7 @@ describe('runMigrations', () => {
   });
 
   it('la tabla real cubre cada versión anterior a la actual', () => {
-    expect(Object.keys(migrations)).toEqual(['1', '2']);
+    expect(Object.keys(migrations)).toEqual(['1', '2', '3']);
   });
 });
 
@@ -114,12 +121,12 @@ describe('migración v1 -> v2 (mayúscula inicial)', () => {
     return g;
   };
 
-  it('capitaliza grupos, miembros y descripciones y sube hasta la v3', () => {
+  it('capitaliza grupos, miembros y descripciones y sube hasta la v4', () => {
     const result = parseDocument(v1([lower()]));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.rejected).toEqual([]);
-    expect(result.document.version).toBe(3);
+    expect(result.document.version).toBe(4);
     const [group] = result.document.groups;
     expect(group.name).toBe('Viaje al sur');
     expect(group.members.map((m) => m.name)).toEqual(['Ana', 'Beto']);
@@ -197,7 +204,7 @@ describe('migración v2 -> v3 (avatares)', () => {
     const result = parseV2([v2Group(3)]);
     if (!result.ok) throw new Error('should parse');
     expect(result.rejected).toEqual([]);
-    expect(result.document.version).toBe(3);
+    expect(result.document.version).toBe(4);
     expect(result.document.groups[0].members).toEqual([
       { id: 'm0', name: 'Miembro 0', avatar: { color: 0, seed: 'm0' } },
       { id: 'm1', name: 'Miembro 1', avatar: { color: 1, seed: 'm1' } },
@@ -253,12 +260,115 @@ describe('migración v2 -> v3 (avatares)', () => {
     expect(group.members.map((m) => m.avatar.seed)).toEqual(['Ana', 'Beto']);
   });
 
-  it('un documento v2 vacío sube a v3', () => {
+  it('un documento v2 vacío sube a v4', () => {
     const result = parseV2([]);
     expect(result).toEqual({
       ok: true,
-      document: { version: 3, groups: [] },
+      document: { version: 4, groups: [], snapshots: [] },
       rejected: [],
     });
+  });
+});
+
+describe('migración v3 -> v4 (capturas guardadas)', () => {
+  const v3 = (groups: unknown[]) => JSON.stringify({ version: 3, groups });
+
+  it('agrega una lista de capturas vacía y no toca los grupos', () => {
+    const group = makeGroup({
+      members: ['Ana', 'Beto'],
+      expenses: [{ amount: 1000, payer: 'Ana', among: ['Ana', 'Beto'] }],
+      payments: [{ from: 'Beto', to: 'Ana', amount: 100 }],
+    });
+    const result = parseDocument(v3([group]));
+    expect(result).toEqual({
+      ok: true,
+      document: { version: 4, groups: [group], snapshots: [] },
+      rejected: [],
+    });
+  });
+
+  it('un documento v3 vacío sube a v4 con la lista vacía', () => {
+    expect(parseDocument(v3([]))).toEqual({
+      ok: true,
+      document: emptyDocument(),
+      rejected: [],
+    });
+  });
+
+  it('un documento v4 sin la lista de capturas se lee como vacía', () => {
+    const result = parseDocument('{"version":4,"groups":[]}');
+    expect(result).toEqual({
+      ok: true,
+      document: emptyDocument(),
+      rejected: [],
+    });
+  });
+
+  it('la migración suma la lista sin pisar las capturas que ya hubiera', () => {
+    expect(migrations[3]({ version: 3, groups: [] })).toEqual({
+      version: 4,
+      groups: [],
+      snapshots: [],
+    });
+  });
+
+  it('sigue dando error en un documento v3 con forma inválida', () => {
+    expect(parseDocument('{"version":3,"groups":"x"}').ok).toBe(false);
+  });
+});
+
+describe('capturas guardadas en un documento v4', () => {
+  const good = () =>
+    createSnapshot(makeGroup({ members: ['Ana', 'Beto'] }), SNAP_TIME);
+  const parse = (snapshots: unknown[], groups: unknown[] = []) =>
+    parseDocument(JSON.stringify({ version: 4, groups, snapshots }));
+
+  it('lee las válidas', () => {
+    const result = parse([good()]);
+    if (!result.ok) throw new Error('should parse');
+    expect(result.document.snapshots).toEqual([good()]);
+    expect(result.rejected).toEqual([]);
+  });
+
+  it('valida cada captura por separado y reporta las inválidas con su tipo', () => {
+    const brokenInvariants = {
+      ...good(),
+      sourceGroupId: 'otro',
+      expenses: [
+        {
+          ...createSnapshot(
+            makeGroup({
+              members: ['A'],
+              expenses: [{ amount: 5, payer: 'A', among: ['A'] }],
+            }),
+            SNAP_TIME
+          ).expenses[0],
+          payerId: 'zzz',
+        },
+      ],
+    };
+    const result = parse([brokenInvariants, good(), 'basura']);
+    if (!result.ok) throw new Error('should parse');
+    expect(result.document.snapshots).toEqual([good()]);
+    expect(result.rejected.map((r) => [r.kind, r.raw === 'basura'])).toEqual([
+      ['snapshot', false],
+      ['snapshot', true],
+    ]);
+  });
+
+  it('rechaza una segunda captura del mismo grupo de origen', () => {
+    const result = parse([good(), { ...good(), name: 'Repetida' }]);
+    if (!result.ok) throw new Error('should parse');
+    expect(result.document.snapshots).toHaveLength(1);
+    expect(result.rejected[0]).toMatchObject({
+      kind: 'snapshot',
+      reason: 'duplicate sourceGroupId',
+    });
+  });
+
+  it('los grupos inválidos van primero en la lista de rechazados', () => {
+    const result = parse([{ nope: true }], [{ nope: true }]);
+    if (!result.ok) throw new Error('should parse');
+    expect(result.rejected.map((r) => r.kind)).toEqual(['group', 'snapshot']);
   });
 });
