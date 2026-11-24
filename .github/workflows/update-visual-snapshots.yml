@@ -47,6 +47,9 @@ jobs:
       image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
       options: --ipc=host
     steps:
+      # The checkout must be a real git clone to commit from it.
+      - name: Install git
+        run: command -v git > /dev/null || (apt-get update && apt-get install -y --no-install-recommends git)
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
@@ -61,6 +64,7 @@ jobs:
         env:
           BRANCH: ${{ inputs.branch }}
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all e2e/__screenshots__/baseline

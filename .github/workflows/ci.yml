@@ -93,14 +93,22 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Only before the very first baselines exist (bootstrap): the update
+      # workflow can only be dispatched once it is on main, so the PR that
+      # adds it cannot have them yet. Once any baseline exists, a missing one
+      # for a single screen fails below like any difference.
       - name: Check that the baseline images exist
+        id: baselines
         run: |
-          if ! ls e2e/__screenshots__/baseline/*.png > /dev/null 2>&1; then
-            echo "::error title=Faltan las imágenes base::No hay imágenes base de regresión visual en e2e/__screenshots__/baseline. Corre el workflow 'Update visual snapshots' sobre esta rama (Actions > Update visual snapshots > Run workflow) y vuelve a correr este job. Ver docs/testing.md."
-            exit 1
+          if ls e2e/__screenshots__/baseline/*.png > /dev/null 2>&1; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Aún no hay imágenes base::No hay imágenes base de regresión visual en e2e/__screenshots__/baseline, así que no se comparó nada. Corre el workflow 'Update visual snapshots' sobre una rama de trabajo (Actions > Update visual snapshots > Run workflow). Ver docs/testing.md."
+            echo "present=false" >> "$GITHUB_OUTPUT"
           fi
       # 'none': a missing or different image fails the job; nothing is written.
       - name: Visual regression
+        if: steps.baselines.outputs.present == 'true'
         run: npm run test:visual -- --update-snapshots=none
       - uses: actions/upload-artifact@v4
         if: failure()
