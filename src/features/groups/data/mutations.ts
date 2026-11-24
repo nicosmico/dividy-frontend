@@ -7,7 +7,7 @@ import {
   type DomainError,
   type Group,
   type GroupId,
-  type Member,
+  type NewMemberInput,
   type Result,
 } from '@/domain';
 import { groupKeys } from './query-keys';
@@ -153,10 +153,11 @@ export function useGroupOperation(groupId: GroupId) {
 
 export interface CreateGroupValues {
   name: string;
-  memberNames: string[];
+  /** Members to create: ids are injected by the caller (the form needs them to show avatars). */
+  members: NewMemberInput[];
 }
 
-/** `create({ name, memberNames })` builds the group (ids and time injected) and saves it. */
+/** `create({ name, members })` builds the group (time injected, avatar colors assigned) and saves it. */
 export function useCreateGroup() {
   const { repository, now, newId } = useServices();
   const queryClient = useQueryClient();
@@ -165,14 +166,10 @@ export function useCreateGroup() {
     mutationFn: async (
       values: CreateGroupValues
     ): Promise<Result<Group, OperationError>> => {
-      const members: Member[] = values.memberNames.map((name) => ({
-        id: newId(),
-        name,
-      }));
       const result = createGroup({
         id: newId(),
         name: values.name,
-        members,
+        members: values.members,
         now: now(),
       });
       if (!result.ok) return result;

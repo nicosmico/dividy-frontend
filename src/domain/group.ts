@@ -1,3 +1,4 @@
+import { nextAvatarColor, validateAvatar } from './avatar';
 import { fail, ok } from './result';
 import type {
   Expense,
@@ -19,10 +20,21 @@ import {
   type PaymentFields,
 } from './validation';
 
+/**
+ * What the caller provides for a new member. The avatar color is assigned by
+ * the domain; the seed is the member id unless `avatarSeed` says otherwise
+ * (e.g. the user regenerated the face before the group was created).
+ */
+export interface NewMemberInput {
+  id: MemberId;
+  name: string;
+  avatarSeed?: string;
+}
+
 export interface CreateGroupInput {
   id: GroupId;
   name: string;
-  members: Member[];
+  members: NewMemberInput[];
   /** ISO timestamp used for `createdAt` and `updatedAt`. */
   now: string;
 }
@@ -70,7 +82,12 @@ export function createGroup(input: CreateGroupInput): Result<Group> {
     ids.add(member.id);
     const valid = validateMemberName({ members }, member.name);
     if (!valid.ok) return valid;
-    members.push({ id: member.id, name: valid.value });
+    const avatar = validateAvatar({
+      color: nextAvatarColor(members),
+      seed: member.avatarSeed ?? member.id,
+    });
+    if (!avatar.ok) return avatar;
+    members.push({ id: member.id, name: valid.value, avatar: avatar.value });
   }
 
   return ok({
@@ -96,7 +113,7 @@ export function touch(group: Group, now: string): Group {
   return { ...group, updatedAt: now };
 }
 
-export function addMember(group: Group, member: Member): Result<Group> {
+export function addMember(group: Group, member: NewMemberInput): Result<Group> {
   if (group.members.some((m) => m.id === member.id)) {
     return fail(
       'duplicate_member_id',
@@ -105,9 +122,17 @@ export function addMember(group: Group, member: Member): Result<Group> {
   }
   const name = validateMemberName(group, member.name);
   if (!name.ok) return name;
+  const avatar = validateAvatar({
+    color: nextAvatarColor(group.members),
+    seed: member.avatarSeed ?? member.id,
+  });
+  if (!avatar.ok) return avatar;
   return ok({
     ...group,
-    members: [...group.members, { id: member.id, name: name.value }],
+    members: [
+      ...group.members,
+      { id: member.id, name: name.value, avatar: avatar.value },
+    ],
   });
 }
 

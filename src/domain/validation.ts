@@ -1,3 +1,4 @@
+import { validateAvatar } from './avatar';
 import { isValidAmount, MAX_AMOUNT } from './money';
 import { fail, ok } from './result';
 import { capitalizeFirst } from './text';
@@ -5,6 +6,7 @@ import type {
   Amount,
   Expense,
   Group,
+  Member,
   MemberId,
   Payment,
   Result,
@@ -56,7 +58,7 @@ function normalizeName(name: string): string {
  * surrounding spaces; `exceptId` skips that member (used when renaming).
  */
 export function validateMemberName(
-  group: Pick<Group, 'members'>,
+  group: { members: ReadonlyArray<Pick<Member, 'id' | 'name'>> },
   name: string,
   exceptId?: MemberId
 ): Result<string> {
@@ -221,6 +223,9 @@ export function getGroupIssues(group: Group): string[] {
     const key = normalizeName(member.name);
     if (names.has(key)) issues.push(`duplicate member name ${member.name}`);
     names.add(key);
+    if (!member.avatar || !validateAvatar(member.avatar).ok) {
+      issues.push(`invalid member avatar ${member.id}`);
+    }
   }
 
   const seen = new Set<string>();

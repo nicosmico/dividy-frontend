@@ -1,3 +1,4 @@
+import { AVATAR_COLOR_COUNT } from '../avatar';
 import type { Expense, Group, Member, Payment } from '../types';
 
 export const NOW = '2026-01-01T12:00:00.000Z';
@@ -5,7 +6,11 @@ export const TODAY = '2026-01-01';
 
 /** Members whose id equals their name, e.g. `members('A', 'B')`. */
 export function members(...names: string[]): Member[] {
-  return names.map((name) => ({ id: name, name }));
+  return names.map((name, index) => ({
+    id: name,
+    name,
+    avatar: { color: index % AVATAR_COLOR_COUNT, seed: name },
+  }));
 }
 
 interface ExpenseSpec {

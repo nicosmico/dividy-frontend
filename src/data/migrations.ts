@@ -54,6 +54,37 @@ function migrateV1toV2(doc: unknown): unknown {
   return { ...doc, version: 2, groups };
 }
 
+const V3_AVATAR_COLORS = 8;
+
+/**
+ * v2 -> v3: gives every member an `avatar`. The seed is the member id, so the
+ * face they already had is kept; colors are assigned in member order, the
+ * first one the group does not use yet (starting over after the 8th).
+ */
+function addAvatars(members: unknown): unknown {
+  if (!Array.isArray(members)) return members;
+  const uses = new Array<number>(V3_AVATAR_COLORS).fill(0);
+  return members.map((member: unknown) => {
+    if (!isObject(member)) return member;
+    if (isObject(member.avatar)) return member;
+    let color = 0;
+    for (let c = 1; c < V3_AVATAR_COLORS; c++) {
+      if (uses[c] < uses[color]) color = c;
+    }
+    uses[color]++;
+    return { ...member, avatar: { color, seed: member.id } };
+  });
+}
+
+function migrateV2toV3(doc: unknown): unknown {
+  if (!isObject(doc) || !Array.isArray(doc.groups))
+    return { ...(doc as Json), version: 3 };
+  const groups = doc.groups.map((group: unknown) =>
+    isObject(group) ? { ...group, members: addAvatars(group.members) } : group
+  );
+  return { ...doc, version: 3, groups };
+}
+
 /**
  * Migrations by source version: `migrations[n]` turns a version `n` document
  * into version `n + 1`. Add an entry (and bump `CURRENT_VERSION`) when the
@@ -61,6 +92,7 @@ function migrateV1toV2(doc: unknown): unknown {
  */
 export const migrations: Record<number, (doc: unknown) => unknown> = {
   1: migrateV1toV2,
+  2: migrateV2toV3,
 };
 
 /** Applies `table[version]`, `table[version + 1]`... until `target`. */

@@ -1,4 +1,5 @@
 import fc from 'fast-check';
+import { AVATAR_COLOR_COUNT } from '../avatar';
 import { MAX_AMOUNT } from '../money';
 import type { Expense, Group, Member, Payment } from '../types';
 
@@ -28,6 +29,7 @@ export function membersArb(min = 1, max = 8): fc.Arbitrary<Member[]> {
     Array.from({ length: n }, (_, i) => ({
       id: `m${i}`,
       name: `Miembro ${i}`,
+      avatar: { color: i % AVATAR_COLOR_COUNT, seed: `m${i}` },
     }))
   );
 }

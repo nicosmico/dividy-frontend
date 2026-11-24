@@ -8,8 +8,8 @@ import {
 } from './migrations';
 
 describe('parseDocument', () => {
-  it('lee un documento v2 válido', () => {
-    const doc = { version: 2, groups: [makeGroup({ members: ['A'] })] };
+  it('lee un documento v3 válido', () => {
+    const doc = { version: 3, groups: [makeGroup({ members: ['A'] })] };
     expect(parseDocument(JSON.stringify(doc))).toEqual({
       ok: true,
       document: doc,
@@ -34,7 +34,7 @@ describe('parseDocument', () => {
       expenses: [{ ...good, id: 'x' }],
     };
     const result = parseDocument(
-      JSON.stringify({ version: 2, groups: [bad, good, 7] })
+      JSON.stringify({ version: 3, groups: [bad, good, 7] })
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -51,7 +51,7 @@ describe('parseDocument', () => {
 
   it.each([
     ['versión 0', { version: 0, groups: [] }],
-    ['versión futura', { version: 3, groups: [] }],
+    ['versión futura', { version: 4, groups: [] }],
     ['versión fraccionaria', { version: 1.5, groups: [] }],
   ])('rechaza %s', (_n, doc) => {
     expect(parseDocument(JSON.stringify(doc)).ok).toBe(false);
@@ -90,7 +90,7 @@ describe('runMigrations', () => {
   });
 
   it('la tabla real cubre cada versión anterior a la actual', () => {
-    expect(Object.keys(migrations)).toEqual(['1']);
+    expect(Object.keys(migrations)).toEqual(['1', '2']);
   });
 });
 
@@ -114,12 +114,12 @@ describe('migración v1 -> v2 (mayúscula inicial)', () => {
     return g;
   };
 
-  it('capitaliza grupos, miembros y descripciones y sube a la v2', () => {
+  it('capitaliza grupos, miembros y descripciones y sube hasta la v3', () => {
     const result = parseDocument(v1([lower()]));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.rejected).toEqual([]);
-    expect(result.document.version).toBe(2);
+    expect(result.document.version).toBe(3);
     const [group] = result.document.groups;
     expect(group.name).toBe('Viaje al sur');
     expect(group.members.map((m) => m.name)).toEqual(['Ana', 'Beto']);
@@ -174,5 +174,91 @@ describe('migración v1 -> v2 (mayúscula inicial)', () => {
   it('un documento v1 corrupto o vacío sigue siendo un caso controlado', () => {
     expect(parseDocument(v1([])).ok).toBe(true);
     expect(parseDocument('{"version":1,"groups":"x"}').ok).toBe(false);
+  });
+});
+
+describe('migración v2 -> v3 (avatares)', () => {
+  const v2Member = (id: string, name: string) => ({ id, name });
+  const v2Group = (memberCount: number) => {
+    const base = makeGroup({ members: ['x', 'y'] });
+    return {
+      ...base,
+      members: Array.from({ length: memberCount }, (_, i) =>
+        v2Member(`m${i}`, `Miembro ${i}`)
+      ),
+      expenses: [],
+      payments: [],
+    };
+  };
+  const parseV2 = (groups: unknown[]) =>
+    parseDocument(JSON.stringify({ version: 2, groups }));
+
+  it('la semilla es el id y los colores van en orden de miembros', () => {
+    const result = parseV2([v2Group(3)]);
+    if (!result.ok) throw new Error('should parse');
+    expect(result.rejected).toEqual([]);
+    expect(result.document.version).toBe(3);
+    expect(result.document.groups[0].members).toEqual([
+      { id: 'm0', name: 'Miembro 0', avatar: { color: 0, seed: 'm0' } },
+      { id: 'm1', name: 'Miembro 1', avatar: { color: 1, seed: 'm1' } },
+      { id: 'm2', name: 'Miembro 2', avatar: { color: 2, seed: 'm2' } },
+    ]);
+  });
+
+  it('no repite colores hasta 8 miembros y vuelve a empezar desde el 9.º', () => {
+    const result = parseV2([v2Group(10)]);
+    if (!result.ok) throw new Error('should parse');
+    const colors = result.document.groups[0].members.map((m) => m.avatar.color);
+    expect(colors).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 0, 1]);
+  });
+
+  it('cada grupo cuenta sus colores por separado', () => {
+    const a = { ...v2Group(2), id: 'a' };
+    const b = { ...v2Group(2), id: 'b' };
+    const result = parseV2([a, b]);
+    if (!result.ok) throw new Error('should parse');
+    expect(
+      result.document.groups.map((g) => g.members.map((m) => m.avatar.color))
+    ).toEqual([
+      [0, 1],
+      [0, 1],
+    ]);
+  });
+
+  it('no pierde datos: gastos, pagos, fechas y nombres quedan iguales', () => {
+    const base = makeGroup({
+      members: ['Ana', 'Beto'],
+      expenses: [
+        {
+          id: 'e1',
+          description: 'Pizza',
+          amount: 1000,
+          payer: 'Ana',
+          among: ['Ana', 'Beto'],
+        },
+      ],
+      payments: [{ id: 'p1', from: 'Beto', to: 'Ana', amount: 100 }],
+    });
+    const v2 = {
+      ...base,
+      members: base.members.map(({ id, name }) => ({ id, name })),
+    };
+    const result = parseV2([v2]);
+    if (!result.ok) throw new Error('should parse');
+    const [group] = result.document.groups;
+    expect({
+      ...group,
+      members: group.members.map(({ id, name }) => ({ id, name })),
+    }).toEqual(v2);
+    expect(group.members.map((m) => m.avatar.seed)).toEqual(['Ana', 'Beto']);
+  });
+
+  it('un documento v2 vacío sube a v3', () => {
+    const result = parseV2([]);
+    expect(result).toEqual({
+      ok: true,
+      document: { version: 3, groups: [] },
+      rejected: [],
+    });
   });
 });

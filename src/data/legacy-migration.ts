@@ -5,7 +5,7 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_MEMBER_NAME_LENGTH,
   type Group,
-  type Member,
+  type NewMemberInput,
 } from '@/domain';
 import { z } from 'zod';
 
@@ -106,7 +106,7 @@ export function migrateLegacyData(input: LegacyMigrationInput): Group | null {
   if (legacyMembers.length === 0) return null;
 
   const taken = new Set<string>();
-  const members: Member[] = legacyMembers.map((m) => ({
+  const members: NewMemberInput[] = legacyMembers.map((m) => ({
     id: m.id,
     name: uniqueName(clip(m.name, MAX_MEMBER_NAME_LENGTH, 'Sin nombre'), taken),
   }));

@@ -1,13 +1,18 @@
 import { getGroupIssues, type Group } from '@/domain';
 import { z } from 'zod';
 
-/** Version 2: names and descriptions start with a capital letter. */
-export const CURRENT_VERSION = 2;
+/** Version 3: every member has an `avatar` (`color` 0-7 and `seed`). */
+export const CURRENT_VERSION = 3;
 
 const isoTimestamp = z.string().min(1);
 const dateString = z.string();
 
-const memberSchema = z.object({ id: z.string().min(1), name: z.string() });
+// Range and non-empty seed are checked by `getGroupIssues` (see `groupSchema`).
+const memberSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  avatar: z.object({ color: z.number(), seed: z.string() }),
+});
 
 const expenseSchema = z.object({
   id: z.string().min(1),
