@@ -14,10 +14,16 @@ export function LazyExplanationPlayer(props: Props) {
   return (
     <Suspense
       fallback={
-        <Skeleton
-          aria-hidden='true'
-          className='h-[40rem] w-full rounded-card'
-        />
+        <div
+          className={
+            props.layout === 'sheet' ? 'px-4 pb-4 md:px-6 md:pb-6' : undefined
+          }
+        >
+          <Skeleton
+            aria-hidden='true'
+            className='h-[40rem] w-full rounded-card'
+          />
+        </div>
       }
     >
       <ExplanationPlayer {...props} />

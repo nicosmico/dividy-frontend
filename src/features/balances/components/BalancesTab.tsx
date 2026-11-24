@@ -57,12 +57,14 @@ export function BalancesTab() {
         open={explaining}
         onOpenChange={setExplaining}
         title='Cómo se calculó'
+        initialFocus='dialog'
+        flush
         description={`Así salen los saldos de ${group.name}, con sus gastos y pagos.`}
       >
         <LazyExplanationPlayer
           group={group}
           label={`Cómo se calculó el saldo de ${group.name}`}
-          className='pb-2'
+          layout='sheet'
         />
       </ResponsiveDialog>
     </div>

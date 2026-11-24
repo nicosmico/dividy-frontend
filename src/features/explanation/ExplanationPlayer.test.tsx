@@ -218,7 +218,7 @@ describe('ExplanationPlayer', () => {
       'CarlaBeto$12.500',
       'CarlaAna$5.000',
     ]);
-    const container = rows()[0].parentElement!;
+    const container = rows()[0].closest('[data-slot="settling"]')!;
     expect(container).toHaveAttribute('aria-hidden', 'true');
     await next(user, FRAMES - 1);
     expect(container).toHaveAttribute('aria-hidden', 'false');
@@ -322,5 +322,81 @@ describe('ExplanationPlayer con un grupo real', () => {
     await next(user, 3);
     expect(screen.getByText('¡Están al día!')).toBeInTheDocument();
     expect(moods(container)).toEqual(['happy', 'happy']);
+  });
+
+  describe('layout sheet (el diálogo "Ver cómo se calculó")', () => {
+    const renderSheet = () => {
+      const view = render(
+        <div data-testid='scroller' style={{ overflowY: 'auto' }}>
+          <ExplanationPlayer
+            group={buildExampleGroup()}
+            label='Diálogo'
+            layout='sheet'
+          />
+        </div>
+      );
+      return { ...view, scroller: screen.getByTestId('scroller') };
+    };
+
+    it('en los pasos 1 a 3 no existe el contenido del paso 4 y en el 4 no existe la leyenda', async () => {
+      const user = userEvent.setup();
+      renderSheet();
+      for (let i = 0; i < FRAMES - 1; i++) {
+        expect(slot(document, 'settling')).toHaveLength(0);
+        expect(slot(document, 'transfer')).toHaveLength(0);
+        expect(slot(document, 'legend')).toHaveLength(1);
+        await next(user);
+      }
+      expect(slot(document, 'settling')).toHaveLength(1);
+      expect(slot(document, 'transfer')).toHaveLength(2);
+      expect(slot(document, 'legend')).toHaveLength(0);
+    });
+
+    it('el pie con la narración y los controles está en todos los pasos', async () => {
+      const user = userEvent.setup();
+      renderSheet();
+      for (let i = 0; i < FRAMES; i++) {
+        const footer = slot(document, 'player-footer')[0];
+        expect(footer).toBeDefined();
+        expect(footer.querySelector('[aria-live="polite"]')).not.toBeNull();
+        expect(
+          footer.querySelector('button[aria-label="Paso anterior"]')
+        ).not.toBeNull();
+        expect(
+          footer.querySelector('button[aria-label="Paso siguiente"]')
+        ).not.toBeNull();
+        // The rows are in the scrolling body, not in the footer.
+        expect(footer.querySelector('[data-slot="paid-share-row"]')).toBeNull();
+        await next(user);
+      }
+    });
+
+    it('al abrir el cuerpo empieza arriba, aunque algo lo haya desplazado', () => {
+      const scroller = document.createElement('div');
+      scroller.style.overflowY = 'auto';
+      scroller.scrollTop = 120;
+      document.body.append(scroller);
+      render(
+        <ExplanationPlayer
+          group={buildExampleGroup()}
+          label='Diálogo'
+          layout='sheet'
+        />,
+        { container: scroller.appendChild(document.createElement('div')) }
+      );
+      expect(scroller.scrollTop).toBe(0);
+      scroller.remove();
+    });
+
+    it('la bienvenida (card) conserva la leyenda y el paso 4 en el DOM todo el tiempo', async () => {
+      const user = userEvent.setup();
+      renderExample();
+      expect(slot(document, 'player-footer')).toHaveLength(0);
+      expect(slot(document, 'legend')).toHaveLength(1);
+      expect(slot(document, 'settling')).toHaveLength(1);
+      await next(user, FRAMES - 1);
+      expect(slot(document, 'legend')).toHaveLength(1);
+      expect(slot(document, 'settling')).toHaveLength(1);
+    });
   });
 });
