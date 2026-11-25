@@ -5,9 +5,13 @@ import {
   createSnapshot,
   decideSnapshotSave,
   fromCompactSnapshotV1,
+  fromCompactSnapshotV2,
+  fromCompactSnapshotV3,
   getSnapshotIssues,
   snapshotToGroup,
   toCompactSnapshotV1,
+  toCompactSnapshotV2,
+  toCompactSnapshotV3,
   type CompactSnapshotV1,
   type Snapshot,
 } from './snapshot';
@@ -75,6 +79,7 @@ describe('createSnapshot', () => {
       toId: 'm2',
     });
     expect(Object.keys(snapshot).sort()).toEqual([
+      'currency',
       'expenses',
       'members',
       'name',
@@ -254,9 +259,28 @@ describe('propiedades de la captura', () => {
       .map((ms) => new Date(ms).toISOString()),
   });
 
-  it('ida y vuelta por el formato compacto es la identidad', () => {
+  const clpGroupAndTime = fc.record({
+    group: groupArb({
+      maxMembers: 10,
+      maxExpenses: 20,
+      maxPayments: 8,
+      currency: 'CLP',
+    }),
+    takenAt: groupAndTime.map((x) => x.takenAt),
+  });
+  const anyCurrencyGroupAndTime = fc.record({
+    group: groupArb({
+      maxMembers: 10,
+      maxExpenses: 20,
+      maxPayments: 8,
+      splits: ['equal', 'exact', 'percent', 'shares'],
+    }),
+    takenAt: groupAndTime.map((x) => x.takenAt),
+  });
+
+  it('ida y vuelta por el formato compacto v1 es la identidad (CLP)', () => {
     fc.assert(
-      fc.property(groupAndTime, ({ group, takenAt }) => {
+      fc.property(clpGroupAndTime, ({ group, takenAt }) => {
         const snapshot = createSnapshot(group, takenAt);
         expect(getSnapshotIssues(snapshot)).toEqual([]);
         expect(fromCompactSnapshotV1(toCompactSnapshotV1(snapshot))).toEqual({
@@ -265,6 +289,37 @@ describe('propiedades de la captura', () => {
         });
       })
     );
+  });
+
+  it('v2 también vuelve igual y supone CLP', () => {
+    fc.assert(
+      fc.property(clpGroupAndTime, ({ group, takenAt }) => {
+        const snapshot = createSnapshot(group, takenAt);
+        const back = fromCompactSnapshotV2(toCompactSnapshotV2(snapshot));
+        expect(back).toEqual({ ok: true, value: snapshot });
+        expect(back.ok && back.value.currency).toBe('CLP');
+      })
+    );
+  });
+
+  it('v3 vuelve igual con cualquier moneda y cualquier división', () => {
+    fc.assert(
+      fc.property(anyCurrencyGroupAndTime, ({ group, takenAt }) => {
+        const snapshot = createSnapshot(group, takenAt);
+        expect(snapshot.currency).toBe(group.currency);
+        expect(getSnapshotIssues(snapshot)).toEqual([]);
+        expect(fromCompactSnapshotV3(toCompactSnapshotV3(snapshot))).toEqual({
+          ok: true,
+          value: snapshot,
+        });
+      })
+    );
+  });
+
+  it('v3 rechaza una moneda desconocida', () => {
+    const compact = toCompactSnapshotV3(createSnapshot(sample(), TAKEN));
+    const broken = [...compact.slice(0, 6), 'XXX'] as unknown as typeof compact;
+    expect(fromCompactSnapshotV3(broken).ok).toBe(false);
   });
 
   it('la captura da los mismos saldos y transferencias que el grupo', () => {

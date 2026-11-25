@@ -1,5 +1,6 @@
 import { validateAvatar } from './avatar';
-import { isValidAmount, MAX_AMOUNT } from './money';
+import { amountRangeMessage, isValidAmount } from './money';
+import { isCurrencyCode, type CurrencyCode } from './currency';
 import { fail, ok } from './result';
 import { validateSplit } from './split';
 import { capitalizeFirst } from './text';
@@ -99,12 +100,12 @@ export function validateDescription(description: string): Result<string> {
   );
 }
 
-export function validateAmount(amount: unknown): Result<Amount> {
+export function validateAmount(
+  amount: unknown,
+  currency: CurrencyCode
+): Result<Amount> {
   if (!isValidAmount(amount)) {
-    return fail(
-      'invalid_amount',
-      `Ingresa un monto en pesos enteros, entre $1 y $${MAX_AMOUNT.toLocaleString('es-CL')}.`
-    );
+    return fail('invalid_amount', amountRangeMessage(currency));
   }
   return ok(amount);
 }
@@ -128,12 +129,12 @@ export function validateDate(date: string): Result<string> {
 
 /** Validates an expense against the group and returns it normalized (trimmed, capitalized). */
 export function validateExpenseFields(
-  group: Pick<Group, 'members'>,
+  group: Pick<Group, 'members' | 'currency'>,
   fields: ExpenseFields
 ): Result<ExpenseFields> {
   const description = validateDescription(fields.description);
   if (!description.ok) return description;
-  const amount = validateAmount(fields.amount);
+  const amount = validateAmount(fields.amount, group.currency);
   if (!amount.ok) return amount;
   const date = validateDate(fields.date);
   if (!date.ok) return date;
@@ -164,7 +165,12 @@ export function validateExpenseFields(
       'Quita de la división a quien ya no está en el grupo.'
     );
   }
-  const split = validateSplit(amount.value, fields.split, group.members);
+  const split = validateSplit(
+    amount.value,
+    fields.split,
+    group.members,
+    group.currency
+  );
   if (!split.ok) return split;
   return ok({
     description: description.value,
@@ -177,10 +183,10 @@ export function validateExpenseFields(
 
 /** Validates a payment against the group and returns it normalized. */
 export function validatePaymentFields(
-  group: Pick<Group, 'members'>,
+  group: Pick<Group, 'members' | 'currency'>,
   fields: PaymentFields
 ): Result<PaymentFields> {
-  const amount = validateAmount(fields.amount);
+  const amount = validateAmount(fields.amount, group.currency);
   if (!amount.ok) return amount;
   const date = validateDate(fields.date);
   if (!date.ok) return date;
@@ -208,6 +214,7 @@ export function validatePaymentFields(
  */
 export function getGroupIssues(group: Group): string[] {
   const issues: string[] = [];
+  if (!isCurrencyCode(group.currency)) issues.push('invalid currency');
   const gName = validateGroupName(group.name);
   if (!gName.ok || gName.value !== group.name) {
     issues.push('invalid group name');

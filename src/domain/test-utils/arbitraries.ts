@@ -1,5 +1,6 @@
 import fc from 'fast-check';
 import { AVATAR_COLOR_COUNT } from '../avatar';
+import { CURRENCY_CODES, type CurrencyCode } from '../currency';
 import { MAX_AMOUNT } from '../money';
 import type { Expense, Group, Member, Payment, Split } from '../types';
 
@@ -10,6 +11,10 @@ export const amountArb: fc.Arbitrary<number> = fc.oneof(
   fc.integer({ min: 1, max: 50 }),
   fc.integer({ min: 1, max: 100_000 }),
   fc.integer({ min: 1, max: MAX_AMOUNT })
+);
+
+export const currencyArb: fc.Arbitrary<CurrencyCode> = fc.constantFrom(
+  ...CURRENCY_CODES
 );
 
 export const dateArb: fc.Arbitrary<string> = fc
@@ -165,6 +170,8 @@ export function groupArb(
     maxPayments?: number;
     /** Kinds of split the expenses may have (equal only by default). */
     splits?: Split['type'][];
+    /** Fixed currency; by default any of the supported ones (0 and 2 decimals). */
+    currency?: CurrencyCode;
   } = {}
 ): fc.Arbitrary<Group> {
   const {
@@ -173,6 +180,7 @@ export function groupArb(
     maxExpenses = 10,
     maxPayments = 5,
     splits = ['equal'],
+    currency,
   } = options;
   return membersArb(minMembers, maxMembers).chain((members) =>
     fc
@@ -194,10 +202,16 @@ export function groupArb(
             )
           ),
       })
-      .map(({ expenses, payments }) => ({
+      .chain((parts) =>
+        (currency ? fc.constant(currency) : currencyArb).map((code) => ({
+          ...parts,
+          currency: code,
+        }))
+      )
+      .map(({ expenses, payments, currency: code }) => ({
         id: 'g1',
         name: 'Grupo',
-        currency: 'CLP' as const,
+        currency: code,
         members,
         expenses,
         payments,

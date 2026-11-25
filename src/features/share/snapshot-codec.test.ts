@@ -8,6 +8,8 @@ import {
   snapshotToGroup,
   toCompactSnapshotV1,
   toCompactSnapshotV2,
+  toCompactSnapshotV3,
+  CURRENCY_CODES,
   type Group,
   type Snapshot,
   type Split,
@@ -19,6 +21,7 @@ import {
   decodeSnapshot,
   encodeSnapshot,
   isSnapshotLinkSupported,
+  LINK_VERSION,
 } from './snapshot-codec';
 
 const TAKEN = '2026-11-24T13:42:10.123Z';
@@ -75,7 +78,7 @@ describe('encodeSnapshot / decodeSnapshot', () => {
 
   it('el link lleva el prefijo de versión y solo caracteres seguros para una URL', async () => {
     const token = await encodeSnapshot(sampleSnapshot());
-    expect(token).toMatch(/^v2\.[A-Za-z0-9_-]+$/);
+    expect(token).toMatch(/^v3\.[A-Za-z0-9_-]+$/);
   });
 
   it('no deja a la vista nombres ni montos (van comprimidos)', async () => {
@@ -299,7 +302,7 @@ describe('links dañados (decodificar nunca lanza)', () => {
   });
 
   it('versión desconocida → error propio y amable', async () => {
-    for (const token of ['v3.abc', 'v99.abc', await tokenFromJson([], 7)]) {
+    for (const token of ['v4.abc', 'v99.abc', await tokenFromJson([], 7)]) {
       const result = await decodeSnapshot(token);
       expect(result).toMatchObject({
         ok: false,
@@ -515,9 +518,100 @@ describe('tamaño del link', () => {
     expect(snapshot.members).toHaveLength(8);
     const token = await encodeSnapshot(snapshot);
     const url = buildSnapshotUrl('https://dividy.netlify.app', token);
-    // Measured (ADR 0006): v1 1.897 characters; v2 with 15 custom splits, 2.161 (2.195 with the URL).
+    // Measured (ADR 0006): v1 1.897 characters; v2 with 15 custom splits, 2.161 (2.195 with the URL); v3 (adds the currency) 2.167 (2.201 with the URL).
     expect(url.length).toBeLessThan(4_000);
     expect(token.length).toBeLessThan(2_400);
     expect(await decodeSnapshot(token)).toEqual({ ok: true, value: snapshot });
+  });
+
+  it('v3 con otra moneda pesa lo mismo que con CLP (el código son pocos bytes)', async () => {
+    const clp = await encodeSnapshot(createSnapshot(busyGroup(), TAKEN));
+    const usd = await encodeSnapshot(
+      createSnapshot({ ...busyGroup(), currency: 'USD' }, TAKEN)
+    );
+    expect(Math.abs(usd.length - clp.length)).toBeLessThan(20);
+    expect(
+      buildSnapshotUrl('https://dividy.netlify.app', usd).length
+    ).toBeLessThan(4_000);
+  });
+});
+
+describe('la moneda en el link (v3)', () => {
+  it('ida y vuelta (propiedad) conserva la moneda y los saldos', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        groupArb({
+          maxMembers: 6,
+          maxExpenses: 8,
+          splits: ['equal', 'exact', 'percent', 'shares'],
+        }),
+        async (group) => {
+          const snapshot = createSnapshot(group, TAKEN);
+          const result = await decodeSnapshot(await encodeSnapshot(snapshot));
+          expect(result).toEqual({ ok: true, value: snapshot });
+          if (!result.ok) return;
+          expect(result.value.currency).toBe(group.currency);
+        }
+      ),
+      { numRuns: 60 }
+    );
+  });
+
+  it.each(CURRENCY_CODES)('ida y vuelta en %s', async (currency) => {
+    const snapshot = createSnapshot({ ...sampleGroup(), currency }, TAKEN);
+    const result = await decodeSnapshot(await encodeSnapshot(snapshot));
+    expect(result.ok && result.value.currency).toBe(currency);
+  });
+
+  it('un link v1 sigue abriendo, en CLP', async () => {
+    const snapshot = sampleSnapshot();
+    const token = await tokenFromJson(toCompactSnapshotV1(snapshot), 1);
+    expect(await decodeSnapshot(token)).toEqual({ ok: true, value: snapshot });
+  });
+
+  it('un link v2 sigue abriendo, en CLP, con sus divisiones', async () => {
+    const snapshot = createSnapshot(customGroup(), TAKEN);
+    const token = await tokenFromJson(toCompactSnapshotV2(snapshot), 2);
+    const result = await decodeSnapshot(token);
+    expect(result).toEqual({ ok: true, value: snapshot });
+    expect(result.ok && result.value.currency).toBe('CLP');
+  });
+
+  it('el codificador escribe siempre v3 y el payload termina con la moneda', async () => {
+    const snapshot = createSnapshot(
+      { ...sampleGroup(), currency: 'EUR' },
+      TAKEN
+    );
+    expect(toCompactSnapshotV3(snapshot)).toHaveLength(7);
+    expect(toCompactSnapshotV3(snapshot)[6]).toBe('EUR');
+    expect(LINK_VERSION).toBe(3);
+    expect(await encodeSnapshot(snapshot)).toMatch(/^v3\./);
+  });
+
+  it.each([
+    ['moneda desconocida', 'XXX'],
+    ['moneda en minúsculas', 'usd'],
+    ['moneda que no es texto', 5],
+  ])('un v3 con %s es un link dañado', async (_name, currency) => {
+    const compact = toCompactSnapshotV3(sampleSnapshot());
+    const token = await tokenFromJson([...compact.slice(0, 6), currency], 3);
+    expect(await decodeSnapshot(token)).toMatchObject({
+      ok: false,
+      error: { code: 'invalid_snapshot' },
+    });
+  });
+
+  it('un v3 sin moneda es un link dañado (y un v2 con moneda también)', async () => {
+    const snapshot = sampleSnapshot();
+    expect(
+      await decodeSnapshot(
+        await tokenFromJson(toCompactSnapshotV2(snapshot), 3)
+      )
+    ).toMatchObject({ ok: false });
+    expect(
+      await decodeSnapshot(
+        await tokenFromJson(toCompactSnapshotV3(snapshot), 2)
+      )
+    ).toMatchObject({ ok: false });
   });
 });

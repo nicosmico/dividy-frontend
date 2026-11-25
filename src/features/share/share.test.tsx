@@ -171,7 +171,7 @@ describe('abrir un link de solo lectura', () => {
       ).toBeInTheDocument();
       // Same numbers as the original group.
       expect(screen.getByText(/Pendiente:/)).toHaveTextContent(
-        formatAmount(getPendingAmount(tripGroup()))
+        formatAmount(getPendingAmount(tripGroup()), 'CLP')
       );
       expect(screen.getAllByText('Beto → Ana').length).toBeGreaterThan(0);
       expect(
@@ -227,6 +227,8 @@ describe('abrir un link de solo lectura', () => {
       await user.click(
         await screen.findByRole('button', { name: 'Copiar resumen' })
       );
+      // The copy or share is async (the link may still be compressing).
+      await waitFor(() => expect(writeText).toHaveBeenCalled());
       const text = writeText.mock.calls[0][0];
       expect(text).toContain(
         `*Viaje a Pucón*\nCuentas al ${formatDateTime(TAKEN)}`
@@ -482,6 +484,8 @@ describe('captura guardada', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Copiar resumen' })
     );
+    // The copy or share is async (the link may still be compressing).
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
     const text = writeText.mock.calls[0][0];
     expect(text).toContain(`Cuentas al ${formatDateTime(TAKEN)}`);
     const token = text.split('/shared#')[1];
@@ -663,10 +667,12 @@ describe('compartir un grupo propio', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Copiar resumen' })
     );
+    // The copy or share is async (the link may still be compressing).
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
     const text = writeText.mock.calls[0][0];
     expect(text).not.toContain('Cuentas al');
     const [, link] = text.split('\n\nVer el detalle: ');
-    expect(link.startsWith(`${window.location.origin}/shared#v2.`)).toBe(true);
+    expect(link.startsWith(`${window.location.origin}/shared#v3.`)).toBe(true);
     const url = new URL(link);
     expect(url.search).toBe('');
     // The link opens a capture with the same numbers as the group.

@@ -214,7 +214,8 @@ function StrategyDialog({
                     <ul className='list-disc pl-5 text-muted-foreground'>
                       {deleted.map((e) => (
                         <li key={e.id} className='break-words'>
-                          {e.description} ({formatAmount(e.amount)})
+                          {e.description} (
+                          {formatAmount(e.amount, group.currency)})
                         </li>
                       ))}
                     </ul>

@@ -15,7 +15,7 @@ describe('Mis grupos', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Solo pesos chilenos. Tus datos se guardan en este dispositivo.'
+        'Pesos, dólares, euros y más. Tus datos se guardan en este dispositivo.'
       )
     ).toBeInTheDocument();
     await user.click(

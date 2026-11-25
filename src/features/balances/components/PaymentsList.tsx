@@ -73,7 +73,7 @@ export function PaymentsList({ group }: { group: Group }) {
                 </p>
               </div>
               <p className='shrink-0 font-semibold tabular-nums'>
-                {formatAmount(payment.amount)}
+                {formatAmount(payment.amount, group.currency)}
               </p>
               {!readOnly && (
                 <Button

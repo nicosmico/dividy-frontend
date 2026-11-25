@@ -5,6 +5,7 @@ import {
   splitTypeLabel,
   suggestTransfers,
   type Amount,
+  type CurrencyCode,
   type ExpenseId,
   type Group,
   type Member,
@@ -74,6 +75,7 @@ export interface Explanation {
   payments: Payment[];
   colors: ColorMap;
   totalSpent: Amount;
+  currency: CurrencyCode;
   /** The tallest bar (paid or share) of any member: the common scale. */
   scaleMax: Amount;
 }
@@ -103,7 +105,7 @@ export function buildExplanation(group: Group): Explanation {
     customDivision:
       expense.split.type === 'equal'
         ? null
-        : `${splitTypeLabel(expense.split.type)}: ${describeSplitValues(expense.split, group.members)}`,
+        : `${splitTypeLabel(expense.split.type)}: ${describeSplitValues(expense.split, group.members, group.currency)}`,
     rank,
     color: colorForRank(rank),
     icon: suggestIcon(expense.description, 'expense'),
@@ -149,6 +151,7 @@ export function buildExplanation(group: Group): Explanation {
     payments: group.payments,
     colors,
     totalSpent: expenses.reduce((sum, e) => sum + e.amount, 0),
+    currency: group.currency,
     scaleMax: Math.max(0, ...members.flatMap((m) => [m.paid, m.share])),
   };
 }

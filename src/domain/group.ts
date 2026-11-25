@@ -1,4 +1,9 @@
 import { nextAvatarColor, validateAvatar } from './avatar';
+import {
+  DEFAULT_CURRENCY,
+  isCurrencyCode,
+  type CurrencyCode,
+} from './currency';
 import { fail, ok } from './result';
 import { reassignSplit, toEqualSplit } from './split';
 import type {
@@ -37,6 +42,8 @@ export interface CreateGroupInput {
   id: GroupId;
   name: string;
   members: NewMemberInput[];
+  /** Defaults to CLP. Fixed once the group has expenses or payments (ADR 0009). */
+  currency?: CurrencyCode;
   /** ISO timestamp used for `createdAt` and `updatedAt`. */
   now: string;
 }
@@ -77,6 +84,10 @@ export interface MemberRemovalImpact {
 export function createGroup(input: CreateGroupInput): Result<Group> {
   const name = validateGroupName(input.name);
   if (!name.ok) return name;
+  const currency = input.currency ?? DEFAULT_CURRENCY;
+  if (!isCurrencyCode(currency)) {
+    return fail('invalid_currency', 'Elige una de las monedas de la lista.');
+  }
 
   const members: Member[] = [];
   const ids = new Set<MemberId>();
@@ -101,7 +112,7 @@ export function createGroup(input: CreateGroupInput): Result<Group> {
   return ok({
     id: input.id,
     name: name.value,
-    currency: 'CLP',
+    currency,
     members,
     expenses: [],
     payments: [],

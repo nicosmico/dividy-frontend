@@ -78,7 +78,9 @@ async function openForm(
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(options.description);
-  await dialog.getByLabel('Monto en pesos').fill(String(options.amount));
+  await dialog
+    .getByLabel('Monto', { exact: true })
+    .fill(String(options.amount));
   if (options.payer) {
     await dialog.getByLabel('Pagado por').click();
     await page.getByRole('option', { name: options.payer }).click();
@@ -110,9 +112,9 @@ async function expectBalances(page: Page, group: Group) {
     const item = list.locator('li', { hasText: name }).first();
     const text =
       b.balance > 0
-        ? `Le deben ${formatAmount(b.balance)}`
+        ? `Le deben ${formatAmount(b.balance, 'CLP')}`
         : b.balance < 0
-          ? `Debe ${formatAmount(-b.balance)}`
+          ? `Debe ${formatAmount(-b.balance, 'CLP')}`
           : 'Al día';
     await expect(item).toContainText(text);
   }
@@ -261,7 +263,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
   const edit = page.getByRole('dialog', { name: 'Editar gasto' });
   await expect(edit.getByRole('radio', { name: 'Montos' })).toBeChecked();
   await expect(edit.getByLabel('Monto de Ana')).toHaveValue('50.000');
-  await edit.getByLabel('Monto en pesos').fill('120000');
+  await edit.getByLabel('Monto', { exact: true }).fill('120000');
   await expect(statusLine(edit)).toContainText('faltan $20.000');
   await edit.getByRole('button', { name: 'Guardar' }).click();
   await expect(edit.getByRole('alert')).toHaveText(
@@ -274,7 +276,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
   // ...and a by-parts expense recalculates by itself when its amount changes.
   await page.getByRole('button', { name: /Bencina/ }).click();
   const editParts = page.getByRole('dialog', { name: 'Editar gasto' });
-  await editParts.getByLabel('Monto en pesos').fill('40000');
+  await editParts.getByLabel('Monto', { exact: true }).fill('40000');
   await expect(editParts.getByText('2 partes · $20.000')).toBeVisible();
   await editParts.getByRole('button', { name: 'Guardar' }).click();
   await expect(editParts).toBeHidden();
@@ -311,7 +313,7 @@ test('montos, porcentaje y partes: errores, saldos exactos, editar, link y abrir
     '• Bencina: $40.000, pagó Carla, por partes (Ana 2, Beto 1, Carla 1)'
   );
   const link = /Ver el detalle: (\S+)$/.exec(text)?.[1] as string;
-  expect(link).toMatch(/\/shared#v2\./);
+  expect(link).toMatch(/\/shared#v3\./);
 
   const context = await freshContext(browser, testInfo);
   const other = await context.newPage();
@@ -349,12 +351,12 @@ test('el gráfico dice cómo se dividió un gasto por partes', async ({
   await expectNoHorizontalScroll(page);
 });
 
-test('los links v1 de antes siguen abriendo y los v2 llevan las divisiones nuevas', async ({
+test('los links v1 y v2 de antes siguen abriendo (en CLP) y los v3 llevan además la moneda', async ({
   page,
 }) => {
   const group = expectedGroup();
-  // v2 keeps the custom splits.
-  await page.goto(snapshotPath(group, TAKEN));
+  // v2 keeps the custom splits and has no currency: it opens as CLP.
+  await page.goto(snapshotPath(group, TAKEN, 2));
   await skipViewerSheet(page);
   await expect(page.getByText('Pagó Ana · dividido por montos')).toBeVisible();
   await openTab(page, 'Saldos');

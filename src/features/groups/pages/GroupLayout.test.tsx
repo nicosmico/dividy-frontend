@@ -48,10 +48,10 @@ describe('Página del grupo', () => {
       await screen.findByRole('button', { name: 'Opciones del grupo' })
     );
     await user.click(
-      await screen.findByRole('menuitem', { name: /Renombrar grupo/ })
+      await screen.findByRole('menuitem', { name: /Editar grupo/ })
     );
     const dialog = await screen.findByRole('dialog', {
-      name: 'Renombrar grupo',
+      name: 'Editar grupo',
     });
     const input = within(dialog).getByLabelText('Nombre del grupo');
     await user.clear(input);

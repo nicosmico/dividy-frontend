@@ -1,3 +1,8 @@
+import {
+  DEFAULT_CURRENCY,
+  isCurrencyCode,
+  type CurrencyCode,
+} from './currency';
 import { fail, ok } from './result';
 import { splitValuesOf } from './split';
 import type {
@@ -24,6 +29,8 @@ export interface Snapshot {
   /** ISO timestamp (canonical: `toISOString()`). */
   takenAt: string;
   name: string;
+  /** The group's currency: every amount in the capture is in it (ADR 0009). */
+  currency: CurrencyCode;
   members: Member[];
   expenses: Expense[];
   payments: Payment[];
@@ -75,6 +82,7 @@ export function createSnapshot(group: Group, takenAt: string): Snapshot {
     sourceGroupId: group.id,
     takenAt: taken,
     name: group.name,
+    currency: group.currency,
     members: group.members.map((m, i) => ({
       id: `m${i}`,
       name: m.name,
@@ -109,7 +117,7 @@ export function snapshotToGroup(snapshot: Snapshot): Group {
   return {
     id: snapshot.sourceGroupId,
     name: snapshot.name,
-    currency: 'CLP',
+    currency: snapshot.currency,
     members: snapshot.members,
     expenses: snapshot.expenses,
     payments: snapshot.payments,
@@ -274,6 +282,18 @@ export function toCompactSnapshotV2(snapshot: Snapshot): CompactSnapshotV2 {
   ];
 }
 
+/**
+ * Compact form of format `v3`: the v2 shape plus the currency code of the
+ * group as a seventh element (ADR 0006, section v3). v1 and v2 have none and
+ * mean CLP.
+ */
+export type CompactSnapshotV3 = [...CompactSnapshotV2, currency: CurrencyCode];
+
+/** Replaces ids by positions and timestamps by epoch milliseconds, and adds the currency. */
+export function toCompactSnapshotV3(snapshot: Snapshot): CompactSnapshotV3 {
+  return [...toCompactSnapshotV2(snapshot), snapshot.currency];
+}
+
 const INVALID = 'El contenido del link no es válido.';
 
 /** Rebuilds a snapshot from the compact form of `v1`. */
@@ -289,7 +309,8 @@ export function fromCompactSnapshotV1(
  * member and that the result satisfies every group invariant.
  */
 export function fromCompactSnapshotV2(
-  compact: CompactSnapshotV1 | CompactSnapshotV2
+  compact: CompactSnapshotV1 | CompactSnapshotV2,
+  currency: CurrencyCode = DEFAULT_CURRENCY
 ): Result<Snapshot> {
   const [sourceGroupId, takenAt, name, members, expenses, payments] = compact;
   const instants = [
@@ -340,6 +361,7 @@ export function fromCompactSnapshotV2(
     sourceGroupId,
     takenAt: iso(takenAt),
     name,
+    currency,
     members: members.map(([memberName, color, seed], i) => ({
       id: `m${i}`,
       name: memberName,
@@ -369,4 +391,16 @@ export function fromCompactSnapshotV2(
     return fail('invalid_snapshot', INVALID);
   }
   return ok(snapshot);
+}
+
+/** Rebuilds a snapshot from its compact form (`v3`): `v2` plus the currency, which must be one of the supported ones. */
+export function fromCompactSnapshotV3(
+  compact: CompactSnapshotV3
+): Result<Snapshot> {
+  const currency: unknown = compact[6];
+  if (!isCurrencyCode(currency)) return fail('invalid_snapshot', INVALID);
+  return fromCompactSnapshotV2(
+    compact.slice(0, 6) as CompactSnapshotV2,
+    currency
+  );
 }

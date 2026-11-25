@@ -1,3 +1,4 @@
+import type { CurrencyCode } from './currency';
 import { formatAmount } from './money';
 import { fail, ok } from './result';
 import type {
@@ -15,23 +16,23 @@ import type {
 export const FULL_PERCENT = 10_000;
 
 /**
- * Splits `total` pesos in proportion to `weights` (non-negative integers):
+ * Splits `total` (in the smallest unit of the currency) in proportion to `weights` (non-negative integers):
  * each part is the floor of its exact proportional part and the pesos left
- * over go $1 at a time to the first entries, in the order given. With equal
+ * over go 1 unit at a time to the first entries, in the order given. With equal
  * weights this is the classic "equal split with remainder". Integer math
  * (BigInt), so it is exact for any safe integers.
  *
  * Private on purpose: `computeShares` is the only door to money division
- * (ADR 0001); `presetSplit` below goes through it too.
+ * (ADR 0009); `presetSplit` below goes through it too.
  */
 function distribute(total: Amount, weights: readonly number[]): Amount[] {
   const sum = weights.reduce((s, w) => s + BigInt(w), 0n);
   if (sum === 0n) return weights.map(() => 0);
   const exact = weights.map((w) => BigInt(total) * BigInt(w));
   const base = exact.map((e) => e / sum);
-  // The leftover pesos go to the first entries that had a fractional part:
+  // The leftover units go to the first entries that had a fractional part:
   // an entry whose proportion was exact never gets one, so every part stays
-  // within $1 of its exact proportion. With equal weights the entries that
+  // within 1 unit of its exact proportion. With equal weights the entries that
   // have a fraction are all of them, so this is the plain "first ones".
   let remainder = Number(BigInt(total) - base.reduce((s, b) => s + b, 0n));
   return base.map((b, index) => {
@@ -61,16 +62,16 @@ export function splitValuesOf(
 }
 
 /**
- * What each participant owes for an expense. The remainder goes $1 at a time
+ * What each participant owes for an expense. The remainder goes 1 unit (the smallest of the currency) at a time
  * to the first participants following the order of `members` (not the order
  * of `participantIds`):
  *
  * - `equal`: `amount / n`, remainder to the first.
  * - `percent` and `shares`: the floor of the proportional part, remainder to
- *   the first, so every part is within $1 of the exact proportion.
+ *   the first, so every part is within 1 unit of the exact proportion.
  * - `exact`: the amounts as they are (validation guarantees they add up).
  *
- * This is the only function in the code base that divides money (ADR 0001).
+ * This is the only function in the code base that divides money (ADR 0009).
  * Participants that are not in `members` are ignored.
  */
 export function computeShares(
@@ -116,13 +117,14 @@ export function splitTypeLabel(type: Exclude<SplitType, 'equal'>): string {
  */
 export function describeSplitValues(
   split: Split,
-  members: readonly Pick<Member, 'id' | 'name'>[]
+  members: readonly Pick<Member, 'id' | 'name'>[],
+  currency: CurrencyCode
 ): string | null {
   const values = splitValuesOf(split);
   if (!values) return null;
   const format = (value: number) =>
     split.type === 'exact'
-      ? formatAmount(value)
+      ? formatAmount(value, currency)
       : split.type === 'percent'
         ? formatPercent(value)
         : String(value);
@@ -138,7 +140,7 @@ function isWhole(value: unknown): value is number {
 }
 
 /**
- * Checks that a split can be applied to an expense of `amount` pesos and
+ * Checks that a split can be applied to an expense of `amount` and
  * returns it normalized (only the participants' values, copied). Each error
  * says what to do. `participantIds` is assumed to be valid already (no
  * duplicates, all members of the group).
@@ -146,7 +148,8 @@ function isWhole(value: unknown): value is number {
 export function validateSplit(
   amount: Amount,
   split: Split,
-  members: readonly Pick<Member, 'id' | 'name'>[]
+  members: readonly Pick<Member, 'id' | 'name'>[],
+  currency: CurrencyCode
 ): Result<Split> {
   const participantIds = [...split.participantIds];
   if (split.type === 'equal') return ok({ type: 'equal', participantIds });
@@ -168,7 +171,7 @@ export function validateSplit(
     if (value === 0 && split.type === 'exact') {
       return fail(
         'invalid_split',
-        `Quita de la división a ${nameOf(id)}, que tiene $0, o asígnale un monto.`
+        `Quita de la división a ${nameOf(id)}, que tiene ${formatAmount(0, currency)}, o asígnale un monto.`
       );
     }
     if (value === 0 && split.type === 'percent') {
@@ -188,13 +191,13 @@ export function validateSplit(
     if (sum < amount) {
       return fail(
         'invalid_split',
-        `Faltan ${formatAmount(amount - sum)} por asignar.`
+        `Faltan ${formatAmount(amount - sum, currency)} por asignar.`
       );
     }
     if (sum > amount) {
       return fail(
         'invalid_split',
-        `Te pasaste por ${formatAmount(sum - amount)}.`
+        `Te pasaste por ${formatAmount(sum - amount, currency)}.`
       );
     }
     return ok({ type: 'exact', participantIds, amounts: kept });
@@ -213,7 +216,7 @@ export function validateSplit(
 
 /**
  * A split of the given type that already adds up, to start editing from:
- * `exact` is today's equal split in pesos; `percent` is an equal split of
+ * `exact` is today's equal split in the smallest unit; `percent` is an equal split of
  * 100,00 % (the leftover hundredths go to the first); `shares` is one part
  * each. Participants are taken in group order. Goes through `computeShares`,
  * so there is no second division algorithm.

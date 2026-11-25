@@ -25,11 +25,11 @@ describe('formatAmount', () => {
     [0, '$0'],
     [1_234_567, '$1.234.567'],
   ])('formatea %s como %s', (amount, expected) => {
-    expect(formatAmount(amount).replace(/\s/g, '')).toBe(expected);
+    expect(formatAmount(amount, 'CLP').replace(/\s/g, '')).toBe(expected);
   });
 
   it('formatea saldos negativos con signo', () => {
-    expect(formatAmount(-500)).toContain('-');
-    expect(formatAmount(-500)).toContain('500');
+    expect(formatAmount(-500, 'CLP')).toContain('-');
+    expect(formatAmount(-500, 'CLP')).toContain('500');
   });
 });

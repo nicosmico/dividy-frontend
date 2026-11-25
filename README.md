@@ -2,7 +2,7 @@
 
 Divide los gastos de un grupo y descubre quién le debe cuánto a quién, con números que cuadran al peso.
 
-> **Estado:** en reconstrucción. Es un MVP: solo CLP y datos guardados en tu navegador. Ver el [plan](docs/PLAN.md).
+> **Estado:** en reconstrucción. Es un MVP: una moneda por grupo (CLP, USD, EUR y otras) y datos guardados en tu navegador. Ver el [plan](docs/PLAN.md).
 
 ## Cómo funciona
 

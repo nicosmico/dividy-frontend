@@ -96,8 +96,10 @@ test('nuevo gasto con descripción larga y monto máximo no se desborda', async 
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const sheet = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await sheet.getByLabel('Descripción').fill(LONG_DESCRIPTION);
-  await sheet.getByLabel('Monto en pesos').fill('999999999');
-  await expect(sheet.getByLabel('Monto en pesos')).toHaveValue('999.999.999');
+  await sheet.getByLabel('Monto', { exact: true }).fill('999999999');
+  await expect(sheet.getByLabel('Monto', { exact: true })).toHaveValue(
+    '999.999.999'
+  );
   await expectNoHorizontalOverflow(page, sheet);
   // The date input in particular must fit the sheet's content width.
   const date = sheet.getByLabel('Fecha');
@@ -117,7 +119,7 @@ test('nuevo gasto con montos, % y partes y un nombre largo no se desborda', asyn
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const sheet = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await sheet.getByLabel('Descripción').fill(LONG_DESCRIPTION);
-  await sheet.getByLabel('Monto en pesos').fill('999999999');
+  await sheet.getByLabel('Monto', { exact: true }).fill('999999999');
 
   await sheet.getByRole('radio', { name: 'Montos' }).click();
   const field = sheet.getByLabel(`Monto de ${LONG_NAME}`);
@@ -160,8 +162,8 @@ test('editar un gasto con datos largos no se desborda', async ({ page }) => {
 test('renombrar grupo no se desborda', async ({ page }) => {
   await page.goto('/groups/g1/expenses');
   await page.getByRole('button', { name: 'Opciones del grupo' }).click();
-  await page.getByRole('menuitem', { name: /Renombrar grupo/ }).click();
-  const sheet = page.getByRole('dialog', { name: 'Renombrar grupo' });
+  await page.getByRole('menuitem', { name: /Editar grupo/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Editar grupo' });
   await sheet.getByLabel('Nombre').fill('G'.repeat(40));
   await expectNoHorizontalOverflow(page, sheet);
 });

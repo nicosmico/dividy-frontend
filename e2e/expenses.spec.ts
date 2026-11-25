@@ -30,7 +30,9 @@ async function addExpense(page: Page, expense: NewExpense) {
   await page.getByRole('button', { name: 'Agregar gasto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
   await dialog.getByLabel('Descripción').fill(expense.description);
-  await dialog.getByLabel('Monto en pesos').fill(String(expense.amount));
+  await dialog
+    .getByLabel('Monto', { exact: true })
+    .fill(String(expense.amount));
   if (expense.payer) {
     await dialog.getByLabel('Pagado por').click();
     await page.getByRole('option', { name: expense.payer }).click();
@@ -90,14 +92,18 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   expect(balances.map((b) => b.balance)).toEqual([5166, -1833, -3333]);
   await expect(
     memberBalances(page).getByText(
-      `Le deben ${formatAmount(balances[0].balance)}`
+      `Le deben ${formatAmount(balances[0].balance, 'CLP')}`
     )
   ).toBeVisible();
   await expect(
-    memberBalances(page).getByText(`Debe ${formatAmount(-balances[1].balance)}`)
+    memberBalances(page).getByText(
+      `Debe ${formatAmount(-balances[1].balance, 'CLP')}`
+    )
   ).toBeVisible();
   await expect(
-    memberBalances(page).getByText(`Debe ${formatAmount(-balances[2].balance)}`)
+    memberBalances(page).getByText(
+      `Debe ${formatAmount(-balances[2].balance, 'CLP')}`
+    )
   ).toBeVisible();
 
   const transfers = suggestTransfers(group);
@@ -108,7 +114,7 @@ test('flujo completo: gastos, saldos exactos, marcar pagos y quedar al día', as
   for (const [i, t] of transfers.entries()) {
     const item = list.getByRole('listitem').nth(i);
     await expect(item).toContainText(`${t.fromId} → ${t.toId}`);
-    await expect(item).toContainText(formatAmount(t.amount));
+    await expect(item).toContainText(formatAmount(t.amount, 'CLP'));
   }
 
   // The breakdown lets anyone check Ana's number by hand.
@@ -165,7 +171,7 @@ test('el ícono del gasto se deduce de la descripción, en el formulario y en la
   await expect(icon(dialog, 'receipt')).toBeVisible();
   await dialog.getByLabel('Descripción').fill('Uber al terminal');
   await expect(icon(dialog, 'car-taxi-front')).toBeVisible();
-  await dialog.getByLabel('Monto en pesos').fill('12000');
+  await dialog.getByLabel('Monto', { exact: true }).fill('12000');
   await dialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(dialog).toBeHidden();
 
@@ -191,9 +197,11 @@ test('escribir rápido y guardar deja exactamente 1 gasto (hallazgo 2)', async (
     .getByLabel('Descripción')
     .pressSequentially('Supermercado', { delay: 20 });
   await dialog
-    .getByLabel('Monto en pesos')
+    .getByLabel('Monto', { exact: true })
     .pressSequentially('12345', { delay: 20 });
-  await expect(dialog.getByLabel('Monto en pesos')).toHaveValue('12.345');
+  await expect(dialog.getByLabel('Monto', { exact: true })).toHaveValue(
+    '12.345'
+  );
   await dialog.getByRole('button', { name: 'Guardar' }).dblclick();
   await expect(dialog).toBeHidden();
 
@@ -233,7 +241,7 @@ test('al eliminar un gasto y abrir el otro, se muestran sus propios datos (halla
 
   await page.getByRole('button', { name: /Asado/ }).click();
   await expect(edit.getByLabel('Descripción')).toHaveValue('Asado');
-  await expect(edit.getByLabel('Monto en pesos')).toHaveValue('9.000');
+  await expect(edit.getByLabel('Monto', { exact: true })).toHaveValue('9.000');
   await expect(edit.getByLabel('Pagado por')).toContainText('Ana');
 });
 

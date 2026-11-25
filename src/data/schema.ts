@@ -1,4 +1,6 @@
 import {
+  CURRENCY_CODES,
+  DEFAULT_CURRENCY,
   getGroupIssues,
   getSnapshotIssues,
   type Group,
@@ -10,6 +12,10 @@ import { z } from 'zod';
  * Version 4: a `snapshots` list next to `groups` (read-only captures opened
  * from a link, ADR 0006). Version 3 added `avatar` (`color` 0-7 and `seed`) to
  * every member.
+ *
+ * Currencies per group (ADR 0009) did not change the version: `currency` was
+ * already stored (always `'CLP'`), so existing documents stay valid as they
+ * are, and a saved snapshot without one reads as CLP (`default` below).
  */
 export const CURRENT_VERSION = 4;
 
@@ -75,7 +81,7 @@ export const groupSchema = z
   .object({
     id: z.string().min(1),
     name: z.string(),
-    currency: z.literal('CLP'),
+    currency: z.enum(CURRENCY_CODES),
     members: z.array(memberSchema),
     expenses: z.array(expenseSchema),
     payments: z.array(paymentSchema),
@@ -94,6 +100,7 @@ export const snapshotSchema = z
     sourceGroupId: z.string().min(1),
     takenAt: isoTimestamp,
     name: z.string(),
+    currency: z.enum(CURRENCY_CODES).default(DEFAULT_CURRENCY),
     members: z.array(memberSchema),
     expenses: z.array(expenseSchema),
     payments: z.array(paymentSchema),

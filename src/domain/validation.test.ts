@@ -72,7 +72,7 @@ describe('validateAmount', () => {
     [Number.NaN, 'invalid_amount'],
     ['10', 'invalid_amount'],
   ])('%s -> %s', (amount, expected) => {
-    expect(code(validateAmount(amount))).toBe(expected);
+    expect(code(validateAmount(amount, 'CLP'))).toBe(expected);
   });
 });
 

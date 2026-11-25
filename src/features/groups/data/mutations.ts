@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import {
   createGroup,
   touch,
+  type CurrencyCode,
   type DomainError,
   type Group,
   type GroupId,
@@ -155,9 +156,11 @@ export interface CreateGroupValues {
   name: string;
   /** Members to create: ids are injected by the caller (the form needs them to show avatars). */
   members: NewMemberInput[];
+  /** Defaults to CLP. */
+  currency?: CurrencyCode;
 }
 
-/** `create({ name, members })` builds the group (time injected, avatar colors assigned) and saves it. */
+/** `create({ name, members, currency })` builds the group (time injected, avatar colors assigned) and saves it. */
 export function useCreateGroup() {
   const { repository, now, newId } = useServices();
   const queryClient = useQueryClient();
@@ -170,6 +173,7 @@ export function useCreateGroup() {
         id: newId(),
         name: values.name,
         members: values.members,
+        currency: values.currency,
         now: now(),
       });
       if (!result.ok) return result;

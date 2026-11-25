@@ -4,9 +4,8 @@ import { members } from '@/domain/test-utils/fixtures';
 import {
   describeSplitStatus,
   formatSplitValue,
+  formatAmountTyping,
   normalizeSplitText,
-  onlyDigits,
-  formatDigits,
   parseAmount,
   parseSplitValue,
   presetValues,
@@ -16,7 +15,10 @@ import {
   type ExpenseFormValues,
 } from './expense-form';
 
-const group = { members: members('Ana', 'Beto', 'Caro') };
+const group = {
+  members: members('Ana', 'Beto', 'Caro'),
+  currency: 'CLP' as const,
+};
 
 const valid: ExpenseFormValues = {
   description: '  Pizza ',
@@ -28,26 +30,27 @@ const valid: ExpenseFormValues = {
   splitValues: {},
 };
 
-describe('formatDigits / onlyDigits / parseAmount', () => {
+describe('formatAmountTyping / parseAmount (CLP)', () => {
   it.each([
     ['', ''],
     ['5', '5'],
     ['1000', '1.000'],
     ['1234567', '1.234.567'],
-  ])('formatea %s como %s', (digits, expected) => {
-    expect(formatDigits(digits)).toBe(expected);
+    ['$ 1a0.0b0', '1.000'],
+    ['0007', '7'],
+    ['abc', ''],
+    ['123456789012', '1.234.567.890'],
+    // The comma is kept so the form can say CLP has no decimals.
+    ['12,5', '12,5'],
+  ])('escribir "%s" muestra "%s"', (typed, shown) => {
+    expect(formatAmountTyping(typed, 'CLP')).toBe(shown);
   });
 
-  it('onlyDigits quita lo que no es dígito, los ceros iniciales y limita el largo', () => {
-    expect(onlyDigits('$ 1a0.0b0')).toBe('1000');
-    expect(onlyDigits('0007')).toBe('7');
-    expect(onlyDigits('abc')).toBe('');
-    expect(onlyDigits('123456789012')).toBe('1234567890');
-  });
-
-  it('parseAmount da un entero, o NaN si no hay nada', () => {
-    expect(parseAmount('10000')).toBe(10000);
-    expect(parseAmount('')).toBeNaN();
+  it('parseAmount da un entero, o NaN si no hay nada o hay decimales', () => {
+    expect(parseAmount('10.000', 'CLP')).toBe(10000);
+    expect(parseAmount('10000', 'CLP')).toBe(10000);
+    expect(parseAmount('', 'CLP')).toBeNaN();
+    expect(parseAmount('12,5', 'CLP')).toBeNaN();
   });
 });
 
@@ -74,7 +77,7 @@ describe('validateExpenseForm', () => {
     expect(result).toEqual({
       errors: {
         description: 'Escribe una descripción del gasto.',
-        amount: expect.stringContaining('Ingresa un monto en pesos enteros'),
+        amount: expect.stringContaining('Ingresa un monto entre $1 y'),
         date: 'Elige una fecha válida.',
       },
     });
@@ -124,47 +127,51 @@ describe('campos de una división personalizada', () => {
     ['shares', '1,5', NaN],
     ['shares', '', 0],
   ] as const)('parseSplitValue(%s, "%s") = %s', (type, text, expected) => {
-    expect(parseSplitValue(type, text)).toBe(expected);
+    expect(parseSplitValue(type, text, 'CLP')).toBe(expected);
   });
 
   it('da formato chileno al salir del campo', () => {
-    expect(normalizeSplitText('exact', '10000')).toBe('10.000');
-    expect(normalizeSplitText('exact', '1.0.0.0')).toBe('1.000');
-    expect(normalizeSplitText('percent', '12.50')).toBe('12,5');
-    expect(normalizeSplitText('percent', '33,3')).toBe('33,3');
-    expect(normalizeSplitText('percent', '50')).toBe('50');
-    expect(normalizeSplitText('shares', '03')).toBe('3');
-    expect(normalizeSplitText('exact', '')).toBe('');
-    expect(normalizeSplitText('percent', '1,2,3')).toBe('1,2,3');
-    expect(formatSplitValue('percent', 3334)).toBe('33,34');
+    expect(normalizeSplitText('exact', '10000', 'CLP')).toBe('10.000');
+    expect(normalizeSplitText('exact', '1.0.0.0', 'CLP')).toBe('1.000');
+    expect(normalizeSplitText('percent', '12.50', 'CLP')).toBe('12,5');
+    expect(normalizeSplitText('percent', '33,3', 'CLP')).toBe('33,3');
+    expect(normalizeSplitText('percent', '50', 'CLP')).toBe('50');
+    expect(normalizeSplitText('shares', '03', 'CLP')).toBe('3');
+    expect(normalizeSplitText('exact', '', 'CLP')).toBe('');
+    expect(normalizeSplitText('percent', '1,2,3', 'CLP')).toBe('1,2,3');
+    expect(formatSplitValue('percent', 3334, 'CLP')).toBe('33,34');
   });
 
   it('solo deja escribir lo que tiene sentido en cada modo', () => {
-    expect(sanitizeSplitInput('exact', '$ 1a0.0,0')).toBe('10.00');
-    expect(sanitizeSplitInput('percent', '1a2,5%')).toBe('12,5');
-    expect(sanitizeSplitInput('shares', '1,2.3')).toBe('123');
+    expect(sanitizeSplitInput('exact', '$ 1a0.0,0', 'CLP')).toBe('10.00');
+    expect(sanitizeSplitInput('percent', '1a2,5%', 'CLP')).toBe('12,5');
+    expect(sanitizeSplitInput('shares', '1,2.3', 'CLP')).toBe('123');
   });
 
   it('precarga valores que ya cuadran', () => {
     const ids = ['Ana', 'Beto', 'Caro'];
-    expect(presetValues('exact', 100_000, ids, group.members)).toEqual({
+    expect(presetValues('exact', 100_000, ids, group.members, 'CLP')).toEqual({
       Ana: '33.334',
       Beto: '33.333',
       Caro: '33.333',
     });
-    expect(presetValues('percent', 100_000, ids, group.members)).toEqual({
-      Ana: '33,34',
-      Beto: '33,33',
-      Caro: '33,33',
-    });
-    expect(presetValues('shares', 100_000, ids, group.members)).toEqual({
+    expect(presetValues('percent', 100_000, ids, group.members, 'CLP')).toEqual(
+      {
+        Ana: '33,34',
+        Beto: '33,33',
+        Caro: '33,33',
+      }
+    );
+    expect(presetValues('shares', 100_000, ids, group.members, 'CLP')).toEqual({
       Ana: '1',
       Beto: '1',
       Caro: '1',
     });
-    expect(presetValues('equal', 100_000, ids, group.members)).toEqual({});
+    expect(presetValues('equal', 100_000, ids, group.members, 'CLP')).toEqual(
+      {}
+    );
     // No amount yet: the amounts start empty.
-    expect(presetValues('exact', NaN, ['Ana'], group.members)).toEqual({
+    expect(presetValues('exact', NaN, ['Ana'], group.members, 'CLP')).toEqual({
       Ana: '',
     });
   });
@@ -241,7 +248,7 @@ describe('describeSplitStatus', () => {
       { tone: 'warn', lead: '', tail: 'Cada parte debe ser al menos 1.' },
     ],
   ] as const)('%s con monto %s y %j', (type, amount, values, expected) => {
-    expect(describeSplitStatus(type, amount, values)).toEqual(expected);
+    expect(describeSplitStatus(type, amount, values, 'CLP')).toEqual(expected);
   });
 });
 
@@ -379,7 +386,7 @@ describe('validateExpenseForm con división personalizada', () => {
       )
     ).toEqual({
       errors: {
-        amount: expect.stringContaining('Ingresa un monto en pesos enteros'),
+        amount: expect.stringContaining('Ingresa un monto entre $1 y'),
       },
     });
   });

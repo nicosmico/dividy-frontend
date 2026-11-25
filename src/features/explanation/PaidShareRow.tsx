@@ -8,7 +8,7 @@ import {
 
 import { BalanceLabel } from '@/components/balance-label';
 import { ViewerName } from '@/components/viewer-name';
-import { formatAmount, type Member } from '@/domain';
+import { formatAmount, type CurrencyCode, type Member } from '@/domain';
 import { EntityIcon } from '@/features/icons';
 import { MemberAvatar, type AvatarMood } from '@/features/members';
 import { useElementWidth } from '@/hooks/use-element-width';
@@ -62,6 +62,7 @@ export interface BarData {
 
 export interface PaidShareRowProps {
   member: Pick<Member, 'id' | 'name' | 'avatar'>;
+  currency: CurrencyCode;
   mood?: AvatarMood;
   /** Writes "(tú)" next to the name (the Saldos chart; the animation never does). */
   isViewer?: boolean;
@@ -94,6 +95,7 @@ const STAGGER_MS = 140;
  */
 export function PaidShareRow({
   member,
+  currency,
   mood,
   isViewer = false,
   balance,
@@ -119,6 +121,7 @@ export function PaidShareRow({
         </span>
         <BalanceLabel
           balance={balance}
+          currency={currency}
           className={cn(
             'shrink-0 text-right text-[13px]',
             motion &&
@@ -129,6 +132,7 @@ export function PaidShareRow({
       </div>
       <Bar
         rowKey={member.id}
+        currency={currency}
         kind='paid'
         label='Gastó'
         owner={member.name}
@@ -150,6 +154,7 @@ export function PaidShareRow({
       />
       <Bar
         rowKey={member.id}
+        currency={currency}
         kind='share'
         label='Su parte'
         owner={member.name}
@@ -175,6 +180,7 @@ export function PaidShareRow({
 
 interface BarProps {
   rowKey: string;
+  currency: CurrencyCode;
   kind: 'paid' | 'share';
   label: string;
   owner: string;
@@ -206,6 +212,7 @@ interface BarMotion {
  */
 function Bar({
   rowKey,
+  currency,
   kind,
   label,
   owner,
@@ -310,9 +317,12 @@ function Bar({
         <Segment
           key={key}
           expense={expense}
+          currency={currency}
           amount={slice.amount}
           division={
-            kind === 'paid' && cuttable ? describeDivision(expense) : null
+            kind === 'paid' && cuttable
+              ? describeDivision(expense, currency)
+              : null
           }
           swatch={swatch}
           open={tooltips.active === key}
@@ -378,7 +388,7 @@ function Bar({
             role={tooltips ? 'group' : undefined}
             aria-label={
               tooltips
-                ? `${label} de ${owner}: ${formatAmount(total)}`
+                ? `${label} de ${owner}: ${formatAmount(total, currency)}`
                 : undefined
             }
             className={cn(
@@ -409,7 +419,7 @@ function Bar({
               : undefined
           }
         >
-          {formatAmount(data.displayTotal ?? total)}
+          {formatAmount(data.displayTotal ?? total, currency)}
         </span>
       </div>
     </div>
@@ -418,6 +428,7 @@ function Bar({
 
 function Segment({
   expense,
+  currency,
   amount,
   division,
   swatch,
@@ -428,6 +439,7 @@ function Segment({
   onFocusSegment,
 }: {
   expense: ExplainedExpense;
+  currency: CurrencyCode;
   amount: number;
   /** How the expense is divided ("entre 5: $30.000 c/u"), in "Gastó" only. */
   division: string | null;
@@ -438,7 +450,7 @@ function Segment({
   onClose: () => void;
   onFocusSegment: () => void;
 }) {
-  const name = `${expense.description}: ${formatAmount(amount)}${division ? ` · ${division}` : ''}`;
+  const name = `${expense.description}: ${formatAmount(amount, currency)}${division ? ` · ${division}` : ''}`;
   return (
     <Popover.Root
       open={open}
@@ -484,7 +496,7 @@ function Segment({
               {expense.description}
             </span>
             <span className='block [overflow-wrap:anywhere] tabular-nums'>
-              {formatAmount(amount)}
+              {formatAmount(amount, currency)}
               {division && ` · ${division}`}
             </span>
           </span>

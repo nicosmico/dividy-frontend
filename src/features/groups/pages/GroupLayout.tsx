@@ -16,7 +16,7 @@ import { EntityIcon } from '@/features/icons';
 import { ViewerSheet } from '@/features/members';
 import { DeleteGroupDialog } from '../components/DeleteGroupDialog';
 import { GroupNotFound } from '../components/GroupNotFound';
-import { RenameGroupDialog } from '../components/RenameGroupDialog';
+import { EditGroupDialog } from '../components/EditGroupDialog';
 import { useGroup, ViewerProvider } from '../data';
 
 const TABS = [
@@ -70,7 +70,7 @@ export function GroupLayout() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem onSelect={() => setRenaming(true)}>
-                <Pencil /> Renombrar grupo
+                <Pencil /> Editar grupo
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant='destructive'
@@ -88,7 +88,7 @@ export function GroupLayout() {
           <Outlet context={group} />
         </Suspense>
 
-        <RenameGroupDialog
+        <EditGroupDialog
           group={group}
           open={renaming}
           onOpenChange={setRenaming}

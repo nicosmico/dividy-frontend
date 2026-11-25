@@ -57,7 +57,7 @@ export function ExpensesTab() {
           <div className='min-w-0'>
             <p className='text-sm text-muted-foreground'>Total del grupo</p>
             <p className='text-3xl font-bold tracking-tight break-words tabular-nums'>
-              {formatAmount(getTotalSpent(group))}
+              {formatAmount(getTotalSpent(group), group.currency)}
             </p>
             <p className='text-sm text-muted-foreground'>
               {plural(count, 'gasto', 'gastos')}
@@ -218,7 +218,7 @@ function ExpenseRow({
             {expense.description}
           </span>
           <span className='shrink-0 font-semibold tabular-nums'>
-            {formatAmount(expense.amount)}
+            {formatAmount(expense.amount, group.currency)}
           </span>
         </span>
         <span className='flex items-center gap-2 text-sm text-muted-foreground'>

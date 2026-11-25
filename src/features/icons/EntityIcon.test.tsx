@@ -71,7 +71,7 @@ describe('Íconos en la interfaz', () => {
     expect(hasIcon(container, 'users')).toBe(false);
   });
 
-  it('Renombrar grupo cambia el ícono en vivo', async () => {
+  it('Editar grupo cambia el ícono en vivo', async () => {
     const group = makeGroup({ name: 'Casa', members: ['Ana', 'Beto'] });
     const { user } = renderWithProviders(undefined, {
       route: '/groups/g1/expenses',
@@ -81,7 +81,7 @@ describe('Íconos en la interfaz', () => {
       await screen.findByRole('button', { name: 'Opciones del grupo' })
     );
     await user.click(
-      await screen.findByRole('menuitem', { name: /Renombrar grupo/ })
+      await screen.findByRole('menuitem', { name: /Editar grupo/ })
     );
     const dialog = await screen.findByRole('dialog');
     const input = within(dialog).getByLabelText('Nombre del grupo');

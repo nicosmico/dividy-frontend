@@ -39,15 +39,15 @@ Miembro entre quienes se reparte un gasto. Un gasto tiene al menos un participan
 _Avoid_: Debtor, member (para este rol)
 
 **Split** (División):
-La regla que dice cuánto le corresponde a cada participante de un gasto. Tiene cuatro formas: **iguales** (`equal`, por defecto), **por montos** (`exact`: un monto en pesos por participante, que suman exactamente el monto del gasto), **por porcentaje** (`percent`: un porcentaje con hasta 2 decimales por participante, guardado en puntos básicos enteros, 100,00 % = 10000, que suman 10000) y **por partes** (`shares`: partes enteras de al menos 1 por participante, p. ej. Ana 2 y Beto 1). Las tres últimas se llaman "división personalizada". Solo `computeShares` convierte una división en partes.
+La regla que dice cuánto le corresponde a cada participante de un gasto. Tiene cuatro formas: **iguales** (`equal`, por defecto), **por montos** (`exact`: un monto por participante, en la unidad mínima de la moneda, que suman exactamente el monto del gasto), **por porcentaje** (`percent`: un porcentaje con hasta 2 decimales por participante, guardado en puntos básicos enteros, 100,00 % = 10000, que suman 10000) y **por partes** (`shares`: partes enteras de al menos 1 por participante, p. ej. Ana 2 y Beto 1). Las tres últimas se llaman "división personalizada". Solo `computeShares` convierte una división en partes.
 _Avoid_: Distribution, prorrateo
 
 **Share** (Parte; en Saldos, "Su parte"):
-El monto, en pesos enteros, que le corresponde a un participante en un gasto. La suma de las partes de un gasto es exactamente su monto.
+El monto, en unidades mínimas enteras de la moneda del grupo, que le corresponde a un participante en un gasto. La suma de las partes de un gasto es exactamente su monto.
 _Avoid_: Portion, cuota, splitAmount
 
 **Remainder** (Resto):
-Los pesos que sobran cuando un monto no se divide exacto entre los participantes (en partes iguales, por porcentaje o por partes: la división por montos no deja resto); se asignan de a un peso a los primeros participantes según el orden de los miembros del grupo, saltándose a quien ya tenía su proporción exacta, para que ninguna parte se aleje un peso o más de la proporcional.
+Las unidades mínimas (pesos en CLP, centavos en USD) que sobran cuando un monto no se divide exacto entre los participantes (en partes iguales, por porcentaje o por partes: la división por montos no deja resto); se asignan de a una unidad mínima a los primeros participantes según el orden de los miembros del grupo, saltándose a quien ya tenía su proporción exacta, para que ninguna parte se aleje una unidad mínima o más de la proporcional.
 
 ### Saldos y pagos
 
@@ -94,5 +94,9 @@ Al eliminar un miembro, borrar los gastos que pagó y sus pagos, y quitarlo de l
 ### Dinero
 
 **Amount** (Monto):
-Cantidad de dinero en pesos chilenos enteros (CLP no usa decimales). Siempre mayor que cero en gastos y pagos.
+Cantidad de dinero como entero en la **unidad mínima de la moneda del grupo** (pesos en CLP, centavos en USD): nunca hay decimales guardados, solo al mostrar o escribir un monto (ADR 0009). Siempre mayor que cero en gastos y pagos.
 _Avoid_: Total, price, precio
+
+**Currency** (Moneda):
+La moneda del grupo, elegida al crearlo (CLP, USD, EUR, ARS, BRL, PEN, MXN, COP o GBP; lista cerrada). Todos los gastos y pagos del grupo están en ella y no hay conversión. Define cuántos decimales se muestran (0 o 2) y cuál es la unidad mínima en que se guarda cada **Amount**. Solo se puede cambiar mientras el grupo no tiene gastos ni pagos.
+_Avoid_: Divisa, tipo de cambio, moneda por gasto

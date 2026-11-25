@@ -19,7 +19,7 @@ const TAKEN = '2026-11-24T13:42:00.000Z';
 const SHOT = {
   animations: 'disabled',
   caret: 'hide',
-  maxDiffPixelRatio: 0.005,
+  maxDiffPixels: 10,
 } as const;
 
 /**
@@ -113,7 +113,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       const dialog = page.getByRole('dialog', { name: 'Nuevo gasto' });
       await expect(dialog).toBeVisible();
       await dialog.getByLabel('Descripción').fill('Cabaña');
-      await dialog.getByLabel('Monto en pesos').fill('150000');
+      await dialog.getByLabel('Monto', { exact: true }).fill('150000');
       await dialog.getByRole('radio', { name: 'Partes' }).click();
       await dialog.getByLabel('Partes de Ana').fill('2');
       await expect(dialog.getByText('2 partes · $75.000')).toBeVisible();
@@ -166,6 +166,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(
         page.getByRole('dialog', { name: '¿Quién eres?' })
       ).toBeVisible();
+      // The Gastos tab behind the sheet loads lazily: under load it could be
+      // missing from the shot. Wait for it (it is hidden from assistive tech
+      // while the sheet is open, so not by role).
+      await expect(page.getByText('Total del grupo')).toBeVisible();
       await shot(page, `viewer-sheet-${colorScheme}`);
     });
 

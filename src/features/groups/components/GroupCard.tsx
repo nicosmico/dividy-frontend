@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
+  DEFAULT_CURRENCY,
   formatAmount,
   getPendingAmount,
   getTotalSpent,
@@ -34,7 +35,12 @@ export function GroupCard({ group }: { group: Group }) {
               {group.name}
             </h2>
             <p className='shrink-0 text-lg font-semibold tabular-nums'>
-              {formatAmount(getTotalSpent(group))}
+              {formatAmount(getTotalSpent(group), group.currency)}
+              {group.currency !== DEFAULT_CURRENCY && (
+                <span className='ml-1.5 text-xs font-medium text-muted-foreground'>
+                  {group.currency}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -63,7 +69,7 @@ export function GroupCard({ group }: { group: Group }) {
             <Badge variant='accent'>Al día</Badge>
           ) : (
             <Badge variant='negative'>
-              Pendiente: {formatAmount(pending)} por saldar
+              Pendiente: {formatAmount(pending, group.currency)} por saldar
             </Badge>
           )}
           <p className='text-xs whitespace-nowrap text-muted-foreground'>
