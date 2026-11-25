@@ -100,6 +100,10 @@ Si cambias un token, recalcula los pares que lo usan y corre `npm run test:e2e` 
 - **Foco**: los campos cambian el borde a `--ring` y suman un halo `ring-[3px] ring-ring-soft`; los demás controles (botones, enlaces, pestañas) usan `ring-[3px] ring-ring/40`. Nunca quites el foco sin reemplazarlo (`e2e/keyboard.spec.ts` lo comprueba).
 - Se respeta `prefers-reduced-motion` (regla global en `index.css`).
 
+## Chips de filtro
+
+Los filtros de Gastos (`ExpenseFilterBar`) son botones con `aria-pressed`, `rounded-full`, de 44 px de alto y sin borde: `bg-secondary text-secondary-foreground` en reposo y `bg-accent text-accent-foreground` con el ícono `Check` cuando están activos (así el estado no depende solo del color). La fila no genera scroll de la página: si no cabe, hace scroll horizontal propio. En la hoja "Gastos de una persona", la carita elegida usa el mismo par accent.
+
 ## Modo claro y oscuro
 
 - `useTheme()` (`src/hooks/use-theme.ts`) devuelve `{ theme, resolvedTheme, setTheme }`. `theme` es la elección (`system`, `light` o `dark`); `resolvedTheme`, lo que se está mostrando.

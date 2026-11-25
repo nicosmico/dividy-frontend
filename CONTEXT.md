@@ -49,6 +49,10 @@ _Avoid_: Portion, cuota, splitAmount
 **Remainder** (Resto):
 Las unidades mínimas (pesos en CLP, centavos en USD) que sobran cuando un monto no se divide exacto entre los participantes (en partes iguales, por porcentaje o por partes: la división por montos no deja resto); se asignan de a una unidad mínima a los primeros participantes según el orden de los miembros del grupo, saltándose a quien ya tenía su proporción exacta, para que ninguna parte se aleje una unidad mínima o más de la proporcional.
 
+**Filter** (Filtro):
+Lo que acota la lista de Gastos para ver solo una parte: un chip a la vez ("Donde participo", "Pagué yo" o una persona, donde participa o lo que pagó) y, con más de 10 gastos, una búsqueda por palabras en la descripción. Es una vista, no un dato: no cambia el grupo, vive en la URL (`?f=` y `?q=`) y el total de arriba la sigue. "Donde participo" y "Pagué yo" necesitan saber quién eres (**Viewer**).
+_Avoid_: Segment, categoría
+
 ### Saldos y pagos
 
 **Balance** (Saldo):

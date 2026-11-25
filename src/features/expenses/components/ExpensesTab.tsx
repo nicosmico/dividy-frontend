@@ -4,12 +4,16 @@ import { Link } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
+  expenseShareOf,
+  filterExpenses,
   formatAmount,
-  getTotalSpent,
   splitTypeLabel,
+  summarizeExpenses,
   type Expense,
   type Group,
+  type MemberId,
 } from '@/domain';
 import { useCurrentGroup } from '@/features/groups/data';
 import { EntityIcon } from '@/features/icons';
@@ -22,7 +26,10 @@ import { useReadOnly } from '@/hooks/use-snapshot-view';
 import { restoreFocusIfLost } from '@/lib/focus';
 import { plural } from '@/lib/plural';
 import { ExpenseDialog } from './ExpenseDialog';
+import { ExpenseFilterBar } from './ExpenseFilters';
 import { dateLabel, groupByDate, sortExpenses } from './expense-list';
+import { tidyQuery, totalDetail, totalLabel } from './filter-text';
+import { useExpenseFilters } from './use-expense-filters';
 
 const MIN_MEMBERS = 2;
 
@@ -39,7 +46,18 @@ export function ExpensesTab() {
   const canAdd = group.members.length >= MIN_MEMBERS;
   const count = group.expenses.length;
   const hasExpenses = count > 0;
-  const days = groupByDate(sortExpenses(group.expenses));
+  const filters = useExpenseFilters(group);
+  const { filter, query, hasQuery, viewerId } = filters;
+  const shown = filters.active
+    ? filterExpenses(group, filter, query, viewerId)
+    : group.expenses;
+  const summary = summarizeExpenses(
+    group,
+    shown,
+    viewerId,
+    filter?.kind === 'member' ? filter.memberId : null
+  );
+  const days = groupByDate(sortExpenses(shown));
   const moods = useMemberMoods(group);
 
   // Lets the toasts rise above the fixed button on mobile (see index.css).
@@ -55,12 +73,23 @@ export function ExpensesTab() {
       {count > 0 ? (
         <div className='flex items-center justify-between gap-3'>
           <div className='min-w-0'>
-            <p className='text-sm text-muted-foreground'>Total del grupo</p>
-            <p className='text-3xl font-bold tracking-tight break-words tabular-nums'>
-              {formatAmount(getTotalSpent(group), group.currency)}
-            </p>
             <p className='text-sm text-muted-foreground'>
-              {plural(count, 'gasto', 'gastos')}
+              {totalLabel(filter, query, group)}
+            </p>
+            <p className='text-3xl font-bold tracking-tight break-words tabular-nums'>
+              {formatAmount(summary.total, group.currency)}
+            </p>
+            <p className='text-sm break-words text-muted-foreground'>
+              {filters.active
+                ? totalDetail({
+                    summary,
+                    groupCount: count,
+                    filter,
+                    hasQuery,
+                    group,
+                    viewerId,
+                  })
+                : plural(count, 'gasto', 'gastos')}
             </p>
           </div>
           {!readOnly && (
@@ -95,31 +124,56 @@ export function ExpensesTab() {
         </Card>
       )}
 
+      {hasExpenses && <ExpenseFilterBar group={group} filters={filters} />}
+      {/* Announces how many expenses are left after a filter or search. */}
+      <p aria-live='polite' className='sr-only'>
+        {hasExpenses && filters.active && !filters.pending
+          ? `Mostrando ${summary.count} de ${count} ${count === 1 ? 'gasto' : 'gastos'}`
+          : ''}
+      </p>
+
       {!readOnly && !canAdd && <NeedMoreMembers group={group} />}
 
-      {days.map((day) => (
-        <section
-          key={day.date}
-          aria-label={dateLabel(day.date)}
-          className='grid grid-cols-[minmax(0,1fr)] gap-2'
-        >
-          <h2 className='text-sm font-semibold text-muted-foreground'>
-            {dateLabel(day.date)}
-          </h2>
-          <ul className='grid grid-cols-[minmax(0,1fr)] gap-2'>
-            {day.expenses.map((expense) => (
-              <li key={expense.id}>
-                <ExpenseRow
-                  group={group}
-                  moods={moods}
-                  expense={expense}
-                  onOpen={readOnly ? undefined : () => setTarget(expense)}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {filters.pending && <Skeleton aria-busy='true' className='h-32' />}
+
+      {!filters.pending &&
+        hasExpenses &&
+        filters.active &&
+        shown.length === 0 && (
+          <NoResults
+            query={hasQuery ? tidyQuery(query) : null}
+            onClear={() => {
+              filters.clear();
+              restoreFocusIfLost();
+            }}
+          />
+        )}
+
+      {!filters.pending &&
+        days.map((day) => (
+          <section
+            key={day.date}
+            aria-label={dateLabel(day.date)}
+            className='grid grid-cols-[minmax(0,1fr)] gap-2'
+          >
+            <h2 className='text-sm font-semibold text-muted-foreground'>
+              {dateLabel(day.date)}
+            </h2>
+            <ul className='grid grid-cols-[minmax(0,1fr)] gap-2'>
+              {day.expenses.map((expense) => (
+                <li key={expense.id}>
+                  <ExpenseRow
+                    group={group}
+                    moods={moods}
+                    expense={expense}
+                    viewerId={viewerId}
+                    onOpen={readOnly ? undefined : () => setTarget(expense)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
 
       {/* Room so the floating button never covers the last expense. */}
       {count > 0 && !readOnly && (
@@ -172,6 +226,28 @@ function AddExpenseButton({
   );
 }
 
+function NoResults({
+  query,
+  onClear,
+}: {
+  /** The search, if there is one; the message then talks about it. */
+  query: string | null;
+  onClear: () => void;
+}) {
+  return (
+    <div className='flex flex-col items-center gap-3 py-8 text-center'>
+      <p className='max-w-xs text-sm text-muted-foreground'>
+        {query !== null
+          ? `No hay gastos que coincidan con "${query}".`
+          : 'No hay gastos con este filtro.'}
+      </p>
+      <Button variant='outline' onClick={onClear}>
+        Limpiar filtros
+      </Button>
+    </div>
+  );
+}
+
 function NeedMoreMembers({ group }: { group: Group }) {
   return (
     <p
@@ -194,44 +270,64 @@ function ExpenseRow({
   group,
   moods,
   expense,
+  viewerId,
   onOpen,
 }: {
   group: Group;
   moods: Map<string, AvatarMood>;
   expense: Expense;
+  /** Who "you" are; with it the row says how much of the expense is yours. */
+  viewerId: MemberId | null;
   /** Opens the edit dialog; without it (read-only) the row is plain text. */
   onOpen?: () => void;
 }) {
   const payer = group.members.find((m) => m.id === expense.payerId);
   const n = expense.split.participantIds.length;
   const everyone = n === group.members.length;
-  const division =
-    expense.split.type === 'equal'
+  // A one-person expense is not "divided": it is someone's own ("solo para Carla").
+  const onlyFor =
+    n === 1 && !everyone
+      ? group.members.find((m) => m.id === expense.split.participantIds[0])
+      : undefined;
+  const division = onlyFor
+    ? `solo para ${onlyFor.name}`
+    : expense.split.type === 'equal'
       ? `dividido entre ${everyone ? 'todos' : plural(n, 'persona', 'personas')}`
       : `dividido ${splitTypeLabel(expense.split.type)}`;
+  const share =
+    viewerId === null ? undefined : expenseShareOf(group, expense, viewerId);
   const content = (
     <>
       <EntityIcon text={expense.description} kind='expense' size='list' />
-      <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
-        <span className='flex items-start justify-between gap-3'>
+      <span className='flex min-w-0 flex-1 items-start gap-3'>
+        <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <span className='min-w-0 font-medium break-words'>
             {expense.description}
           </span>
-          <span className='shrink-0 font-semibold tabular-nums'>
-            {formatAmount(expense.amount, group.currency)}
+          <span className='flex items-center gap-2 text-sm text-muted-foreground'>
+            {payer && (
+              <MemberAvatar
+                member={payer}
+                mood={moods.get(payer.id)}
+                className='size-5'
+              />
+            )}
+            <span className='min-w-0 break-words'>
+              Pagó {payer?.name ?? 'alguien'} · {division}
+            </span>
           </span>
         </span>
-        <span className='flex items-center gap-2 text-sm text-muted-foreground'>
-          {payer && (
-            <MemberAvatar
-              member={payer}
-              mood={moods.get(payer.id)}
-              className='size-5'
-            />
-          )}
-          <span className='min-w-0 break-words'>
-            Pagó {payer?.name ?? 'alguien'} · {division}
+        <span className='flex shrink-0 flex-col items-end gap-0.5 text-right'>
+          <span className='font-semibold tabular-nums'>
+            {formatAmount(expense.amount, group.currency)}
           </span>
+          {share !== undefined && (
+            <span className='text-xs leading-5 text-muted-foreground tabular-nums'>
+              {share === null
+                ? 'No participas'
+                : `Tu parte ${formatAmount(share, group.currency)}`}
+            </span>
+          )}
         </span>
       </span>
     </>

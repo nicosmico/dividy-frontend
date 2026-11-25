@@ -10,8 +10,13 @@ import type {
 } from '@/data';
 
 function LocationProbe() {
-  const { pathname } = useLocation();
-  return <output data-testid='pathname'>{pathname}</output>;
+  const { pathname, search } = useLocation();
+  return (
+    <>
+      <output data-testid='pathname'>{pathname}</output>
+      <output data-testid='search'>{search}</output>
+    </>
+  );
 }
 
 interface TestProvidersProps {
@@ -25,7 +30,7 @@ interface TestProvidersProps {
   children: ReactNode;
 }
 
-/** All app providers plus a `MemoryRouter` and a probe that shows the pathname. */
+/** All app providers plus a `MemoryRouter` and a probe that shows the pathname and the query string. */
 export function TestProviders({
   repository,
   snapshotRepository,

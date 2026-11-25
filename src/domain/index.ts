@@ -116,6 +116,19 @@ export {
   type ExpenseFields,
   type PaymentFields,
 } from './validation';
+export {
+  SEARCH_MIN_EXPENSES,
+  expenseShareOf,
+  filterExpenses,
+  filterNeedsViewer,
+  normalizeSearchText,
+  parseExpenseFilter,
+  searchWords,
+  serializeExpenseFilter,
+  summarizeExpenses,
+  type ExpenseFilter,
+  type ExpensesSummary,
+} from './filter';
 export { capitalizeFirst } from './text';
 export { formatGroupSummary, type SummaryOptions } from './summary';
 export {

@@ -102,13 +102,14 @@ export function ViewerProvider({
       scope,
       members,
       viewerId,
+      loading,
       sheetOpen,
       openSheet: () => setPhase('open'),
       closeSheet: () => setPhase('closed'),
       choose: (memberId) => save({ memberId }),
       skip: () => save({ none: true }),
     }),
-    [scope, members, viewerId, sheetOpen, save]
+    [scope, members, viewerId, loading, sheetOpen, save]
   );
 
   return (

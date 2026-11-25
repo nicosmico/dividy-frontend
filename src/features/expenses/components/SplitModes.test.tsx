@@ -518,11 +518,11 @@ describe('lista de gastos con división personalizada', () => {
           description: 'Tres',
           amount: 100,
           payer: 'Ana',
-          among: ['Ana'],
+          among: ['Ana', 'Beto'],
           split: {
             type: 'shares',
-            participantIds: ['Ana'],
-            parts: { Ana: 3 },
+            participantIds: ['Ana', 'Beto'],
+            parts: { Ana: 3, Beto: 1 },
           },
         },
         {
