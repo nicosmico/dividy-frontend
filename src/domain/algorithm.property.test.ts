@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { computeBalances } from './balances';
-import { removeExpense, removeMember } from './group';
+import { removeExpense } from './group';
 import { previewBalanceChange } from './impact';
 import { computeShares } from './split';
 import { groupArb, splitArb } from './test-utils/arbitraries';
@@ -22,14 +22,6 @@ const ALL: Split['type'][] = ['equal', 'exact', 'percent', 'shares'];
 const RUNS = { numRuns: 300 };
 
 const mixedGroupArb = groupArb({ splits: ALL });
-const mixedGroupWithMembersArb = groupArb({ splits: ALL, minMembers: 2 }).chain(
-  (group) =>
-    fc.record({
-      group: fc.constant(group),
-      index: fc.integer({ min: 0, max: group.members.length - 1 }),
-      offset: fc.integer({ min: 1, max: group.members.length - 1 }),
-    })
-);
 
 const sum = (values: Iterable<number>) =>
   [...values].reduce((s, v) => s + v, 0);
@@ -178,52 +170,6 @@ describe('algoritmo completo con divisiones mezcladas', () => {
         ];
         expect(second).toEqual(first);
         expect(group).toEqual(before);
-      }),
-      RUNS
-    );
-  });
-
-  it('reasignar deja un grupo válido, con los mismos montos y saldos que suman 0', () => {
-    fc.assert(
-      fc.property(mixedGroupWithMembersArb, ({ group, index, offset }) => {
-        const removed = group.members[index].id;
-        const target =
-          group.members[(index + offset) % group.members.length].id;
-        const result = removeMember(group, removed, {
-          type: 'reassign',
-          toMemberId: target,
-        });
-        expect(result.ok).toBe(true);
-        if (!result.ok) return;
-        expect(getGroupIssues(result.value)).toEqual([]);
-        expect(result.value.expenses.map((e) => e.amount)).toEqual(
-          group.expenses.map((e) => e.amount)
-        );
-        // The receiver taking over exactly the removed member's balance is
-        // pending a decision: with equal splits where both took part, today
-        // the expense stays "once" (ADR 0003) and third parties change.
-        const after = computeBalances(result.value).map((b) => b.balance);
-        expect(sum(after)).toBe(0);
-      }),
-      RUNS
-    );
-  });
-
-  it('eliminar en cascada deja un grupo válido con saldos que suman 0', () => {
-    fc.assert(
-      fc.property(mixedGroupWithMembersArb, ({ group, index }) => {
-        const removed = group.members[index].id;
-        const result = removeMember(group, removed, { type: 'cascade' });
-        expect(result.ok).toBe(true);
-        if (!result.ok) return;
-        expect(getGroupIssues(result.value)).toEqual([]);
-        for (const e of result.value.expenses) {
-          expect(e.split.participantIds).not.toContain(removed);
-          expect(e.payerId).not.toBe(removed);
-        }
-        expect(sum(computeBalances(result.value).map((b) => b.balance))).toBe(
-          0
-        );
       }),
       RUNS
     );

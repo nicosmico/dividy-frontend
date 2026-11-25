@@ -134,31 +134,11 @@ describe('propiedades del dominio', () => {
     );
   });
 
-  it('7a. reasignar deja un grupo válido sin referencias al miembro', () => {
-    fc.assert(
-      fc.property(groupWithMembersArb, ({ group, index, offset }) => {
-        const removed = group.members[index].id;
-        const target =
-          group.members[(index + offset) % group.members.length].id;
-        const result = removeMember(group, removed, {
-          type: 'reassign',
-          toMemberId: target,
-        });
-        expect(result.ok).toBe(true);
-        if (!result.ok) return;
-        expectNoReferences(result.value, removed);
-        expect(result.value.expenses.map((e) => e.amount)).toEqual(
-          group.expenses.map((e) => e.amount)
-        );
-      })
-    );
-  });
-
-  it('7b. eliminar en cascada deja un grupo válido sin gastos sin participantes', () => {
+  it('7b. eliminar repartiendo deja un grupo válido sin gastos sin participantes', () => {
     fc.assert(
       fc.property(groupWithMembersArb, ({ group, index }) => {
         const removed = group.members[index].id;
-        const result = removeMember(group, removed, { type: 'cascade' });
+        const result = removeMember(group, removed, { type: 'redistribute' });
         expect(result.ok).toBe(true);
         if (!result.ok) return;
         expectNoReferences(result.value, removed);

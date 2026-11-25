@@ -5,7 +5,7 @@ import {
   type CurrencyCode,
 } from './currency';
 import { fail, ok } from './result';
-import { reassignSplit, toEqualSplit } from './split';
+import { redistributeSplit } from './split';
 import type {
   Expense,
   ExpenseId,
@@ -16,7 +16,6 @@ import type {
   Payment,
   PaymentId,
   Result,
-  Split,
 } from './types';
 import {
   validateExpenseFields,
@@ -57,10 +56,11 @@ export type NewPaymentInput = PaymentFields & {
   createdAt: string;
 };
 
-export type RemoveMemberStrategy =
-  | { type: 'none' }
-  | { type: 'reassign'; toMemberId: MemberId }
-  | { type: 'cascade' };
+/**
+ * `none` only works for a member without activity; `redistribute` is the
+ * single way to remove one that has it (ADR 0010).
+ */
+export type RemoveMemberStrategy = { type: 'none' } | { type: 'redistribute' };
 
 export interface MemberRemovalImpact {
   /** Expenses the member paid. */
@@ -69,14 +69,18 @@ export interface MemberRemovalImpact {
   participatingExpenses: Expense[];
   /** Payments the member sent or received. */
   payments: Payment[];
-  /** Expenses that a cascade delete would remove (paid by them, or left without participants). */
-  expensesDeletedByCascade: Expense[];
   /**
-   * Expenses with a custom split (amounts, percentages or parts) the member
-   * takes part in and that survive a cascade delete: they become equal parts
-   * among the people who remain (ADR 0008).
+   * Expenses removing the member deletes: the ones they paid and the ones
+   * where they were the only participant (nobody left to take their share).
    */
-  expensesConvertedByCascade: Expense[];
+  deletedExpenses: Expense[];
+  /** Expenses that stay, where their share is divided among the other participants. */
+  redistributedExpenses: Expense[];
+  /**
+   * The redistributed expenses divided by parts: they become amounts, since a
+   * part cannot be divided (ADR 0010).
+   */
+  expensesConvertedToAmounts: Expense[];
   /** `true` when the member has any activity, so a strategy other than `none` is needed. */
   requiresStrategy: boolean;
 }
@@ -178,15 +182,6 @@ function memberNotFound<T>(): Result<T> {
   );
 }
 
-/** The split with its participants in the order of the group (how forms save them). */
-function inGroupOrder(split: Split, members: readonly Member[]): Split {
-  const order = new Map(members.map((m, i) => [m.id, i]));
-  const participantIds = [...split.participantIds].sort(
-    (a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0)
-  );
-  return { ...split, participantIds };
-}
-
 function participantsOf(expense: Expense): MemberId[] {
   return expense.split.participantIds;
 }
@@ -203,20 +198,24 @@ export function getMemberRemovalImpact(
   const payments = group.payments.filter(
     (p) => p.fromId === memberId || p.toId === memberId
   );
-  const expensesDeletedByCascade = group.expenses.filter(
+  const deletedExpenses = group.expenses.filter(
     (e) =>
       e.payerId === memberId || participantsOf(e).every((id) => id === memberId)
   );
-  const deletedIds = new Set(expensesDeletedByCascade.map((e) => e.id));
-  const expensesConvertedByCascade = participatingExpenses.filter(
-    (e) => e.split.type !== 'equal' && !deletedIds.has(e.id)
+  const deletedIds = new Set(deletedExpenses.map((e) => e.id));
+  const redistributedExpenses = participatingExpenses.filter(
+    (e) => !deletedIds.has(e.id)
+  );
+  const expensesConvertedToAmounts = redistributedExpenses.filter(
+    (e) => e.split.type === 'shares'
   );
   return ok({
     paidExpenses,
     participatingExpenses,
     payments,
-    expensesDeletedByCascade,
-    expensesConvertedByCascade,
+    deletedExpenses,
+    redistributedExpenses,
+    expensesConvertedToAmounts,
     requiresStrategy:
       paidExpenses.length > 0 ||
       participatingExpenses.length > 0 ||
@@ -225,10 +224,11 @@ export function getMemberRemovalImpact(
 }
 
 /**
- * Removes a member (ADR 0003). `none` only works when the member has no
- * activity; `reassign` hands everything to another member; `cascade` deletes
- * their expenses and payments and drops them from other expenses (deleting
- * the ones left without participants). Never leaves an expense without participants.
+ * Removes a member (ADR 0010). `none` only works when they have no activity.
+ * `redistribute` deletes the expenses they paid and their payments, and in the
+ * expenses they only took part in divides their share equally among the other
+ * participants (`redistributeSplit`); an expense where nobody else took part is
+ * deleted. Never leaves an expense without participants.
  */
 export function removeMember(
   group: Group,
@@ -239,68 +239,26 @@ export function removeMember(
   if (!impact.ok) return impact;
   const members = group.members.filter((m) => m.id !== memberId);
 
-  switch (strategy.type) {
-    case 'none':
-      if (impact.value.requiresStrategy) {
-        return fail(
-          'member_has_activity',
-          'Esta persona tiene gastos o pagos. Reasigna o elimina sus movimientos.'
-        );
-      }
-      return ok({ ...group, members });
-
-    case 'reassign': {
-      const target = strategy.toMemberId;
-      if (target === memberId || !members.some((m) => m.id === target)) {
-        return fail(
-          'invalid_reassign_target',
-          'Elige a otra persona del grupo para reasignar.'
-        );
-      }
-      const swap = (id: MemberId) => (id === memberId ? target : id);
-      const expenses = group.expenses.map((e): Expense => {
-        if (e.payerId !== memberId && !participantsOf(e).includes(memberId)) {
-          return e;
-        }
-        return {
-          ...e,
-          payerId: swap(e.payerId),
-          split: inGroupOrder(
-            reassignSplit(e.split, memberId, target),
-            members
-          ),
-        };
-      });
-      const payments = group.payments
-        .map((p): Payment => ({
-          ...p,
-          fromId: swap(p.fromId),
-          toId: swap(p.toId),
-        }))
-        .filter((p) => p.fromId !== p.toId);
-      return ok({ ...group, members, expenses, payments });
-    }
-
-    case 'cascade': {
-      const expenses: Expense[] = [];
-      for (const e of group.expenses) {
-        if (e.payerId === memberId) continue;
-        const remaining = participantsOf(e).filter((id) => id !== memberId);
-        if (remaining.length === 0) continue;
-        // A custom split cannot lose a participant and still add up: the
-        // expense becomes equal parts among who remains (ADR 0008).
-        expenses.push(
-          remaining.length === participantsOf(e).length
-            ? e
-            : { ...e, split: toEqualSplit(e.split, memberId) }
-        );
-      }
-      const payments = group.payments.filter(
-        (p) => p.fromId !== memberId && p.toId !== memberId
+  if (strategy.type === 'none') {
+    if (impact.value.requiresStrategy) {
+      return fail(
+        'member_has_activity',
+        'Esta persona tiene gastos o pagos. Elimínala repartiendo su parte entre los demás.'
       );
-      return ok({ ...group, members, expenses, payments });
     }
+    return ok({ ...group, members });
   }
+
+  const expenses: Expense[] = [];
+  for (const e of group.expenses) {
+    if (e.payerId === memberId) continue;
+    const split = redistributeSplit(e, memberId, group.members);
+    if (split) expenses.push(split === e.split ? e : { ...e, split });
+  }
+  const payments = group.payments.filter(
+    (p) => p.fromId !== memberId && p.toId !== memberId
+  );
+  return ok({ ...group, members, expenses, payments });
 }
 
 export function addExpense(

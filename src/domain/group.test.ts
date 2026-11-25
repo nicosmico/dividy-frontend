@@ -279,16 +279,14 @@ describe('getMemberRemovalImpact / removeMember', () => {
     ],
   });
 
-  it('describe el impacto: pagados, participaciones, pagos y borrados en cascada', () => {
+  it('describe el impacto: pagados, participaciones, pagos, borrados y repartidos', () => {
     const impact = unwrap(getMemberRemovalImpact(group, 'A'));
     expect(impact.paidExpenses.map((e) => e.id)).toEqual(['e1']);
     expect(impact.participatingExpenses.map((e) => e.id)).toEqual(['e1', 'e3']);
     expect(impact.payments.map((p) => p.id)).toEqual(['p1', 'p2']);
     // e1 (la pagó) y e3 (A era su único participante)
-    expect(impact.expensesDeletedByCascade.map((e) => e.id)).toEqual([
-      'e1',
-      'e3',
-    ]);
+    expect(impact.deletedExpenses.map((e) => e.id)).toEqual(['e1', 'e3']);
+    expect(impact.redistributedExpenses).toEqual([]);
     expect(impact.requiresStrategy).toBe(true);
   });
 
@@ -298,8 +296,9 @@ describe('getMemberRemovalImpact / removeMember', () => {
       paidExpenses: [],
       participatingExpenses: [],
       payments: [],
-      expensesDeletedByCascade: [],
-      expensesConvertedByCascade: [],
+      deletedExpenses: [],
+      redistributedExpenses: [],
+      expensesConvertedToAmounts: [],
       requiresStrategy: false,
     });
   });
@@ -333,50 +332,9 @@ describe('getMemberRemovalImpact / removeMember', () => {
     });
   });
 
-  describe('reassign', () => {
-    it('traspasa pagador, participación y pagos al destino sin duplicar', () => {
-      const next = unwrap(
-        removeMember(group, 'B', { type: 'reassign', toMemberId: 'C' })
-      );
-      expect(next.members.map((m) => m.id)).toEqual(['A', 'C', 'D', 'E']);
-      const byId = Object.fromEntries(next.expenses.map((e) => [e.id, e]));
-      expect(byId.e1.split.participantIds).toEqual(['A', 'C']);
-      expect(byId.e2.payerId).toBe('C');
-      expect(byId.e2.split.participantIds).toEqual(['C']); // C ya participaba: sin duplicar
-      expect(next.payments.map((p) => [p.id, p.fromId, p.toId])).toEqual([
-        ['p1', 'C', 'A'],
-        ['p2', 'A', 'C'],
-      ]);
-      expect(getGroupIssues(next)).toEqual([]);
-    });
-
-    it('elimina los pagos que quedarían de alguien a sí mismo', () => {
-      const next = unwrap(
-        removeMember(group, 'B', { type: 'reassign', toMemberId: 'A' })
-      );
-      expect(next.payments.map((p) => p.id)).toEqual(['p2']);
-    });
-
-    it('conserva el total de dinero de los gastos', () => {
-      const next = unwrap(
-        removeMember(group, 'A', { type: 'reassign', toMemberId: 'B' })
-      );
-      expect(next.expenses.map((e) => e.amount)).toEqual([900, 300, 90, 50]);
-    });
-
-    it.each([
-      ['a sí mismo', 'A'],
-      ['a alguien inexistente', 'Z'],
-    ])('rechaza reasignar %s', (_n, toMemberId) => {
-      expect(
-        code(removeMember(group, 'A', { type: 'reassign', toMemberId }))
-      ).toBe('invalid_reassign_target');
-    });
-  });
-
-  describe('cascade', () => {
-    it('borra sus gastos y pagos y lo quita de los demás', () => {
-      const next = unwrap(removeMember(group, 'B', { type: 'cascade' }));
+  describe('redistribute', () => {
+    it('borra sus gastos y pagos y reparte su parte en los demás', () => {
+      const next = unwrap(removeMember(group, 'B', { type: 'redistribute' }));
       expect(next.members.map((m) => m.id)).toEqual(['A', 'C', 'D', 'E']);
       expect(next.expenses.map((e) => [e.id, e.split.participantIds])).toEqual([
         ['e1', ['A', 'C']],
@@ -384,10 +342,11 @@ describe('getMemberRemovalImpact / removeMember', () => {
         ['e4', ['D']],
       ]);
       expect(next.payments.map((p) => p.id)).toEqual(['p2']);
+      expect(getGroupIssues(next)).toEqual([]);
     });
 
     it('borra los gastos que quedarían sin participantes (nunca deja gastos huérfanos)', () => {
-      const next = unwrap(removeMember(group, 'A', { type: 'cascade' }));
+      const next = unwrap(removeMember(group, 'A', { type: 'redistribute' }));
       // e1 la pagó A; e3 tenía a A como único participante
       expect(next.expenses.map((e) => e.id)).toEqual(['e2', 'e4']);
       expect(next.payments).toEqual([]);
@@ -397,12 +356,23 @@ describe('getMemberRemovalImpact / removeMember', () => {
       expect(getGroupIssues(next)).toEqual([]);
     });
 
-    it('lo que dice el impacto coincide con lo que se borra', () => {
+    it('lo que dice el impacto coincide con lo que se borra y se reparte', () => {
       for (const m of group.members) {
         const impact = unwrap(getMemberRemovalImpact(group, m.id));
-        const next = unwrap(removeMember(group, m.id, { type: 'cascade' }));
+        const next = unwrap(
+          removeMember(group, m.id, { type: 'redistribute' })
+        );
         expect(group.expenses.length - next.expenses.length).toBe(
-          impact.expensesDeletedByCascade.length
+          impact.deletedExpenses.length
+        );
+        expect(
+          impact.redistributedExpenses.length + impact.deletedExpenses.length
+        ).toBe(
+          new Set(
+            [...impact.participatingExpenses, ...impact.paidExpenses].map(
+              (e) => e.id
+            )
+          ).size
         );
       }
     });

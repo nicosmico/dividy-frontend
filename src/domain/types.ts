@@ -103,7 +103,6 @@ export type DomainErrorCode =
   | 'duplicate_id'
   | 'member_not_found'
   | 'member_has_activity'
-  | 'invalid_reassign_target'
   | 'expense_not_found'
   | 'payment_not_found'
   | 'invalid_description'
