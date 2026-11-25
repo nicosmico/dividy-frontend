@@ -112,6 +112,15 @@ describe('Gráfico "Gastó vs. su parte"', () => {
       'true'
     );
     expect(share.querySelectorAll('[data-slot="cut"]')).toHaveLength(0);
+    // "Gastó" is only outlined (the whole that was split); "Su parte" is filled.
+    expect(paid.querySelector('[data-style]')).toHaveAttribute(
+      'data-style',
+      'outline'
+    );
+    expect(share.querySelector('[data-style]')).toHaveAttribute(
+      'data-style',
+      'solid'
+    );
     // Beto: Bebidas ($6.000) among 2 -> 1 cut at 50%.
     expect(bars(rows[1])[0].querySelectorAll('[data-slot="cut"]')).toHaveLength(
       1
