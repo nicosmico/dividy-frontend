@@ -151,7 +151,7 @@ function StrategyDialog({
           </p>
         )}
 
-        <p className='text-sm text-muted-foreground [overflow-wrap:anywhere]'>
+        <p className='text-sm [overflow-wrap:anywhere] text-muted-foreground'>
           Si {member.name} sí participó en estos gastos, mejor no lo elimines.
         </p>
 
