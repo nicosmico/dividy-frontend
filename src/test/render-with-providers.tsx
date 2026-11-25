@@ -35,6 +35,11 @@ export function currentPath(): string {
   return screen.getByTestId('pathname').textContent ?? '';
 }
 
+/** Current query string of the render, e.g. `?f=mine` (empty when there is none). */
+export function currentSearch(): string {
+  return screen.getByTestId('search').textContent ?? '';
+}
+
 export interface RenderWithProvidersOptions {
   /** Initial URL. Default `/`. */
   route?: string;

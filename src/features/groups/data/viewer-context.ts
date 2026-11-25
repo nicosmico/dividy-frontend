@@ -8,6 +8,8 @@ export interface ViewerContextValue {
   members: Member[];
   /** The member who is "you" here, or `null` (not asked, chose "none", or still loading). */
   viewerId: MemberId | null;
+  /** The saved choice is still being read: `viewerId` is `null` for now. */
+  loading: boolean;
   /** "¿Quién eres?" is open. */
   sheetOpen: boolean;
   openSheet: () => void;
@@ -26,6 +28,7 @@ const NO_VIEWER: ViewerContextValue = {
   scope: null,
   members: [],
   viewerId: null,
+  loading: false,
   sheetOpen: false,
   openSheet: () => undefined,
   closeSheet: () => undefined,
