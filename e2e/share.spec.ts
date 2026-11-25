@@ -122,6 +122,10 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   page,
   browser,
 }, testInfo) => {
+  // The whole flow in two browsers (share, open, save, update, older link,
+  // delete, undo, reload) took close to the 30 s default on mobile WebKit in
+  // CI and failed at its last steps when the welcome page grew a little.
+  test.slow();
   // --- The owner: a group with expenses and a payment, then "Compartir resumen".
   await stubShare(page);
   await createGroup(page, 'Viaje a Pucón', ['Ana', 'Beto', 'Carla']);
