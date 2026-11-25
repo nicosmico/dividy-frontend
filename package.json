@@ -17,7 +17,8 @@
     "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "test:visual": "playwright test --config e2e/playwright.config.ts --project=visual",
     "test:visual:update": "playwright test --config e2e/playwright.config.ts --project=visual --update-snapshots",
-    "size": "node scripts/check-bundle-size.mjs"
+    "size": "node scripts/check-bundle-size.mjs",
+    "test:mutation": "stryker run"
   },
   "dependencies": {
     "@dicebear/core": "^9.4.3",
@@ -43,6 +44,8 @@
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.65.1",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^8.0.0",

@@ -51,6 +51,12 @@ function checkTransfers(balances: Balances, transfers: SuggestedTransfer[]) {
   expect(transfers.length).toBeLessThanOrEqual(Math.max(0, people - 1));
 }
 
+/**
+ * 200 ms normally. Mutation testing runs instrumented code several times
+ * slower and sets `PERF_BUDGET_MS` (vitest.mutation.config.ts).
+ */
+const TIME_BUDGET_MS = Number(process.env.PERF_BUDGET_MS ?? 200);
+
 describe('transferencias sugeridas: propiedades', () => {
   it('con grupos de todo tipo de división: saldan, tienen buena forma y no superan al voraz', () => {
     fc.assert(
@@ -146,7 +152,7 @@ describe('transferencias sugeridas: rendimiento', () => {
     const balances = people(MAX_PEOPLE_FOR_SPLITTING);
     const start = performance.now();
     const transfers = settleBalances(balances);
-    expect(performance.now() - start).toBeLessThan(200);
+    expect(performance.now() - start).toBeLessThan(TIME_BUDGET_MS);
     checkTransfers(balances, transfers);
   });
 
@@ -154,7 +160,7 @@ describe('transferencias sugeridas: rendimiento', () => {
     const balances = people(40);
     const start = performance.now();
     const transfers = settleBalances(balances);
-    expect(performance.now() - start).toBeLessThan(200);
+    expect(performance.now() - start).toBeLessThan(TIME_BUDGET_MS);
     checkTransfers(balances, transfers);
   });
 });
