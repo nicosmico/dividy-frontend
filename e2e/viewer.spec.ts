@@ -230,7 +230,7 @@ test('la hoja no se abre en un link inválido ni en la bienvenida', async ({
   await expect(sheetOf(page)).toHaveCount(0);
 });
 
-test('un miembro elegido y eliminado con reasignar: se vuelve a preguntar', async ({
+test('un miembro elegido y eliminado: se vuelve a preguntar', async ({
   page,
 }) => {
   const [trip] = sampleGroups();
@@ -240,9 +240,6 @@ test('un miembro elegido y eliminado con reasignar: se vuelve a preguntar', asyn
   await expect(page.getByText('Beto (tú)')).toBeVisible();
   await page.getByRole('button', { name: 'Eliminar a Beto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Beto' });
-  await dialog.getByText('Reasignar a…').click();
-  await dialog.getByRole('combobox').click();
-  await page.getByRole('option', { name: 'Ana' }).click();
   await dialog.getByRole('button', { name: 'Eliminar a Beto' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Ana (tú)')).toHaveCount(0);

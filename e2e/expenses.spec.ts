@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { computeBalances, formatAmount, suggestTransfers } from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
+import { seedGroups } from './seed';
 import { skipViewerSheet } from './viewer';
 
 async function createGroup(page: Page, name: string, members: string[]) {
@@ -245,10 +246,10 @@ test('al eliminar un gasto y abrir el otro, se muestran sus propios datos (halla
   await expect(edit.getByLabel('Pagado por')).toContainText('Ana');
 });
 
-test('eliminar en cascada al único participante no deja gastos sin participantes (hallazgo 4)', async ({
+test('eliminar al único participante no deja gastos sin participantes (hallazgo 4)', async ({
   page,
 }) => {
-  await createGroup(page, 'Cascada', ['Ana', 'Beto', 'Carla']);
+  await createGroup(page, 'Eliminar', ['Ana', 'Beto', 'Carla']);
   await addExpense(page, {
     description: 'Solo Carla',
     amount: 3000,
@@ -263,7 +264,6 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await openTab(page, 'Miembros');
   await page.getByRole('button', { name: 'Eliminar a Carla' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Carla' });
-  await dialog.getByText('Eliminar con sus gastos y pagos').click();
   await dialog.getByRole('button', { name: 'Eliminar a Carla' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText('2 miembros')).toBeVisible();
@@ -283,4 +283,56 @@ test('eliminar en cascada al único participante no deja gastos sin participante
   await expect(
     memberBalances(page).getByText('Al día', { exact: true })
   ).toHaveCount(2);
+});
+
+test('eliminar a Beto reparte su parte del asado entre Ana y Carla, y se puede deshacer', async ({
+  page,
+}) => {
+  const group = makeGroup({
+    name: 'Asado',
+    members: ['Ana', 'Beto', 'Carla'],
+    expenses: [
+      {
+        id: 'e1',
+        description: 'Asado',
+        amount: 30_000,
+        payer: 'Ana',
+        among: ['Ana', 'Beto', 'Carla'],
+      },
+    ],
+  });
+  await seedGroups(page, [group]);
+  await page.goto('/groups/g1/balances');
+  await expect(
+    memberBalances(page).getByText('Le deben $20.000')
+  ).toBeVisible();
+
+  await openTab(page, 'Miembros');
+  await page.getByRole('button', { name: 'Eliminar a Beto' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Eliminar a Beto' });
+  await expect(
+    dialog.getByText('Su parte en 1 gasto se reparte entre los demás.')
+  ).toBeVisible();
+  await expect(
+    dialog.getByText('Ana: le deben $20.000 → $15.000')
+  ).toBeVisible();
+  await expect(dialog.getByText('Carla: debe $10.000 → $15.000')).toBeVisible();
+  await expect(
+    dialog.getByText(
+      'Si Beto sí participó en estos gastos, mejor no lo elimines.'
+    )
+  ).toBeVisible();
+  await dialog.getByRole('button', { name: 'Eliminar a Beto' }).click();
+  await expect(dialog).toBeHidden();
+
+  await openTab(page, 'Saldos');
+  const balances = memberBalances(page);
+  await expect(balances.getByText('Le deben $15.000')).toBeVisible();
+  await expect(balances.getByText('Debe $15.000')).toBeVisible();
+  await expect(balances.getByText('Beto')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(balances.getByText('Beto')).toBeVisible();
+  await expect(balances.getByText('Le deben $20.000')).toBeVisible();
+  await expect(balances.getByText('Debe $10.000')).toHaveCount(2);
 });

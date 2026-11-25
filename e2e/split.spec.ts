@@ -8,7 +8,12 @@ import {
   type TestInfo,
 } from '@playwright/test';
 
-import { computeBalances, formatAmount, type Group } from '../src/domain';
+import {
+  computeBalances,
+  formatAmount,
+  removeMember,
+  type Group,
+} from '../src/domain';
 import { makeGroup } from '../src/domain/test-utils/fixtures';
 import { openTab } from './navigation';
 import { seedGroups } from './seed';
@@ -18,7 +23,7 @@ import { chooseViewer, skipViewerSheet } from './viewer';
 /**
  * División por montos, porcentajes o partes (ADR 0008), de punta a punta:
  * crear con error y corrección, saldos exactos, editar, compartir el link y
- * eliminar a un miembro en cascada.
+ * eliminar a un miembro repartiendo su parte.
  */
 
 declare global {
@@ -385,7 +390,7 @@ test('los links v1 y v2 de antes siguen abriendo (en CLP) y los v3 llevan ademá
   await expectBalances(page, equal);
 });
 
-test('eliminar a un miembro en cascada avisa cuántos gastos pasan a partes iguales', async ({
+test('eliminar a un miembro reparte su parte y los gastos por partes pasan a montos', async ({
   page,
 }) => {
   const group: Group = {
@@ -402,49 +407,32 @@ test('eliminar a un miembro en cascada avisa cuántos gastos pasan a partes igua
     date: '2026-03-10',
     createdAt: '2026-03-10T12:00:00.000Z',
   });
-  // Beto only paid "Cena" (it goes with him); "Cabaña" and "Bencina" are
-  // custom and keep going without him; "Pan" is equal and is left as is.
+  // Beto only paid "Cena" (it goes with him); his share in "Cabaña" (montos),
+  // "Bencina" (partes) and "Pan" (iguales) is divided between the rest.
+  const after = removeMember(group, 'Beto', { type: 'redistribute' });
+  if (!after.ok) throw new Error(after.error.message);
   await seedGroups(page, [group]);
   await page.goto('/groups/g1/members');
   await page.getByRole('button', { name: 'Eliminar a Beto' }).click();
   const dialog = page.getByRole('dialog', { name: 'Eliminar a Beto' });
-  await dialog.getByText('Eliminar con sus gastos y pagos').click();
   await expect(
     dialog.getByText(
-      '2 gastos con división personalizada pasarán a partes iguales.'
+      'Su parte en 3 gastos se reparte entre los demás. Se borra el gasto que pagó.'
     )
   ).toBeVisible();
-  await expect(dialog.getByText('Se borrará 1 gasto:')).toBeVisible();
+  await expect(
+    dialog.getByText('Los gastos divididos por partes pasan a montos.')
+  ).toBeVisible();
   await dialog.getByRole('button', { name: 'Eliminar a Beto' }).click();
   await expect(dialog).toBeHidden();
 
   await openTab(page, 'Gastos');
-  await expect(page.getByRole('button', { name: /Cabaña/ })).toContainText(
-    'Pagó Ana · dividido entre todos'
-  );
+  await expect(page.getByRole('button', { name: /Cabaña/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Bencina/ })).toContainText(
-    'Pagó Carla · dividido entre todos'
+    'por montos'
   );
   await expect(page.getByRole('button', { name: /Cena/ })).toHaveCount(0);
 
   await openTab(page, 'Saldos');
-  const after = makeGroup({
-    members: ['Ana', 'Carla'],
-    expenses: [
-      {
-        description: 'Cabaña',
-        amount: 100_000,
-        payer: 'Ana',
-        among: ['Ana', 'Carla'],
-      },
-      {
-        description: 'Bencina',
-        amount: 30_001,
-        payer: 'Carla',
-        among: ['Ana', 'Carla'],
-      },
-      { description: 'Pan', amount: 3000, payer: 'Carla', among: ['Ana'] },
-    ],
-  });
-  await expectBalances(page, after);
+  await expectBalances(page, after.value);
 });
