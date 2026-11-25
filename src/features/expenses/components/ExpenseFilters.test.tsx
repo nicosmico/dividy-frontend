@@ -115,16 +115,16 @@ describe('filtros de la lista de Gastos', () => {
       await user.click(chip('Donde participo'));
       expect(chip('Donde participo')).toHaveAttribute('aria-pressed', 'true');
       expect(chip('Pagué yo')).toHaveAttribute('aria-pressed', 'false');
-      expect(currentSearch()).toBe('?f=mine');
+      await waitFor(() => expect(currentSearch()).toBe('?f=mine'));
 
       await user.click(chip('Pagué yo'));
       expect(chip('Donde participo')).toHaveAttribute('aria-pressed', 'false');
       expect(chip('Pagué yo')).toHaveAttribute('aria-pressed', 'true');
-      expect(currentSearch()).toBe('?f=paid');
+      await waitFor(() => expect(currentSearch()).toBe('?f=paid'));
 
       await user.click(chip('Pagué yo'));
       expect(chip('Pagué yo')).toHaveAttribute('aria-pressed', 'false');
-      expect(currentSearch()).toBe('');
+      await waitFor(() => expect(currentSearch()).toBe(''));
     });
 
     it('filtra la lista y deja la fila de lo que queda', async () => {
@@ -315,7 +315,7 @@ describe('filtros de la lista de Gastos', () => {
           screen.queryByRole('dialog', { name: 'Gastos de una persona' })
         ).not.toBeInTheDocument()
       );
-      expect(currentSearch()).toBe('?f=member%3ACarla');
+      await waitFor(() => expect(currentSearch()).toBe('?f=member%3ACarla'));
       expect(chip('Carla')).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByText('Gastos de Carla')).toBeInTheDocument();
     });
@@ -407,7 +407,7 @@ describe('filtros de la lista de Gastos', () => {
       expect(
         screen.queryByRole('button', { name: /Taxi/ })
       ).not.toBeInTheDocument();
-      expect(currentSearch()).toBe('?q=CABANA');
+      await waitFor(() => expect(currentSearch()).toBe('?q=CABANA'));
       expect(screen.getByText('Coinciden con "CABANA"')).toBeInTheDocument();
       expect(screen.getByText('1 de 12 gastos')).toBeInTheDocument();
     });
@@ -440,7 +440,7 @@ describe('filtros de la lista de Gastos', () => {
         screen.getByRole('textbox', { name: 'Buscar gasto' }),
         'e'
       );
-      expect(currentSearch()).toBe('?f=mine&q=ae');
+      await waitFor(() => expect(currentSearch()).toBe('?f=mine&q=ae'));
       expect(screen.getAllByRole('button', { name: /\$/ })).toHaveLength(1);
     });
 
@@ -456,7 +456,7 @@ describe('filtros de la lista de Gastos', () => {
       );
       expect(box).toHaveValue('');
       expect(box).toHaveFocus();
-      expect(currentSearch()).toBe('');
+      await waitFor(() => expect(currentSearch()).toBe(''));
       expect(
         screen.queryByRole('button', { name: 'Limpiar búsqueda' })
       ).not.toBeInTheDocument();
@@ -477,7 +477,7 @@ describe('filtros de la lista de Gastos', () => {
           screen.queryByRole('textbox', { name: 'Buscar gasto' })
         ).not.toBeInTheDocument()
       );
-      expect(currentSearch()).toBe('');
+      await waitFor(() => expect(currentSearch()).toBe(''));
       // Nothing stays filtered: the 10 expenses are all there.
       expect(screen.getByText('Total del grupo')).toBeInTheDocument();
       expect(screen.getByText('10 gastos')).toBeInTheDocument();
@@ -518,7 +518,7 @@ describe('filtros de la lista de Gastos', () => {
         await screen.findByText('No hay gastos que coincidan con "kayak".')
       ).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
-      expect(currentSearch()).toBe('');
+      await waitFor(() => expect(currentSearch()).toBe(''));
       expect(screen.getByText('Total del grupo')).toBeInTheDocument();
       expect(screen.getByText('12 gastos')).toBeInTheDocument();
       expect(chip('Donde participo')).toHaveAttribute('aria-pressed', 'false');

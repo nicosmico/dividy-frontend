@@ -1,6 +1,6 @@
 {
-  "initialJs": 202300,
-  "initialCss": 10600,
+  "initialJs": 202700,
+  "initialCss": 10800,
   "chunks": {
     "ExplanationPlayer.js": 4100,
     "alert-dialog.js": 1400,
@@ -8,14 +8,14 @@
     "balances.js": 7800,
     "dates.js": 10600,
     "example-group.js": 700,
-    "expenses.js": 10400,
+    "expenses.js": 13400,
     "explanation.js": 8200,
     "groups.js": 4700,
-    "index.css": 10600,
     "index.js": 82500,
+    "index.css": 10800,
     "members.js": 43300,
     "play.js": 300,
-    "preload-helper.js": 119300,
+    "preload-helper.js": 119700,
     "rolldown-runtime.js": 500,
     "share.js": 5200,
     "workbox-window.prod.es5.js": 2500
