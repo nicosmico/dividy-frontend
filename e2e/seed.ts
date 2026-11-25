@@ -90,3 +90,37 @@ export async function seedDocument(
     }
   }, JSON.stringify(document));
 }
+
+/**
+ * "Viaje a Pucón" with 12 expenses (enough for the search box). Seen as Beto:
+ * he takes part in 9 of them (174.001 in total, his share 65.501) and paid 3
+ * (his share of those, 17.500). Carla paid 5 (55.001); Beto owes 22.001 there.
+ */
+export function filterGroup(): Group {
+  const all = ['Ana', 'Beto', 'Carla'];
+  const spec = (
+    description: string,
+    amount: number,
+    payer: string,
+    among: string[]
+  ) => ({ description, amount, payer, among });
+  const expenses = [
+    spec('Cabaña', 60000, 'Ana', all),
+    spec('Taxi aeropuerto', 10000, 'Beto', ['Ana', 'Beto']),
+    spec('Bencina', 20001, 'Carla', ['Beto', 'Carla']),
+    spec('Café', 3000, 'Ana', ['Ana']),
+    spec('Almuerzo', 15000, 'Carla', all),
+    spec('Supermercado', 24000, 'Beto', all),
+    spec('Peaje', 4500, 'Ana', ['Ana', 'Carla']),
+    spec('Helados', 6000, 'Carla', ['Beto', 'Carla']),
+    spec('Entradas parque', 18000, 'Ana', all),
+    spec('Pan', 2000, 'Carla', ['Carla']),
+    spec('Leña', 9000, 'Beto', ['Ana', 'Beto']),
+    spec('Bebidas', 12000, 'Carla', all),
+  ].map((e, i) => ({
+    ...e,
+    id: `e${i + 1}`,
+    date: `2026-03-${String(i + 1).padStart(2, '0')}`,
+  }));
+  return makeGroup({ name: 'Viaje a Pucón', members: all, expenses });
+}

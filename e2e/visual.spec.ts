@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { createSnapshot } from '../src/domain';
-import { sampleGroups, seedDocument, seedGroups } from './seed';
+import { filterGroup, sampleGroups, seedDocument, seedGroups } from './seed';
 import { snapshotPath } from './snapshot-link';
 import { seedViewers } from './viewer';
 
@@ -93,6 +93,28 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.goto('/groups/g1/expenses');
       await expect(page.getByText('Supermercado')).toBeVisible();
       await shot(page, `expenses-${colorScheme}`);
+    });
+
+    test('Gastos con filtro Donde participo', async ({ page }) => {
+      await seedViewers(page, { 'group:g1': { memberId: 'Beto' } });
+      await seedGroups(page, [filterGroup()], { askViewer: true });
+      await page.goto('/groups/g1/expenses?f=mine');
+      await expect(page.getByText('Donde participas')).toBeVisible();
+      await expect(
+        page.getByText('9 de 12 gastos · tu parte $65.501')
+      ).toBeVisible();
+      await shot(page, `expenses-filter-mine-${colorScheme}`, true);
+    });
+
+    test('Gastos buscando (12 gastos)', async ({ page }) => {
+      await seedViewers(page, { 'group:g1': { memberId: 'Beto' } });
+      await seedGroups(page, [filterGroup()], { askViewer: true });
+      await page.goto('/groups/g1/expenses?q=ca');
+      await expect(page.getByText('Coinciden con "ca"')).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: 'Buscar gasto' })
+      ).toHaveValue('ca');
+      await shot(page, `expenses-search-${colorScheme}`, true);
     });
 
     test('Nuevo gasto', async ({ page }) => {
