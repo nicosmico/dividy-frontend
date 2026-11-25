@@ -18,14 +18,29 @@ export function Welcome() {
   const example = useMemo(() => buildExampleGroup(), []);
   return (
     <div className='grid gap-4'>
+      {/* The button first: the animated example is tall, and below it the
+          button ended up under the browser's bottom bar on a phone. */}
       <div className='grid gap-1'>
         <h1 className='text-2xl font-extrabold tracking-tight'>
           Divide gastos sin enredos
         </h1>
         <p className='text-muted-foreground'>
-          Así calcula Dividy quién le debe a quién:
+          Anota quién pagó qué y Dividy te dice quién le transfiere a quién.
         </p>
       </div>
+      <div className='grid gap-2'>
+        <Button asChild size='lg'>
+          <Link to='/groups/new'>
+            <Plus aria-hidden='true' /> Crear mi primer grupo
+          </Link>
+        </Button>
+        <p className='text-center text-sm text-muted-foreground'>
+          Pesos, dólares, euros y más. Tus datos se guardan en este dispositivo.
+        </p>
+      </div>
+      <h2 className='mt-2 text-sm font-semibold'>
+        Así se calcula, con un ejemplo:
+      </h2>
       <Card className='gap-3 rounded-card p-4'>
         <LazyExplanationPlayer
           group={example}
@@ -33,14 +48,6 @@ export function Welcome() {
           label='Ejemplo animado: un asado entre Ana, Beto y Carla'
         />
       </Card>
-      <Button asChild size='lg'>
-        <Link to='/groups/new'>
-          <Plus aria-hidden='true' /> Crear mi primer grupo
-        </Link>
-      </Button>
-      <p className='text-center text-sm text-muted-foreground'>
-        Pesos, dólares, euros y más. Tus datos se guardan en este dispositivo.
-      </p>
     </div>
   );
 }
