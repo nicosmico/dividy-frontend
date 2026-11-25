@@ -156,3 +156,12 @@ npm run size           # presupuesto de tamaño del bundle (después de build)
 ## Esperas en tests de componentes
 
 `src/test/setup.ts` sube la espera de `findBy*` y `waitFor` de Testing Library de 1 s a 3 s (`asyncUtilTimeout`). El primer test de cada archivo carga rutas perezosas, y con cobertura y todos los workers ocupados (como en CI) eso a veces pasaba del segundo y fallaba sin un error real. No cambia nada cuando el test pasa: solo da más margen antes de declarar que algo no apareció.
+
+## Mutation testing del dominio
+
+`npm run test:mutation` corre [Stryker](https://stryker-mutator.io) sobre `src/domain`: mete errores chicos a propósito en el código (cambiar `>` por `>=`, `+` por `-`, borrar una condición…), uno a la vez, y corre los tests del dominio para cada uno. Un mutante **atrapado** hizo fallar algún test; uno que **sobrevivió** es un error posible que ningún test detectaría. Mide algo que la cobertura no mide: no basta con pasar por una línea, hay que comprobar lo que hace.
+
+- Configuración: `stryker.config.json` y `vitest.mutation.config.ts` (solo los tests del dominio, en Node, con más tiempo por test y `PERF_BUDGET_MS` alto porque el código instrumentado es más lento).
+- Reporte: `reports/mutation/index.html` (ignorado por git). Tarda unos 30 minutos con 3 procesos.
+- No corre en cada PR (es lento). Conviene correrlo después de cambiar la lógica del dominio.
+- Al revisar sobrevivientes: los textos de error y los mutantes **equivalentes** (no cambian ningún resultado, como un caché o una protección que otra validación repite) no necesitan test. Los demás sí: `src/domain/mutation-gaps.test.ts` reúne los que se agregaron por esto.
