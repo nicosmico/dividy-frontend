@@ -455,6 +455,7 @@ Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece s
 - **Backend y grupos compartidos.** Que todos vean el mismo grupo. `HttpGroupRepository` detrás del puerto actual (pasando la suite de contrato), identidad ligera (enlace de invitación, sin cuenta al inicio), resolución de conflictos (versionado por grupo u operaciones) y sincronización con la cola offline que la PWA hace posible. Trae también el respaldo de los datos (exportar/importar quedó descartado, Ronda 10).
 - **Foto de la boleta.** Sin backend no tiene sentido guardarla solo en el dispositivo.
 - **Recordatorios para saldar.** Notificaciones del tipo "Tienes $3.333 pendientes con Ana": para que lleguen con la app cerrada las tiene que enviar un servidor (Web Push), y en iPhone solo funcionan con la app instalada.
+
 228. **En «Gastó vs. su parte», la barra «Gastó» va solo con el borde del color del gasto y fondo de la tarjeta; «Su parte» sigue rellena.** Los cortes de la división se dibujan con el color del gasto. Los gastos 7 a 12 llevan rayas finas dentro del borde. Aplica al gráfico de Saldos y a la animación de bienvenida (comparten `PaidShareRow`). **Por qué:** se entiende que lo que pagó cada uno es el total que se dividió, y que las partes rellenas son lo que le tocó; pedido del dueño del producto.
 
 ### Descartado
