@@ -103,7 +103,7 @@ function Chip({
       aria-haspopup={haspopup ? 'dialog' : undefined}
       onClick={onClick}
       className={cn(
-        'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+        'inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
         pressed
           ? 'bg-accent font-semibold text-accent-foreground'
           : 'bg-secondary text-secondary-foreground hover:bg-secondary/70'
