@@ -258,288 +258,281 @@ describe('Pestaña Miembros', () => {
     expect((await repository.get('g1'))?.members).toHaveLength(3);
   });
 
-  it('con movimientos muestra la vista previa y no permite confirmar sin elegir', async () => {
-    const { user } = renderWithProviders(undefined, {
-      route: ROUTE,
-      groups: [groupWithActivity()],
-    });
-    await user.click(
-      await screen.findByRole('button', { name: 'Eliminar a Beto' })
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: 'Eliminar a Beto',
-    });
-    expect(within(dialog).getByText('Pagó 2 gastos')).toBeInTheDocument();
-    expect(
-      within(dialog).getByText('Participa en 2 gastos')
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByText('Tiene 1 pago enviado o recibido')
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
-    ).toBeDisabled();
-  });
-
-  it('muestra solo los movimientos que tiene (sin "0 pagos")', async () => {
-    const group = makeGroup({
-      members: ['Ana', 'Beto'],
-      expenses: [
-        {
-          id: 'e1',
-          description: 'Asado',
-          amount: 9000,
-          payer: 'Ana',
-          among: ['Ana', 'Beto'],
-        },
-      ],
-    });
-    const { user } = renderWithProviders(undefined, {
-      route: `/groups/${group.id}/members`,
-      groups: [group],
-    });
-    await user.click(
-      await screen.findByRole('button', { name: 'Eliminar a Beto' })
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: 'Eliminar a Beto',
-    });
-    expect(
-      within(dialog).getByText('Participa en 1 gasto')
-    ).toBeInTheDocument();
-    expect(within(dialog).queryByText(/^Pagó/)).toBeNull();
-    expect(within(dialog).queryByText(/^Tiene \d+ pago/)).toBeNull();
-  });
-
-  it('reasigna sus movimientos a otro miembro', async () => {
-    const { user, repository } = renderWithProviders(undefined, {
-      route: ROUTE,
-      groups: [groupWithActivity()],
-    });
-    await user.click(
-      await screen.findByRole('button', { name: 'Eliminar a Beto' })
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: 'Eliminar a Beto',
-    });
-    await user.click(
-      within(dialog).getByRole('radio', { name: 'Reasignar a…' })
-    );
-    const confirm = within(dialog).getByRole('button', {
-      name: 'Eliminar a Beto',
-    });
-    expect(confirm).toBeDisabled();
-
-    await user.click(within(dialog).getByRole('combobox'));
-    await user.click(await screen.findByRole('option', { name: 'Ana' }));
-    expect(confirm).toBeEnabled();
-    await user.click(confirm);
-
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    );
-    const group = await repository.get('g1');
-    expect(group?.members.map((m) => m.id)).toEqual(['Ana', 'Caro', 'Dani']);
-    expect(
-      group?.expenses.map((e) => [e.id, e.payerId, e.split.participantIds])
-    ).toEqual([
-      ['e1', 'Ana', ['Ana', 'Caro']],
-      ['e2', 'Ana', ['Ana', 'Caro']],
-      ['e3', 'Ana', ['Caro']],
-    ]);
-    expect(group?.payments).toEqual([
-      expect.objectContaining({ id: 'p1', fromId: 'Caro', toId: 'Ana' }),
-    ]);
-    expect(group?.updatedAt).toBe('2026-05-01T10:00:00.000Z');
-  });
-
-  it('elimina con sus gastos y explica qué se borra', async () => {
-    const { user, repository } = renderWithProviders(undefined, {
-      route: ROUTE,
-      groups: [groupWithActivity()],
-    });
-    await user.click(
-      await screen.findByRole('button', { name: 'Eliminar a Beto' })
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: 'Eliminar a Beto',
-    });
-    await user.click(
-      within(dialog).getByRole('radio', {
-        name: 'Eliminar con sus gastos y pagos',
-      })
-    );
-    expect(
-      within(dialog).getByText('Se borrarán 2 gastos:')
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText('Bebidas ($3.000)')).toBeInTheDocument();
-    expect(within(dialog).getByText('Pan ($1.000)')).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/También se borrará 1 pago/)
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(/las partes de los demás cambian/)
-    ).toBeInTheDocument();
-
-    await user.click(
-      within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
-    );
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    );
-    const group = await repository.get('g1');
-    expect(group?.members.map((m) => m.id)).toEqual(['Ana', 'Caro', 'Dani']);
-    expect(group?.expenses.map((e) => [e.id, e.split.participantIds])).toEqual([
-      ['e1', ['Ana', 'Caro']],
-    ]);
-    expect(group?.payments).toEqual([]);
-  });
-
-  describe('con divisiones personalizadas', () => {
-    type Specs = NonNullable<Parameters<typeof makeGroup>[0]['expenses']>;
-    const custom = (n: 1 | 2) =>
-      makeGroup({
-        members: ['Ana', 'Beto', 'Caro'],
-        expenses: (
-          [
-            {
-              id: 'e1',
-              description: 'Cabaña',
-              amount: 150_000,
-              payer: 'Ana',
-              among: ['Ana', 'Beto', 'Caro'],
-              split: {
-                type: 'shares',
-                participantIds: ['Ana', 'Beto', 'Caro'],
-                parts: { Ana: 2, Beto: 1, Caro: 1 },
-              },
-            },
-            {
-              id: 'e2',
-              description: 'Cena',
-              amount: 90_000,
-              payer: 'Ana',
-              among: ['Ana', 'Beto'],
-              split: {
-                type: 'exact',
-                participantIds: ['Ana', 'Beto'],
-                amounts: { Ana: 50_000, Beto: 40_000 },
-              },
-            },
-          ] satisfies Specs
-        ).slice(0, n),
-      });
-
-    async function openCascade(
-      user: ReturnType<typeof renderWithProviders>['user']
+  describe('eliminar a quien tiene movimientos', () => {
+    async function openDialog(
+      user: ReturnType<typeof renderWithProviders>['user'],
+      name = 'Beto'
     ) {
       await user.click(
-        await screen.findByRole('button', { name: 'Eliminar a Beto' })
+        await screen.findByRole('button', { name: `Eliminar a ${name}` })
       );
-      const dialog = await screen.findByRole('dialog', {
-        name: 'Eliminar a Beto',
-      });
-      await user.click(
-        within(dialog).getByRole('radio', {
-          name: 'Eliminar con sus gastos y pagos',
-        })
-      );
-      return dialog;
+      return screen.findByRole('dialog', { name: `Eliminar a ${name}` });
     }
 
-    it('avisa cuántos gastos con división personalizada pasarán a partes iguales', async () => {
-      const { user, repository } = renderWithProviders(undefined, {
-        route: ROUTE,
-        groups: [custom(2)],
-      });
-      const dialog = await openCascade(user);
-      expect(
-        within(dialog).getByText(
-          '2 gastos con división personalizada pasarán a partes iguales.'
-        )
-      ).toBeInTheDocument();
-
-      await user.click(
-        within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
-      );
-      await waitFor(() =>
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-      );
-      const group = await repository.get('g1');
-      expect(group?.expenses.map((e) => e.split)).toEqual([
-        { type: 'equal', participantIds: ['Ana', 'Caro'] },
-        { type: 'equal', participantIds: ['Ana'] },
-      ]);
-    });
-
-    it('en singular dice "1 gasto … pasará"', async () => {
-      const { user } = renderWithProviders(undefined, {
-        route: ROUTE,
-        groups: [custom(1)],
-      });
-      const dialog = await openCascade(user);
-      expect(
-        within(dialog).getByText(
-          '1 gasto con división personalizada pasará a partes iguales.'
-        )
-      ).toBeInTheDocument();
-    });
-
-    it('sin divisiones personalizadas no avisa nada', async () => {
+    it('explica lo que pasa y cómo cambian las cuentas, sin elegir nada', async () => {
       const { user } = renderWithProviders(undefined, {
         route: ROUTE,
         groups: [groupWithActivity()],
       });
-      await user.click(
-        await screen.findByRole('button', { name: 'Eliminar a Beto' })
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog).getByText(
+          'Su parte en 1 gasto se reparte entre los demás. Se borran los 2 gastos que pagó y su pago.'
+        )
+      ).toBeInTheDocument();
+      expect(within(dialog).queryByRole('radio')).toBeNull();
+      expect(within(dialog).queryByRole('combobox')).toBeNull();
+      expect(within(dialog).getByText('Así cambian las cuentas')).toBeVisible();
+      expect(
+        within(dialog)
+          .getAllByRole('listitem')
+          .map((li) => li.textContent)
+      ).toEqual([
+        'Ana: le deben $6.000 → $4.500',
+        'Caro: debe $5.000 → $4.500',
+      ]);
+      const warning = within(dialog).getByText(
+        'Si Beto sí participó en estos gastos, mejor no lo elimines.'
       );
-      const dialog = await screen.findByRole('dialog', {
-        name: 'Eliminar a Beto',
-      });
-      await user.click(
-        within(dialog).getByRole('radio', {
-          name: 'Eliminar con sus gastos y pagos',
-        })
-      );
-      expect(within(dialog).queryByText(/división personalizada/)).toBeNull();
+      expect(warning).toHaveClass('text-muted-foreground');
+      expect(
+        within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
+      ).toBeEnabled();
+      expect(
+        within(dialog).getByRole('button', { name: 'Cancelar' })
+      ).toBeInTheDocument();
+      expect(within(dialog).queryByText(/divididos por partes/)).toBeNull();
     });
 
-    it('reasignar suma su valor al de quien recibe', async () => {
+    it('elimina, reparte su parte y se puede deshacer', async () => {
       const { user, repository } = renderWithProviders(undefined, {
         route: ROUTE,
-        groups: [custom(2)],
+        groups: [groupWithActivity()],
       });
-      await user.click(
-        await screen.findByRole('button', { name: 'Eliminar a Beto' })
-      );
-      const dialog = await screen.findByRole('dialog', {
-        name: 'Eliminar a Beto',
-      });
-      await user.click(
-        within(dialog).getByRole('radio', { name: 'Reasignar a…' })
-      );
-      await user.click(within(dialog).getByLabelText('¿A quién se los pasas?'));
-      await user.click(await screen.findByRole('option', { name: 'Caro' }));
-      expect(within(dialog).queryByText(/división personalizada/)).toBeNull();
+      const dialog = await openDialog(user);
       await user.click(
         within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
       );
       await waitFor(() =>
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       );
-      const group = await repository.get('g1');
-      expect(group?.expenses.map((e) => e.split)).toEqual([
-        {
-          type: 'shares',
-          participantIds: ['Ana', 'Caro'],
-          parts: { Ana: 2, Caro: 2 },
-        },
-        {
-          type: 'exact',
-          participantIds: ['Ana', 'Caro'],
-          amounts: { Ana: 50_000, Caro: 40_000 },
-        },
+      let group = await repository.get('g1');
+      expect(group?.members.map((m) => m.id)).toEqual(['Ana', 'Caro', 'Dani']);
+      expect(
+        group?.expenses.map((e) => [e.id, e.split.participantIds])
+      ).toEqual([['e1', ['Ana', 'Caro']]]);
+      expect(group?.payments).toEqual([]);
+
+      await user.click(await screen.findByRole('button', { name: 'Deshacer' }));
+      expect(await screen.findByText('Cambio deshecho')).toBeInTheDocument();
+      group = await repository.get('g1');
+      expect(group?.members.map((m) => m.id)).toEqual([
+        'Ana',
+        'Beto',
+        'Caro',
+        'Dani',
       ]);
+      expect(group?.expenses).toHaveLength(3);
+      expect(group?.payments).toHaveLength(1);
+    });
+
+    it('cancelar no cambia nada', async () => {
+      const { user, repository } = renderWithProviders(undefined, {
+        route: ROUTE,
+        groups: [groupWithActivity()],
+      });
+      const dialog = await openDialog(user);
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Cancelar' })
+      );
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      );
+      expect((await repository.get('g1'))?.members).toHaveLength(4);
+    });
+
+    it('omite lo que es 0 y respeta el plural', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto'],
+        expenses: [
+          { id: 'e1', amount: 9000, payer: 'Ana', among: ['Ana', 'Beto'] },
+          { id: 'e2', amount: 6000, payer: 'Ana', among: ['Ana', 'Beto'] },
+        ],
+      });
+      const { user } = renderWithProviders(undefined, {
+        route: `/groups/${group.id}/members`,
+        groups: [group],
+      });
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog).getByText(
+          'Su parte en 2 gastos se reparte entre los demás.'
+        )
+      ).toBeInTheDocument();
+      expect(within(dialog).queryByText(/Se borra/)).toBeNull();
+    });
+
+    it('con solo gastos pagados y varios pagos no habla de repartir', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto', 'Caro'],
+        expenses: [
+          { id: 'e1', amount: 9000, payer: 'Beto', among: ['Ana', 'Caro'] },
+        ],
+        payments: [
+          { id: 'p1', from: 'Ana', to: 'Beto', amount: 100 },
+          { id: 'p2', from: 'Beto', to: 'Caro', amount: 200 },
+        ],
+      });
+      const { user } = renderWithProviders(undefined, {
+        route: `/groups/${group.id}/members`,
+        groups: [group],
+      });
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog).getByText('Se borran el gasto que pagó y sus 2 pagos.')
+      ).toBeInTheDocument();
+      expect(within(dialog).queryByText(/se reparte/)).toBeNull();
+    });
+
+    it('un solo pago se borra en singular, y un gasto donde participaba solo también se avisa', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto'],
+        expenses: [{ id: 'e1', amount: 900, payer: 'Ana', among: ['Beto'] }],
+        payments: [{ id: 'p1', from: 'Ana', to: 'Beto', amount: 100 }],
+      });
+      const { user, repository } = renderWithProviders(undefined, {
+        route: `/groups/${group.id}/members`,
+        groups: [group],
+      });
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog).getByText(
+          'Se borra su pago. También se borra 1 gasto en que solo participaba Beto.'
+        )
+      ).toBeInTheDocument();
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
+      );
+      await waitFor(async () =>
+        expect((await repository.get(group.id))?.expenses).toEqual([])
+      );
+    });
+
+    it('escribe "(tú)" junto a quien eres y usa la moneda del grupo', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto', 'Caro'],
+        currency: 'USD',
+        expenses: [
+          {
+            id: 'e1',
+            amount: 3000,
+            payer: 'Ana',
+            among: ['Ana', 'Beto', 'Caro'],
+          },
+        ],
+      });
+      const { user } = renderWithProviders(undefined, {
+        route: `/groups/${group.id}/members`,
+        groups: [group],
+        viewers: { 'group:g1': { memberId: 'Caro' } },
+      });
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog)
+          .getAllByRole('listitem')
+          .map((li) => li.textContent)
+      ).toEqual([
+        'Ana: le deben US$20,00 → US$15,00',
+        'Caro (tú): debe US$10,00 → US$15,00',
+      ]);
+    });
+
+    it('si queda al día, muestra los dos saldos completos', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto'],
+        expenses: [
+          { id: 'e1', amount: 1000, payer: 'Ana', among: ['Ana', 'Beto'] },
+        ],
+      });
+      const { user } = renderWithProviders(undefined, {
+        route: `/groups/${group.id}/members`,
+        groups: [group],
+      });
+      const dialog = await openDialog(user);
+      expect(
+        within(dialog)
+          .getAllByRole('listitem')
+          .map((li) => li.textContent)
+      ).toEqual(['Ana: le deben $500 → al día']);
+    });
+
+    describe('con divisiones por partes', () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto', 'Caro'],
+        expenses: [
+          {
+            id: 'e1',
+            description: 'Cabaña',
+            amount: 100_000,
+            payer: 'Ana',
+            among: ['Ana', 'Beto', 'Caro'],
+            split: {
+              type: 'shares',
+              participantIds: ['Ana', 'Beto', 'Caro'],
+              parts: { Ana: 2, Beto: 1, Caro: 1 },
+            },
+          },
+          {
+            id: 'e2',
+            description: 'Cena',
+            amount: 90_000,
+            payer: 'Ana',
+            among: ['Ana', 'Beto'],
+            split: {
+              type: 'exact',
+              participantIds: ['Ana', 'Beto'],
+              amounts: { Ana: 50_000, Beto: 40_000 },
+            },
+          },
+        ],
+      });
+
+      it('avisa que pasan a montos y lo hace', async () => {
+        const { user, repository } = renderWithProviders(undefined, {
+          route: ROUTE,
+          groups: [group],
+        });
+        const dialog = await openDialog(user);
+        expect(
+          within(dialog).getByText(
+            'Los gastos divididos por partes pasan a montos.'
+          )
+        ).toBeInTheDocument();
+        await user.click(
+          within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
+        );
+        await waitFor(() =>
+          expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        );
+        const saved = await repository.get('g1');
+        expect(saved?.expenses.map((e) => e.split)).toEqual([
+          {
+            type: 'exact',
+            participantIds: ['Ana', 'Caro'],
+            amounts: { Ana: 62_500, Caro: 37_500 },
+          },
+          { type: 'exact', participantIds: ['Ana'], amounts: { Ana: 90_000 } },
+        ]);
+      });
+
+      it('sin gastos por partes no avisa nada', async () => {
+        const { user } = renderWithProviders(undefined, {
+          route: ROUTE,
+          groups: [groupWithActivity()],
+        });
+        const dialog = await openDialog(user);
+        expect(within(dialog).queryByText(/por partes/)).toBeNull();
+      });
     });
   });
 

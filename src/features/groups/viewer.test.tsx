@@ -197,7 +197,7 @@ describe('¿Quién eres? en un grupo propio', () => {
     );
   });
 
-  it('eliminar con reasignar al miembro que eres no traspasa la marca: se vuelve a preguntar', async () => {
+  it('eliminar al miembro que eres no traspasa la marca: se vuelve a preguntar', async () => {
     const group = makeGroup({
       members: ['Ana', 'Beto', 'Carla'],
       expenses: [
@@ -222,17 +222,12 @@ describe('¿Quién eres? en un grupo propio', () => {
       name: 'Eliminar a Beto',
     });
     await user.click(
-      within(dialog).getByRole('radio', { name: 'Reasignar a…' })
-    );
-    await user.click(within(dialog).getByRole('combobox'));
-    await user.click(await screen.findByRole('option', { name: 'Ana' }));
-    await user.click(
       within(dialog).getByRole('button', { name: 'Eliminar a Beto' })
     );
     await waitFor(() =>
       expect(screen.queryByText('Beto')).not.toBeInTheDocument()
     );
-    // Ana (who received the expenses) did not inherit the mark.
+    // Ana (who took his share) did not inherit the mark.
     await waitFor(async () =>
       expect(await viewerRepository.get(OWN)).toBeNull()
     );
