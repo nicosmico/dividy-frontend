@@ -19,7 +19,7 @@ const TAKEN = '2026-11-24T13:42:00.000Z';
 const SHOT = {
   animations: 'disabled',
   caret: 'hide',
-  maxDiffPixelRatio: 0.005,
+  maxDiffPixels: 10,
 } as const;
 
 /**
@@ -166,6 +166,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(
         page.getByRole('dialog', { name: '¿Quién eres?' })
       ).toBeVisible();
+      // The Gastos tab behind the sheet loads lazily: under load it could be
+      // missing from the shot. Wait for it (it is hidden from assistive tech
+      // while the sheet is open, so not by role).
+      await expect(page.getByText('Total del grupo')).toBeVisible();
       await shot(page, `viewer-sheet-${colorScheme}`);
     });
 
