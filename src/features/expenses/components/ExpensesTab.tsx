@@ -284,8 +284,14 @@ function ExpenseRow({
   const payer = group.members.find((m) => m.id === expense.payerId);
   const n = expense.split.participantIds.length;
   const everyone = n === group.members.length;
-  const division =
-    expense.split.type === 'equal'
+  // A one-person expense is not "divided": it is someone's own ("solo para Carla").
+  const onlyFor =
+    n === 1 && !everyone
+      ? group.members.find((m) => m.id === expense.split.participantIds[0])
+      : undefined;
+  const division = onlyFor
+    ? `solo para ${onlyFor.name}`
+    : expense.split.type === 'equal'
       ? `dividido entre ${everyone ? 'todos' : plural(n, 'persona', 'personas')}`
       : `dividido ${splitTypeLabel(expense.split.type)}`;
   const share =

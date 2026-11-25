@@ -134,6 +134,28 @@ describe('Pestaña Gastos', () => {
       );
     });
 
+    it('un gasto de una sola persona dice para quién es', async () => {
+      const group = makeGroup({
+        members: ['Ana', 'Beto', 'Carla'],
+        expenses: [
+          {
+            id: 'e1',
+            description: 'Café',
+            amount: 3000,
+            payer: 'Ana',
+            among: ['Carla'],
+          },
+        ],
+      });
+      renderWithProviders(undefined, {
+        route: `/groups/${group.id}/expenses`,
+        groups: [group],
+      });
+      const cafe = await screen.findByRole('button', { name: /Café/ });
+      expect(cafe).toHaveTextContent('Pagó Ana · solo para Carla');
+      expect(cafe).not.toHaveTextContent('1 persona');
+    });
+
     it('con menos de 2 miembros deshabilita el botón y enlaza a Miembros', async () => {
       renderWithProviders(undefined, {
         route: ROUTE,
