@@ -60,7 +60,7 @@ Lo que un miembro gastó en el grupo ("Gastó": lo que pagó en gastos) menos su
 _Avoid_: Debt (para el saldo neto), total
 
 **Suggested Transfer** (Transferencia sugerida; la sección de Saldos se llama "Para quedar al día"):
-Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero ("Ana le transfiere $X a Beto"). Es un cálculo, no algo que ocurrió.
+Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero ("Ana le transfiere $X a Beto"). Es un cálculo, no algo que ocurrió. Se calculan con el mínimo de transferencias y, siempre que se puede, cada persona paga una sola vez (ADR 0011).
 _Avoid_: Simplified debt, transaction, deuda simplificada
 
 **Payment** (Pago):

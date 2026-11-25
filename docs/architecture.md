@@ -139,7 +139,7 @@ Todo se importa desde `@/domain`. Las operaciones devuelven `Result<T>` (`{ ok: 
 - `isSettled(group)`: `true` si todos los saldos son 0.
 - `isExpenseCoveredByPayments(group, expenseId)`: `true` si el gasto es un **Covered expense** (hay un pago del grupo con `createdAt` posterior al del gasto). Prefiere avisar de más.
 - `previewBalanceChange(group, nextGroup)`: `BalanceChange[]` (`{ memberId, before, after }`) solo de los miembros cuyo saldo cambia, en el orden del grupo; la UI lo usa para advertir antes de editar o eliminar un gasto cubierto.
-- `suggestTransfers(group)`: transferencias sugeridas (voraz, máximo n-1, siempre positivas).
+- `suggestTransfers(group)`: transferencias sugeridas (mínimas: grupos que se saldan solos y pagos enteros cuando se puede, ADR 0011; máximo n-1, siempre positivas).
 
 **Operaciones del grupo** (inmutables)
 

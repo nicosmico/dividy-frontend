@@ -22,7 +22,7 @@ Para cualquier grupo válido generado al azar:
 1. La suma de las partes de un gasto es exactamente su monto, y cada parte difiere de las demás en a lo más $1.
 2. La suma de los saldos del grupo es 0.
 3. Aplicar las transferencias sugeridas deja todos los saldos exactamente en 0.
-4. Hay como máximo `n - 1` transferencias sugeridas para `n` miembros con saldo distinto de cero, y ninguna tiene monto ≤ 0 ni va de un miembro a sí mismo.
+4. Hay como máximo `n - 1` transferencias sugeridas para `n` miembros con saldo distinto de cero, ninguna tiene monto ≤ 0 ni va de un miembro a sí mismo, y (hasta 15 personas con saldo) nunca son más que con el algoritmo voraz anterior (`src/domain/transfers.property.test.ts`, que también mide el rendimiento).
 5. Todos los montos calculados son enteros.
 6. Los cálculos son determinísticos: la misma entrada da la misma salida.
 7. Reasignar o eliminar en cascada un miembro deja un grupo válido (sin referencias a ese miembro y sin gastos sin participantes).
