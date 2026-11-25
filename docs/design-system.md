@@ -162,7 +162,9 @@ Cada miembro guarda `avatar: { color, seed }` (decisión 133). `color` es un ín
 
 ### Cortes en la barra "Gastó"
 
-El tramo de cada gasto en "Gastó" se corta en tantas partes como participantes, con separadores finos de 2 px del color de fondo (`bg-card`), decorativos (`aria-hidden`, `data-slot="cut"`). Las posiciones salen de las partes reales (`computeShares`, con el peso extra del resto) en `computeCuts` (`src/features/explanation/cuts.ts`); si la parte más angosta mediría menos de 6 px (`MIN_PART_PX`) no se dibuja ningún corte de ese tramo. "Su parte" nunca lleva cortes.
+El tramo de cada gasto en "Gastó" se corta en tantas partes como participantes, con separadores finos de 2 px del color del gasto, decorativos (`aria-hidden`, `data-slot="cut"`). Las posiciones salen de las partes reales (`computeShares`, con el peso extra del resto) en `computeCuts` (`src/features/explanation/cuts.ts`); si la parte más angosta mediría menos de 6 px (`MIN_PART_PX`) no se dibuja ningún corte de ese tramo. "Su parte" nunca lleva cortes.
+
+El tramo de "Gastó" va con borde de 2 px del color del gasto y relleno de la tarjeta (`outlineStyle` en `colors.ts`); "Su parte" va relleno (`fillStyle`). Así se lee que lo pagado es el total que se dividió y lo relleno es lo que le tocó a cada uno (decisión 228).
 
 ## Cómo agregar un componente de shadcn
 
