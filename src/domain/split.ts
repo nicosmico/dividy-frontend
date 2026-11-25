@@ -252,40 +252,79 @@ export function presetSplit(
   }
 }
 
-/** The same participants (minus `without`) in equal parts: what a custom split becomes when someone is removed in a cascade delete. */
-export function toEqualSplit(split: Split, without?: MemberId): EqualSplit {
-  return {
-    type: 'equal',
-    participantIds: split.participantIds.filter((id) => id !== without),
-  };
-}
-
 /**
- * Hands `from`'s place in the split to `to` (reassigning a member). `to`
- * takes `from`'s value (amount, percentage or parts), added to their own if
- * they already took part.
+ * What an expense's split becomes when `memberId` leaves the group and was
+ * not its payer (ADR 0010): their share is divided in equal parts among the
+ * other participants and added to each one's; nobody else's share changes
+ * except by that. `null` when nobody else took part (the expense goes away).
+ *
+ * - `equal`: the member is dropped and it stays equal (which is exactly
+ *   "everyone takes an equal part of it").
+ * - `exact`: their amount is divided equally among the rest (remainder in the
+ *   order of `members`) and added to theirs.
+ * - `percent`: the same with their basis points, so it still adds up to 10000.
+ * - `shares`: half a part does not exist, and adding fractions would give
+ *   odd splits like "Ana 5 parts, Carla 3". The expense becomes `exact` with
+ *   the amount each one already had (`computeShares`) plus their equal part
+ *   of the leaver's share. Whoever would end with 0 is dropped (an exact
+ *   amount must be above 0); their share is 0 either way.
+ *
+ * Every division goes through `computeShares`, the only door to division.
+ * `members` must include the leaver (it is the group before removing them).
  */
-export function reassignSplit(
-  split: Split,
-  from: MemberId,
-  to: MemberId
-): Split {
-  const participantIds = [
-    ...new Set(split.participantIds.map((id) => (id === from ? to : id))),
-  ];
-  const values = splitValuesOf(split);
-  if (!values) return { type: 'equal', participantIds };
-  const moved: Record<MemberId, number> = {};
-  for (const id of split.participantIds) {
-    const target = id === from ? to : id;
-    moved[target] = (moved[target] ?? 0) + values[id];
-  }
+export function redistributeSplit(
+  expense: Pick<Expense, 'amount' | 'split'>,
+  memberId: MemberId,
+  members: readonly Member[]
+): Split | null {
+  const { split } = expense;
+  const participantIds = split.participantIds.filter((id) => id !== memberId);
+  if (participantIds.length === 0) return null;
+  if (participantIds.length === split.participantIds.length) return split;
+  if (split.type === 'equal') return { type: 'equal', participantIds };
+
+  /** `total` divided equally among the remaining participants. */
+  const equalParts = (total: Amount) =>
+    computeShares(
+      { amount: total, split: { type: 'equal', participantIds } },
+      members
+    );
+  const values = splitValuesOf(split)!;
+  const withPortions = (
+    own: (id: MemberId) => number,
+    removed: number
+  ): Record<MemberId, number> => {
+    const portions = equalParts(removed);
+    return Object.fromEntries(
+      participantIds.map((id) => [id, own(id) + (portions.get(id) ?? 0)])
+    );
+  };
+
   switch (split.type) {
     case 'exact':
-      return { type: 'exact', participantIds, amounts: moved };
+      return {
+        type: 'exact',
+        participantIds,
+        amounts: withPortions((id) => values[id], values[memberId]),
+      };
     case 'percent':
-      return { type: 'percent', participantIds, basisPoints: moved };
-    default:
-      return { type: 'shares', participantIds, parts: moved };
+      return {
+        type: 'percent',
+        participantIds,
+        basisPoints: withPortions((id) => values[id], values[memberId]),
+      };
+    case 'shares': {
+      const shares = computeShares(expense, members);
+      const amounts = withPortions(
+        (id) => shares.get(id) ?? 0,
+        shares.get(memberId) ?? 0
+      );
+      const kept = participantIds.filter((id) => amounts[id] > 0);
+      return {
+        type: 'exact',
+        participantIds: kept,
+        amounts: Object.fromEntries(kept.map((id) => [id, amounts[id]])),
+      };
+    }
   }
 }

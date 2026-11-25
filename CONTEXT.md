@@ -60,7 +60,7 @@ Lo que un miembro gastó en el grupo ("Gastó": lo que pagó en gastos) menos su
 _Avoid_: Debt (para el saldo neto), total
 
 **Suggested Transfer** (Transferencia sugerida; la sección de Saldos se llama "Para quedar al día"):
-Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero ("Ana le transfiere $X a Beto"). Es un cálculo, no algo que ocurrió.
+Un movimiento de dinero entre dos miembros que Dividy propone para dejar los saldos en cero ("Ana le transfiere $X a Beto"). Es un cálculo, no algo que ocurrió. Se calculan con el mínimo de transferencias y, siempre que se puede, cada persona paga una sola vez (ADR 0011).
 _Avoid_: Simplified debt, transaction, deuda simplificada
 
 **Payment** (Pago):
@@ -89,11 +89,9 @@ _Avoid_: Copia, export, backup
 Los gastos que un miembro pagó o en los que participa, y los pagos que envió o recibió. Un miembro sin movimientos se puede eliminar directo.
 _Avoid_: History, historial
 
-**Reassign** (Reasignar):
-Al eliminar un miembro con gastos o pagos, traspasar todas sus apariciones (como pagador, participante o en pagos) a otro miembro del grupo. En una división personalizada, su monto, porcentaje o partes se suman a los de quien recibe (o los toma, si no participaba).
-
-**Cascade delete** (Eliminar con sus gastos y pagos):
-Al eliminar un miembro, borrar los gastos que pagó y sus pagos, y quitarlo de los gastos donde participa. Las partes de los demás cambian. Si participaba en un gasto con división personalizada, ese gasto pasa a partes iguales entre quienes quedan (el diálogo lo avisa).
+**Remove member** (Eliminar miembro):
+Quitar a alguien del grupo, pensado para corregir errores (se agregó por error o no participó). Sin movimientos es directo. Con movimientos hay una sola regla: se borran los gastos que pagó y los pagos que envió o recibió, y su parte en los gastos donde solo participaba se reparte en partes iguales entre los demás participantes de cada gasto (si era el único participante, el gasto se borra). En un gasto por montos o por porcentaje la porción se suma a cada uno; un gasto por partes pasa a montos. El diálogo muestra cómo cambian las cuentas antes de confirmar. No existe "reasignar" a otro miembro (ADR 0010).
+_Avoid_: Reassign, reasignar, cascade delete, eliminar en cascada
 
 ### Dinero
 

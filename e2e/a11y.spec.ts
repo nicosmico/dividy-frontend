@@ -183,7 +183,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(dialog).toBeVisible();
       await expectNoSeriousViolations(page);
 
-      await dialog.getByText('Reasignar a…').click();
+      await expect(dialog.getByText('Así cambian las cuentas')).toBeVisible();
       await expectNoSeriousViolations(page);
     });
   });

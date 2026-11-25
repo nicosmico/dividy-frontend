@@ -45,14 +45,14 @@ describe('asignación de color', () => {
 
   it('un miembro nuevo toma el primer color que quedó libre', () => {
     const group = grow(4);
-    const without = unwrap(removeMember(group, 'm1', { type: 'cascade' }));
+    const without = unwrap(removeMember(group, 'm1', { type: 'redistribute' }));
     const next = unwrap(addMember(without, { id: 'n', name: 'Nuevo' }));
     expect(colors(next)).toEqual([0, 2, 3, 1]);
   });
 
   it('eliminar a otro miembro no cambia los colores guardados', () => {
     const group = grow(5);
-    const without = unwrap(removeMember(group, 'm1', { type: 'cascade' }));
+    const without = unwrap(removeMember(group, 'm1', { type: 'redistribute' }));
     expect(without.members.map((m) => [m.id, m.avatar.color])).toEqual([
       ['m0', 0],
       ['m2', 2],

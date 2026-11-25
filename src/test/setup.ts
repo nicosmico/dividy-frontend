@@ -1,11 +1,16 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { toast } from 'sonner';
 import {
   CompressionStream as NodeCompressionStream,
   DecompressionStream as NodeDecompressionStream,
 } from 'node:stream/web';
 import { afterEach } from 'vitest';
+
+// `findBy*` and `waitFor` wait up to 3 s instead of 1 s: the first test of a
+// file loads lazy routes, and under coverage with every worker busy (CI) that
+// took more than a second now and then (seen in ExpenseFilters and share).
+configure({ asyncUtilTimeout: 3000 });
 
 // jsdom lacks a few browser APIs that Radix UI relies on.
 Element.prototype.hasPointerCapture ??= () => false;
