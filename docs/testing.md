@@ -152,3 +152,7 @@ npm run test:visual    # regresión visual (en CI y en Docker; ver arriba)
 npm run test:visual:update  # regenera las imágenes base
 npm run size           # presupuesto de tamaño del bundle (después de build)
 ```
+
+## Esperas en tests de componentes
+
+`src/test/setup.ts` sube la espera de `findBy*` y `waitFor` de Testing Library de 1 s a 3 s (`asyncUtilTimeout`). El primer test de cada archivo carga rutas perezosas, y con cobertura y todos los workers ocupados (como en CI) eso a veces pasaba del segundo y fallaba sin un error real. No cambia nada cuando el test pasa: solo da más margen antes de declarar que algo no apareció.
