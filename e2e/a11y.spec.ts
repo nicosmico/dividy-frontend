@@ -41,6 +41,18 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expectNoSeriousViolations(page);
     });
 
+    test('Preguntas frecuentes, con una pregunta abierta', async ({ page }) => {
+      await page.goto('/preguntas');
+      await expect(
+        page.getByRole('heading', { name: 'Preguntas frecuentes' })
+      ).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      await page.goto('/preguntas#pruebas');
+      await expect(page.locator('details#pruebas')).toHaveAttribute('open', '');
+      await expectNoSeriousViolations(page);
+    });
+
     test('Gastos, formulario de gasto abierto', async ({ page }) => {
       await seedGroups(page, sampleGroups());
       await page.goto('/groups/g1/expenses');

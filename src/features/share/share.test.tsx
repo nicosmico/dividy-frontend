@@ -107,6 +107,27 @@ describe('abrir un link de solo lectura', () => {
     );
   });
 
+  it('el aviso completo (no la barra compacta) enlaza a "¿Qué es Dividy?"', async () => {
+    renderWithProviders(undefined, {
+      viewers: QUIET,
+      route: await linkRoute(snapshotAt(TAKEN)),
+    });
+    const banner = await screen.findByRole('region', {
+      name: 'Captura de solo lectura',
+    });
+    expect(
+      within(banner).getByRole('link', { name: '¿Qué es Dividy?' })
+    ).toHaveAttribute('href', '/preguntas');
+    expect(
+      within(screen.getByTestId('snapshot-compact-banner')).queryByRole(
+        'link',
+        {
+          hidden: true,
+        }
+      )
+    ).not.toBeInTheDocument();
+  });
+
   it('solo tiene las pestañas Gastos y Saldos', async () => {
     renderWithProviders(undefined, {
       viewers: QUIET,

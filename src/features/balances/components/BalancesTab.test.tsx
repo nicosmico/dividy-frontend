@@ -35,6 +35,50 @@ afterEach(() => {
 });
 
 describe('Pestaña Saldos', () => {
+  it('junto a "Para quedar al día" enlaza a por qué esas transferencias', async () => {
+    renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [groupWithDebts()],
+    });
+    expect(
+      await screen.findByRole('link', {
+        name: '¿Por qué estas transferencias?',
+      })
+    ).toHaveAttribute('href', '/preguntas#transferencias');
+  });
+
+  it('sin transferencias que mostrar no ofrece ese enlace', async () => {
+    const settled = makeGroup({
+      members: ['Ana', 'Beto'],
+      expenses: [
+        {
+          id: 'e1',
+          description: 'Cena',
+          amount: 1000,
+          payer: 'Ana',
+          among: ['Ana', 'Beto'],
+        },
+      ],
+      payments: [{ id: 'p1', from: 'Beto', to: 'Ana', amount: 500 }],
+    });
+    renderWithProviders(undefined, { route: ROUTE, groups: [settled] });
+    await screen.findByRole('heading', { name: /al día/i });
+    expect(screen.queryByText('Para quedar al día')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '¿Por qué estas transferencias?' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('"Compartir resumen" enlaza a quién puede ver el link', async () => {
+    renderWithProviders(undefined, {
+      route: ROUTE,
+      groups: [groupWithDebts()],
+    });
+    expect(
+      await screen.findByRole('link', { name: '¿Quién puede ver este link?' })
+    ).toHaveAttribute('href', '/preguntas#compartir');
+  });
+
   it('sin gastos muestra el estado vacío con enlace a Gastos', async () => {
     renderWithProviders(undefined, {
       route: ROUTE,

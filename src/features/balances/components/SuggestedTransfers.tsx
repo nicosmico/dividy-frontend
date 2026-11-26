@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { HelpLink } from '@/components/help-link';
 import { ViewerName } from '@/components/viewer-name';
 import {
   addPayment,
@@ -60,6 +61,11 @@ export function SuggestedTransfers({
       <h2 id='transfers-heading' className='text-sm font-semibold'>
         Para quedar al día
       </h2>
+      {ordered.length > 0 && (
+        <HelpLink to='/preguntas#transferencias'>
+          ¿Por qué estas transferencias?
+        </HelpLink>
+      )}
       <ul className='grid gap-2'>
         {ordered.map((t) => {
           const from = nameOf(t.fromId);

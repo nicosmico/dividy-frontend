@@ -71,6 +71,12 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await shot(page, `welcome-${colorScheme}`);
     });
 
+    test('Preguntas frecuentes', async ({ page }) => {
+      await page.goto('/preguntas#datos');
+      await expect(page.locator('details#datos')).toHaveAttribute('open', '');
+      await shot(page, `faq-${colorScheme}`, true);
+    });
+
     test('Mis grupos con "Compartidos conmigo"', async ({ page }) => {
       const [trip] = sampleGroups();
       const saved = createSnapshot({ ...trip, id: 'otro-grupo' }, TAKEN);

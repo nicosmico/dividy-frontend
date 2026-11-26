@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { HelpLink } from '@/components/help-link';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/dates';
 
@@ -25,15 +26,23 @@ export function SnapshotBanner({ takenAt }: { takenAt: string }) {
         className='flex items-start gap-2.5 rounded-card bg-accent p-3 text-sm leading-snug text-accent-foreground shadow-soft'
       >
         <Eye aria-hidden='true' className='mt-0.5 size-5 shrink-0' />
-        <p>
-          Captura del{' '}
-          <time dateTime={takenAt} className='font-semibold'>
-            {formatDateTime(takenAt)}
-          </time>
-          . Es solo para ver: los cambios que se hagan en el grupo original no
-          aparecen aquí. Para ver una versión más nueva, pide que te compartan
-          el link de nuevo.
-        </p>
+        <div className='grid gap-1'>
+          <p>
+            Captura del{' '}
+            <time dateTime={takenAt} className='font-semibold'>
+              {formatDateTime(takenAt)}
+            </time>
+            . Es solo para ver: los cambios que se hagan en el grupo original no
+            aparecen aquí. Para ver una versión más nueva, pide que te compartan
+            el link de nuevo.
+          </p>
+          <HelpLink
+            to='/preguntas'
+            className='text-accent-foreground underline'
+          >
+            ¿Qué es Dividy?
+          </HelpLink>
+        </div>
       </section>
       <div
         aria-hidden='true'

@@ -2,6 +2,7 @@ import { Copy, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HelpLink } from '@/components/help-link';
 import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
@@ -82,7 +83,12 @@ export function ShareSummaryButton({
           <Icon /> {canShare ? 'Compartir resumen' : 'Copiar resumen'}
         </Button>
         {isSnapshotLinkSupported() && (
-          <p className='text-sm text-muted-foreground'>{PRIVACY_NOTICE}</p>
+          <>
+            <p className='text-sm text-muted-foreground'>{PRIVACY_NOTICE}</p>
+            <HelpLink to='/preguntas#compartir'>
+              ¿Quién puede ver este link?
+            </HelpLink>
+          </>
         )}
       </div>
       {fallbackText !== null && (
