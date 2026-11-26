@@ -14,7 +14,7 @@ import { MemberAvatar, type AvatarMood } from '@/features/members';
 import { useElementWidth } from '@/hooks/use-element-width';
 import { cn } from '@/lib/utils';
 import type { ExplainedExpense, Slice } from './build-explanation';
-import { fillStyle, lineColor, outlineStyle, type ColorMap } from './colors';
+import { fillStyle, type ColorMap } from './colors';
 import { computeCuts, describeDivision } from './cuts';
 
 /** Room kept at the end of each bar for the total amount. */
@@ -289,9 +289,8 @@ function Bar({
         : [];
     const swatch = (
       <span
-        data-style={kind === 'paid' ? 'outline' : 'solid'}
         className='relative block h-3.5 w-full rounded-[4px] ring-1 ring-foreground/15 ring-inset'
-        style={kind === 'paid' ? outlineStyle(color) : fillStyle(color)}
+        style={fillStyle(color)}
       >
         {cuts.length > 0 && (
           <span
@@ -303,11 +302,8 @@ function Bar({
               <span
                 key={i}
                 data-slot='cut'
-                className='absolute inset-y-0 w-[2px] -translate-x-1/2 transition-[opacity,transform] duration-500 motion-reduce:transition-none starting:scale-y-0 starting:opacity-0'
-                style={{
-                  left: `${position * 100}%`,
-                  backgroundColor: lineColor(color),
-                }}
+                className='absolute inset-y-0 w-[2px] -translate-x-1/2 bg-card transition-[opacity,transform] duration-500 motion-reduce:transition-none starting:scale-y-0 starting:opacity-0'
+                style={{ left: `${position * 100}%` }}
               />
             ))}
           </span>

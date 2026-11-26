@@ -45,27 +45,5 @@ export function fillStyle(color: ExpenseColor): CSSProperties {
   return { backgroundColor: base };
 }
 
-/**
- * Inline style for a "Gastó" segment: only the outline in the expense's color,
- * filled with the card surface, so it reads as "the whole that was split" next
- * to the solid "Su parte" (decision 228). Striped expenses keep thin stripes
- * inside the outline so they stay apart from the solid ones.
- */
-export function outlineStyle(color: ExpenseColor): CSSProperties {
-  const base = baseVar(color);
-  return {
-    backgroundColor: 'var(--card)',
-    boxShadow: `inset 0 0 0 2px ${base}`,
-    ...(color.kind === 'striped' && {
-      backgroundImage: `repeating-linear-gradient(45deg, transparent 0 3px, ${base} 3px 4px)`,
-    }),
-  };
-}
-
-/** Color the cuts of a "Gastó" segment are drawn with. */
-export function lineColor(color: ExpenseColor): string {
-  return baseVar(color);
-}
-
 /** Color of each expense id, for painting slices. */
 export type ColorMap = ReadonlyMap<ExpenseId, ExpenseColor>;
