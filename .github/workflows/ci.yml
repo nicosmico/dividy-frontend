@@ -57,6 +57,16 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium webkit
       - run: npm run test:e2e
+      # The report artifact is not always reachable (e.g. from agent sessions):
+      # print the page as it was at each failure right in the log.
+      - name: Show the page at each failure
+        if: failure()
+        run: |
+          find test-results -name error-context.md | sort | while read -r file; do
+            echo "::group::$file"
+            cat "$file"
+            echo "::endgroup::"
+          done
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
