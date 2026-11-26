@@ -24,12 +24,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant='ghost'
-          size='icon'
-          aria-label='Tema de colores'
-          className='-mr-2 ml-auto'
-        >
+        <Button variant='ghost' size='icon' aria-label='Tema de colores'>
           <Current aria-hidden='true' />
         </Button>
       </DropdownMenuTrigger>

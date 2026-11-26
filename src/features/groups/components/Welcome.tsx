@@ -2,12 +2,16 @@ import { Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 
+import { HelpLink } from '@/components/help-link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { FaqItem, QUESTIONS } from '@/features/faq';
 import {
   buildExampleGroup,
   LazyExplanationPlayer,
 } from '@/features/explanation';
+
+const WELCOME_QUESTIONS = ['datos', 'compartir', 'costo'];
 
 /**
  * "Mis grupos" without groups (decision 90): the animated example of how
@@ -48,6 +52,15 @@ export function Welcome() {
           label='Ejemplo animado: un asado entre Ana, Beto y Carla'
         />
       </Card>
+      <h2 className='mt-2 text-sm font-semibold'>Preguntas frecuentes</h2>
+      <div className='grid gap-2'>
+        {QUESTIONS.filter((q) => WELCOME_QUESTIONS.includes(q.id)).map(
+          (item) => (
+            <FaqItem key={item.id} item={item} />
+          )
+        )}
+        <HelpLink to='/preguntas'>Ver todas las preguntas</HelpLink>
+      </div>
     </div>
   );
 }

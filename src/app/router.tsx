@@ -30,6 +30,9 @@ const LinkSnapshotPage = lazy(() =>
 const SavedSnapshotPage = lazy(() =>
   import('@/features/share').then((m) => ({ default: m.SavedSnapshotPage }))
 );
+const FaqPage = lazy(() =>
+  import('@/features/faq').then((m) => ({ default: m.FaqPage }))
+);
 const RedirectToExpenses = lazy(() =>
   import('@/features/share').then((m) => ({ default: m.RedirectToExpenses }))
 );
@@ -59,6 +62,7 @@ export function AppRoutes() {
             <Route path='expenses' element={<ExpensesTab />} />
             <Route path='balances' element={<BalancesTab />} />
           </Route>
+          <Route path='preguntas' element={<FaqPage />} />
           <Route path='*' element={<NotFoundPage />} />
         </Route>
       </Routes>

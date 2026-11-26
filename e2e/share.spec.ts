@@ -254,7 +254,7 @@ test('compartir por link: abrir sin datos, solo lectura, guardar, actualizar, av
   await expect(
     other.getByRole('button', { name: /Guardar en mi celular/ })
   ).toHaveCount(0);
-  await other.getByRole('link', { name: 'Dividy' }).click();
+  await other.getByRole('link', { name: 'Dividy', exact: true }).click();
   await expect(
     other.getByRole('heading', { name: 'Mis grupos' })
   ).toBeVisible();
@@ -428,7 +428,7 @@ test('un documento v3 (sin capturas) se migra a v4 al guardar una captura, sin p
   );
   expect(stored.snapshots).toHaveLength(1);
 
-  await page.getByRole('link', { name: 'Dividy' }).click();
+  await page.getByRole('link', { name: 'Dividy', exact: true }).click();
   await expect(page.getByRole('link', { name: /Viaje a Pucón/ })).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Compartidos conmigo · solo lectura' })

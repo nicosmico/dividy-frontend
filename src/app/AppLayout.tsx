@@ -1,8 +1,10 @@
 import { Suspense } from 'react';
+import { CircleHelp } from 'lucide-react';
 import { Link, Outlet } from 'react-router';
 
 import { DividyLogo } from '@/components/dividy-logo';
 import { PageFallback } from '@/components/page-fallback';
+import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MAIN_ID } from '@/lib/focus';
 
@@ -16,7 +18,14 @@ export function AppHeader() {
         <DividyLogo />
         Dividy
       </Link>
-      <ThemeToggle />
+      <div className='-mr-2 ml-auto flex items-center'>
+        <Button asChild variant='ghost' size='icon'>
+          <Link to='/preguntas' aria-label='Preguntas frecuentes'>
+            <CircleHelp aria-hidden='true' />
+          </Link>
+        </Button>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
