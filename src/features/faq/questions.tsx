@@ -113,9 +113,8 @@ export const QUESTIONS: readonly Question[] = [
             cálculo de referencia hecho por separado.
           </li>
           <li>
-            Pruebas que meten errores a propósito en el cálculo para ver si se
-            detectan: hoy se detecta cerca del 91 %, y casi todo el resto son
-            cambios que no alteran el resultado.
+            Pruebas de las propias pruebas: metemos errores a propósito en el
+            cálculo para confirmar que las pruebas los atrapan.
           </li>
           <li>
             Unas 100 pruebas de punta a punta, como si fuera una persona usando
@@ -127,8 +126,7 @@ export const QUESTIONS: readonly Question[] = [
           </li>
         </ul>
         <p>
-          Las pruebas dan confianza, pero no garantizan que no haya errores. El
-          código es abierto: puedes{' '}
+          Y el código es abierto: cualquiera puede{' '}
           <a
             href={REPOSITORY_URL}
             target='_blank'

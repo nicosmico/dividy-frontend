@@ -168,6 +168,8 @@ npm run size           # presupuesto de tamaño del bundle (después de build)
 
 ## Números en Preguntas frecuentes
 
-La pregunta «Para los más técnicos: ¿cómo lo probamos?» (`src/features/faq/questions.tsx`) cita números **redondeados hacia abajo**, a propósito, para que no haya que tocarla en cada PR: «más de 500 pruebas solo del cálculo» (hoy 534 en `src/domain`), «más de 1.400 en total» (hoy 1.418), «unas 100 pruebas de punta a punta» (hoy 115 por proyecto de Playwright, sin contar las visuales), «cerca del 91 %» de mutantes detectados (90,7 %, decisión 227 de `docs/PLAN.md`) y los navegadores donde corren (Chrome y WebKit con el tamaño de un iPhone). No se escriben cifras exactas en la página.
+La pregunta «Para los más técnicos: ¿cómo lo probamos?» (`src/features/faq/questions.tsx`) cita números **redondeados hacia abajo**, a propósito, para que no haya que tocarla en cada PR: «más de 500 pruebas solo del cálculo» (hoy 534 en `src/domain`), «más de 1.400 en total» (hoy 1.418), «unas 100 pruebas de punta a punta» (hoy 115 por proyecto de Playwright, sin contar las visuales) y los navegadores donde corren (Chrome y WebKit con el tamaño de un iPhone). No se escriben cifras exactas en la página.
 
-Hay que revisar esa pregunta si algún número baja de lo que dice (por ejemplo, si se borran pruebas o el puntaje de mutación cae bajo 90 %) o si cambian los proyectos de `e2e/playwright.config.ts`. Un número que sube no obliga a nada.
+Hay que revisar esa pregunta si algún número baja de lo que dice (por ejemplo, si se borran pruebas o si cambian los proyectos de `e2e/playwright.config.ts`. Un número que sube no obliga a nada.
+
+**Cuidado con cifras que se lean como falla.** Esa página es para dar confianza a cualquier persona, no solo a la gente técnica: no se citan porcentajes menores a 100 % (como el puntaje de mutación, 90,7 %), cantidades de errores ni advertencias del tipo «no garantizan». Se cuenta qué se prueba y cómo, en positivo, sin exagerar.
