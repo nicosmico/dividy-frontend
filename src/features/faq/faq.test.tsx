@@ -71,7 +71,17 @@ describe('Preguntas frecuentes', () => {
     );
   });
 
-  it('"Volver" lleva al inicio', async () => {
+  it('"Volver" vuelve a la pantalla desde donde se abrió', async () => {
+    const { user } = renderWithProviders(undefined, { route: '/groups/new' });
+    await user.click(
+      await screen.findByRole('link', { name: 'Preguntas frecuentes' })
+    );
+    await waitFor(() => expect(currentPath()).toBe('/preguntas'));
+    await user.click(await screen.findByRole('link', { name: 'Volver' }));
+    await waitFor(() => expect(currentPath()).toBe('/groups/new'));
+  });
+
+  it('abierta directamente (sin pantalla anterior), "Volver" lleva al inicio', async () => {
     const { user } = renderWithProviders(undefined, { route: '/preguntas' });
     await user.click(await screen.findByRole('link', { name: 'Volver' }));
     await waitFor(() => expect(currentPath()).toBe('/'));

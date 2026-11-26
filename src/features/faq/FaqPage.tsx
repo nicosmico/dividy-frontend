@@ -1,6 +1,6 @@
 import { ChevronLeft } from 'lucide-react';
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 
 import { FaqItem } from './FaqItem';
 import { QUESTIONS } from './questions';
@@ -9,7 +9,11 @@ const TITLE = 'Preguntas frecuentes · Dividy';
 
 /** `/preguntas`: the questions people ask before trusting Dividy. */
 export function FaqPage() {
-  const { hash } = useLocation();
+  const { hash, key } = useLocation();
+  const navigate = useNavigate();
+  // Opened from another screen of the app: "Volver" goes back there (with its
+  // scroll and, for a shared link, its data). Opened directly: to the start.
+  const cameFromApp = key !== 'default';
 
   useEffect(() => {
     const previous = document.title;
@@ -33,6 +37,11 @@ export function FaqPage() {
     <div className='grid gap-4'>
       <Link
         to='/'
+        onClick={(event) => {
+          if (!cameFromApp) return;
+          event.preventDefault();
+          void navigate(-1);
+        }}
         className='-ml-1 inline-flex min-h-11 w-fit items-center gap-1 rounded-xl px-1 font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40'
       >
         <ChevronLeft aria-hidden='true' className='size-5' />

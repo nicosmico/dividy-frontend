@@ -42,6 +42,13 @@ test.describe('Preguntas frecuentes', () => {
       item.getByText('Busca la menor cantidad posible de transferencias')
     ).toBeVisible();
     await expect(item).toBeInViewport();
+
+    // "Volver" goes back to Saldos, not to the start.
+    await page.getByRole('link', { name: 'Volver' }).click();
+    await expect(page).toHaveURL(/\/groups\/g1\/balances$/);
+    await expect(
+      page.getByRole('heading', { name: 'Para quedar al día' })
+    ).toBeVisible();
   });
 
   test('un link con # abre su pregunta al cargar', async ({ page }) => {
@@ -73,5 +80,18 @@ test.describe('Preguntas frecuentes', () => {
     await expect(page.getByText('Supermercado')).toBeVisible();
     await expect(banner).toBeVisible();
     expect(new URL(page.url()).hash).toBe(before.hash);
+
+    // The page's own "Volver" does the same as the browser's back.
+    await banner.getByRole('link', { name: '¿Qué es Dividy?' }).click();
+    await expect(page).toHaveURL(/\/preguntas$/);
+    await page.getByRole('link', { name: 'Volver' }).click();
+    await expect(page.getByText('Supermercado')).toBeVisible();
+    expect(new URL(page.url()).hash).toBe(before.hash);
+  });
+
+  test('abierta directamente, "Volver" lleva al inicio', async ({ page }) => {
+    await page.goto('/preguntas');
+    await page.getByRole('link', { name: 'Volver' }).click();
+    await expect(page).toHaveURL(/\/$/);
   });
 });
