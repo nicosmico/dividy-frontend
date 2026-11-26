@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 
+import { isChunkLoadError, reloadForNewVersion } from './stale-chunks';
+
 interface BoundaryProps {
   children: ReactNode;
   /** When this value changes (e.g. the route), the error is cleared. */
@@ -24,6 +26,8 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // A screen from an older version of Dividy: reload to get the new one.
+    if (isChunkLoadError(error) && reloadForNewVersion()) return;
     console.error(error, info.componentStack);
   }
 
@@ -37,6 +41,7 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
     if (this.state.error) {
       return (
         <ErrorScreen
+          newVersion={isChunkLoadError(this.state.error)}
           onReset={() => {
             this.props.onReset?.();
             this.setState({ error: null });
@@ -48,7 +53,31 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-export function ErrorScreen({ onReset }: { onReset?: () => void }) {
+export function ErrorScreen({
+  onReset,
+  newVersion = false,
+}: {
+  onReset?: () => void;
+  /** The screen could not load because a new version was published. */
+  newVersion?: boolean;
+}) {
+  if (newVersion) {
+    return (
+      <div
+        role='alert'
+        className='mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-20 text-center'
+      >
+        <h1 className='text-2xl font-bold'>Hay una nueva versión de Dividy</h1>
+        <p className='text-muted-foreground'>
+          Recarga la página para seguir. Tus datos siguen guardados en este
+          dispositivo.
+        </p>
+        <Button size='lg' onClick={() => window.location.reload()}>
+          Recargar
+        </Button>
+      </div>
+    );
+  }
   return (
     <div
       role='alert'

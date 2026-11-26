@@ -457,6 +457,8 @@ Prioridades decididas por el dueño del producto (Ronda 11). Cada ítem merece s
 - **Foto de la boleta.** Sin backend no tiene sentido guardarla solo en el dispositivo.
 - **Recordatorios para saldar.** Notificaciones del tipo "Tienes $3.333 pendientes con Ana": para que lleguen con la app cerrada las tiene que enviar un servidor (Web Push), y en iPhone solo funcionan con la app instalada.
 
+229. **Si falta el archivo de una pantalla porque se publicó una versión nueva, la app recarga sola** → `src/app/stale-chunks.ts`: ante `vite:preloadError` o un error de carga de módulo en el `ErrorBoundary`, recarga una vez (como máximo cada 10 s, guardado en `sessionStorage`, para no entrar en bucle). Si ya recargó y sigue fallando, muestra «Hay una nueva versión de Dividy» con «Recargar», en vez de «Algo salió mal». Probado en `e2e/stale-version.spec.ts` simulando el archivo faltante. **Por qué:** los nombres de los archivos cambian en cada build y Netlify solo sirve los del último deploy; con la app abierta durante un deploy, abrir una pantalla que no se había cargado (por ejemplo Saldos) fallaba con «Algo salió mal». Lo encontró el dueño del producto en la preview del PR #18.
+
 ### Descartado
 
 - **Exportar e importar datos** (Ronda 10, decisión 78): se resolverá con el backend.
